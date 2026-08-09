@@ -1,0 +1,62 @@
+{
+  "httpStatus": 200,
+  "readyState": "complete",
+  "fixedLight": true,
+  "pageTitle": "日报",
+  "pageSubtitle": "回顾当天的投入、进展与下一步",
+  "kpiCards": 4,
+  "kpiBandColumns": 4,
+  "kpiBandBorderWidth": "1px",
+  "firstKpiBorderWidth": "0px",
+  "articleWidth": 1006,
+  "articleTitleCount": 1,
+  "bodyH1Count": 0,
+  "articleTitle": "2026年8月9日星期日",
+  "leadContainsPreface": true,
+  "editButtonVisible": true,
+  "tocVisible": true,
+  "tocItems": 4,
+  "heroHeight": 55,
+  "sidebarWidth": 204,
+  "noHorizontalOverflow": true,
+  "exportMenuItems": 3,
+  "editModal": {
+    "role": "dialog",
+    "ariaModal": "true",
+    "width": 767,
+    "radius": "12px",
+    "focusInside": true,
+    "closeAriaLabel": "关闭"
+  },
+  "settingsDrawer": {
+    "role": "dialog",
+    "ariaModal": "true",
+    "width": 440,
+    "rightAligned": true,
+    "fullHeight": true
+  },
+  "presetTransition": {
+    "dialogCount": 1,
+    "drawerCount": 0,
+    "modalCount": 1,
+    "modalZIndex": "150",
+    "focusInside": true,
+    "focusedElement": "BUTTON",
+    "closeAriaLabel": "关闭"
+  },
+  "returnedToDrawer": true,
+  "batchModal": {
+    "role": "dialog",
+    "ariaModal": "true",
+    "width": 479,
+    "radius": "12px",
+    "focusInside": true,
+    "closeAriaLabel": "关闭"
+  },
+  "responsiveModal": {
+    "noHorizontalOverflow": true,
+    "width": 475,
+    "fitsViewport": true
+  },
+  "consoleErrors": []
+}

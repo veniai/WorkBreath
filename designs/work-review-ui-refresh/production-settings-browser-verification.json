@@ -1,0 +1,38 @@
+{
+  "facts": {
+    "colorScheme": "light",
+    "boardWidth": 1186,
+    "railWidth": 166,
+    "stageWidth": 870,
+    "tabCount": 6,
+    "activeTab": "常规",
+    "activePageTitle": "常规",
+    "saveDisabled": true,
+    "saveStatus": "已保存",
+    "horizontalOverflow": false
+  },
+  "tabStates": [
+    { "activeTab": "常规", "stageTitle": "常规", "cardCount": 4 },
+    { "activeTab": "外观", "stageTitle": "外观", "cardCount": 1 },
+    { "activeTab": "AI 模型", "stageTitle": "AI 模型", "cardCount": 1 },
+    { "activeTab": "隐私", "stageTitle": "隐私", "cardCount": 1 },
+    { "activeTab": "存储", "stageTitle": "存储", "cardCount": 5 },
+    { "activeTab": "接入管理 Beta", "stageTitle": "接入管理", "cardCount": 4 }
+  ],
+  "dirtyState": {
+    "saveDisabled": false,
+    "saveStatus": "有未保存修改",
+    "dirtyClass": true
+  },
+  "savedState": {
+    "saveDisabled": true,
+    "saveStatus": "已保存"
+  },
+  "responsive1024": {
+    "horizontalOverflow": false,
+    "railWidth": 166,
+    "stageWidth": 586,
+    "activePageVisible": true
+  },
+  "consoleErrors": []
+}

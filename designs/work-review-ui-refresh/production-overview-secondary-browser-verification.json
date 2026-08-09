@@ -1,0 +1,49 @@
+{
+  "httpStatus": 200,
+  "readyState": "complete",
+  "fixedLight": true,
+  "domainDialog": {
+    "role": "dialog",
+    "ariaModal": "true",
+    "width": 672,
+    "radius": "12px",
+    "fixedLight": true,
+    "focusInside": true,
+    "closeAriaLabel": "关闭",
+    "urlRows": 3
+  },
+  "semanticPopover": {
+    "role": "dialog",
+    "width": 348,
+    "radius": "12px",
+    "fixedLight": true,
+    "options": 6,
+    "selectedOptions": 1,
+    "focusInside": true,
+    "closeAriaLabel": "关闭"
+  },
+  "semanticTransition": {
+    "popoverCount": 0,
+    "confirmCount": 1,
+    "title": "修改网站语义分类",
+    "width": 416,
+    "radius": "12px",
+    "focusInside": true,
+    "closeAriaLabel": "关闭",
+    "domainDialogInert": true,
+    "domainDialogAriaHidden": "true"
+  },
+  "returnedToPopover": true,
+  "deleteConfirm": {
+    "title": "删除语义分类",
+    "dangerButton": true,
+    "focusInside": true
+  },
+  "responsiveDialog": {
+    "noHorizontalOverflow": true,
+    "width": 665,
+    "fitsViewport": true,
+    "fitsHeight": true
+  },
+  "consoleErrors": []
+}

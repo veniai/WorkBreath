@@ -71,16 +71,16 @@ test('分类确认层应接管键盘焦点，并在分类入口触发时恢复�
   );
   assert.match(
     source,
-    /class="timeline-action-confirm-dialog"\s+use:trapFocus\s+role="dialog"\s+aria-modal="true"\s+aria-labelledby="timeline-action-confirm-title"\s+tabindex="-1"/
+    /class="modal-panel timeline-action-confirm-dialog"\s+use:trapFocus\s+role="dialog"\s+aria-modal="true"\s+aria-labelledby="timeline-action-confirm-title"\s+aria-describedby="timeline-action-confirm-description"\s+tabindex="-1"/
   );
   assert.equal(
     (source.match(/id="timeline-action-confirm-title"/g) || []).length,
-    3,
-    '删除、隐私和分类变更三个标题分支都应为确认对话框提供可访问名称'
+    1,
+    '清理、删除、隐私和分类变更应共用一个可访问标题节点'
   );
   assert.match(source, /function handleTimelineWindowKeydown\(event\)[\s\S]*cancelPendingAction\(\)/);
   assert.match(source, /<svelte:window[\s\S]*on:keydown=\{handleTimelineWindowKeydown\}/);
-  const confirmDialogStart = source.indexOf('class="timeline-action-confirm-dialog"');
+  const confirmDialogStart = source.indexOf('class="modal-panel timeline-action-confirm-dialog"');
   const confirmDialogEnd = source.indexOf('>', confirmDialogStart);
   assert.ok(confirmDialogStart >= 0 && confirmDialogEnd > confirmDialogStart);
   assert.doesNotMatch(

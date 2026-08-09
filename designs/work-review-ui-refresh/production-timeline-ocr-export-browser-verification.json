@@ -1,0 +1,85 @@
+{
+  "verifiedAt": "2026-08-09T14:29:23.234Z",
+  "url": "http://127.0.0.1:4312/#/timeline",
+  "status": 200,
+  "initial": {
+    "role": "dialog",
+    "ariaModal": "true",
+    "title": "选择导出内容",
+    "width": 420,
+    "radius": "12px",
+    "background": "rgb(255, 255, 255)",
+    "radioCount": 2,
+    "checkedCount": 1,
+    "defaultExclude": true,
+    "recommendedVisible": true,
+    "focusOnSafeDefault": true,
+    "fitsViewport": true,
+    "noHorizontalOverflow": true
+  },
+  "explicitCancel": {
+    "saveCount": 0,
+    "exportCalls": [],
+    "focusReturned": true
+  },
+  "escapeCancel": {
+    "saveCount": 0,
+    "exportCalls": [],
+    "focusReturned": true
+  },
+  "excludeExport": {
+    "saveCount": 1,
+    "exportCalls": [
+      {
+        "date": "2026-08-09",
+        "targetPath": "/tmp/timeline-export-1.json",
+        "includeOcr": false
+      }
+    ]
+  },
+  "selectedInclude": {
+    "checkedCount": 1,
+    "includeChecked": true
+  },
+  "includeExport": {
+    "saveCount": 2,
+    "exportCalls": [
+      {
+        "date": "2026-08-09",
+        "targetPath": "/tmp/timeline-export-1.json",
+        "includeOcr": false
+      },
+      {
+        "date": "2026-08-09",
+        "targetPath": "/tmp/timeline-export-2.json",
+        "includeOcr": true
+      }
+    ]
+  },
+  "narrow": {
+    "width": 374,
+    "fitsViewport": true
+  },
+  "errors": {
+    "console": [],
+    "page": []
+  },
+  "checks": {
+    "httpOk": true,
+    "fixedLight": true,
+    "accessibleDialog": true,
+    "approvedGeometry": true,
+    "safeDefault": true,
+    "safeDefaultFocused": true,
+    "initialFits": true,
+    "explicitCancelAborts": true,
+    "escapeAborts": true,
+    "excludeExportWorks": true,
+    "includeSelectionExclusive": true,
+    "includeExportWorks": true,
+    "exportArgumentsPreserved": true,
+    "narrowDialogFits": true,
+    "noBrowserErrors": true
+  },
+  "passed": true
+}

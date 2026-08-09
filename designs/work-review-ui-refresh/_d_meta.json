@@ -1,0 +1,159 @@
+{
+  "type": "design",
+  "designSystems": [],
+  "primaryDesignSystem": null,
+  "assets": {
+    "紧凑工作台": {
+      "versions": [
+        {
+          "path": "compact.html",
+          "createdAt": "2026-08-09T07:59:54.697Z",
+          "status": "approved",
+          "subtitle": "已确认基线；固定亮色，不提供主题切换",
+          "viewport": {
+            "width": 1440,
+            "height": 1120
+          },
+          "section": "第一轮视觉骨架"
+        }
+      ]
+    },
+    "克制演进": {
+      "versions": [
+        {
+          "path": "conservative.html",
+          "createdAt": "2026-08-09T07:59:54.793Z",
+          "status": "needs-review",
+          "subtitle": "应用外壳 + 概览页；保留现有面板观感",
+          "viewport": {
+            "width": 1440,
+            "height": 1120
+          },
+          "section": "第一轮视觉骨架"
+        }
+      ]
+    },
+    "紧凑时间线": {
+      "versions": [
+        {
+          "path": "timeline-compact.html",
+          "createdAt": "2026-08-09T08:56:02.914Z",
+          "status": "approved",
+          "subtitle": "已确认；方案 A 延续、固定亮色、高密度记录行、截图辅助预览",
+          "viewport": {
+            "width": 1440,
+            "height": 1120
+          },
+          "section": "第二轮时间线"
+        }
+      ]
+    },
+    "紧凑日报": {
+      "versions": [
+        {
+          "path": "report-compact.html",
+          "createdAt": "2026-08-09T09:42:38.418Z",
+          "status": "approved",
+          "subtitle": "已确认；方案 A 延续、固定亮色、统一摘要带、单一日期标题、紧凑阅读工作台",
+          "viewport": {
+            "width": 1440,
+            "height": 1120
+          },
+          "section": "第三轮日报"
+        }
+      ]
+    },
+    "紧凑助手": {
+      "versions": [
+        {
+          "path": "assistant-compact.html",
+          "createdAt": "2026-08-09T10:48:18.451Z",
+          "status": "approved",
+          "subtitle": "已确认；融合 ChatGPT、Gemini 与 Codex 的成熟交互原则，固定亮色、统一阅读轴、紧凑过程表达",
+          "viewport": {
+            "width": 1440,
+            "height": 1120
+          },
+          "section": "第四轮助手"
+        }
+      ]
+    },
+    "紧凑设置": {
+      "versions": [
+        {
+          "path": "settings-compact.html",
+          "createdAt": "2026-08-09T11:10:02.647Z",
+          "status": "approved",
+          "subtitle": "已确认；固定亮色、轻量二级导航、统一设置行、六类设置可交互",
+          "viewport": {
+            "width": 1440,
+            "height": 1120
+          },
+          "section": "第五轮设置"
+        }
+      ]
+    },
+    "紧凑护眼": {
+      "versions": [
+        {
+          "path": "eye-care-compact.html",
+          "createdAt": "2026-08-09T11:30:51.437Z",
+          "status": "approved",
+          "subtitle": "已确认；固定亮色、紧凑状态概览、判断依据与事件双栏、设置进入首屏",
+          "viewport": {
+            "width": 1440,
+            "height": 1120
+          },
+          "section": "第六轮护眼"
+        }
+      ]
+    },
+    "紧凑关于页": {
+      "versions": [
+        {
+          "path": "about-compact.html",
+          "createdAt": "2026-08-09T11:57:17.200Z",
+          "status": "approved",
+          "subtitle": "已确认；固定亮色、紧凑产品面板、统一更新管理、轻量产品原则与赞助弹窗",
+          "viewport": {
+            "width": 1440,
+            "height": 1120
+          },
+          "section": "第七轮关于"
+        }
+      ]
+    },
+    "二级交互规范": {
+      "versions": [
+        {
+          "path": "secondary-surfaces.html",
+          "createdAt": "2026-08-09T12:34:27.581Z",
+          "status": "approved",
+          "subtitle": "已确认；统一普通确认、危险清理、表单弹窗与抽屉编辑，抽屉进入预设时采用单层过渡",
+          "viewport": {
+            "width": 1440,
+            "height": 1120
+          },
+          "section": "第八轮二级交互"
+        }
+      ]
+    },
+    "全应用最终验收": {
+      "versions": [
+        {
+          "path": "final-audit/final-ui-contact-sheet.png",
+          "createdAt": "2026-08-09T15:17:40.838Z",
+          "status": "needs-review",
+          "subtitle": "默认 1000×700 窗口下的七个主页面统一检查；固定亮色",
+          "viewport": {
+            "width": 1040,
+            "height": 1560
+          },
+          "section": "第九轮全局验收"
+        }
+      ]
+    }
+  },
+  "createdAt": "2026-08-09T07:59:54.698Z",
+  "updatedAt": "2026-08-09T15:17:40.838Z"
+}

@@ -1,0 +1,443 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="design-variant" content="compact-light-assistant" />
+    <title>Work Review · 紧凑助手原型</title>
+    <!--
+      设计上下文：延续已确认的方案 A，固定亮色、204px 侧栏、细边框、小圆角与蓝色强调。
+      参考原则：ChatGPT 的窄阅读轴、Gemini 的输入框内能力选择、Codex 的任务过程表达。
+      设计取舍：只借鉴成熟产品的结构纪律，不复刻品牌；保留 Work Review 的本地工作记录语义。
+      原型范围：历史会话、新对话、快捷问题、模型/参考记录、发送、过程展开、引用展开均可交互。
+    -->
+    <style>
+      :root {
+        color-scheme: light;
+        --page: #eef1f4;
+        --shell: #f8fafb;
+        --sidebar: #f2f5f7;
+        --surface: #ffffff;
+        --surface-2: #f6f8fa;
+        --surface-3: #edf2f6;
+        --ink: #16212b;
+        --ink-2: #4d5c68;
+        --ink-3: #81909c;
+        --line: #dfe6eb;
+        --line-soft: #ebf0f3;
+        --brand: #2f78e8;
+        --brand-strong: #1d64d6;
+        --brand-soft: #e9f2ff;
+        --green: #159b76;
+        --red: #d34b5d;
+        --amber: #cf812c;
+        --shadow-float: 0 18px 52px rgba(22, 33, 43, 0.2);
+        font-family: Inter, "SF Pro Text", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+      }
+
+      * { box-sizing: border-box; }
+      html, body { min-width: 840px; min-height: 100%; margin: 0; }
+      body { overflow: hidden; background: var(--page); color: var(--ink); font-size: 14px; -webkit-font-smoothing: antialiased; }
+      button, input, textarea, select { font: inherit; }
+      button { color: inherit; }
+      svg { display: block; }
+      .num { font-variant-numeric: tabular-nums; }
+      .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+      .is-hidden { display: none !important; }
+
+      .app-window { width: 100%; height: 100vh; overflow: hidden; background: var(--shell); }
+      .windowbar { height: 28px; display: flex; align-items: center; border-bottom: 1px solid var(--line-soft); background: var(--shell); user-select: none; }
+      .windowbar-title { flex: 1; padding-left: 16px; color: var(--ink-3); font-size: 10px; font-weight: 700; }
+      .window-controls { height: 100%; display: flex; }
+      .window-control { width: 46px; border: 0; background: transparent; color: var(--ink-3); display: grid; place-items: center; }
+      .window-control:hover { background: var(--surface-3); color: var(--ink); }
+      .window-control.close:hover { background: #e74b55; color: #fff; }
+      .window-control svg { width: 10px; height: 10px; }
+
+      .workspace { height: calc(100vh - 28px); display: grid; grid-template-columns: 204px minmax(0, 1fr); }
+      .sidebar { min-width: 0; display: flex; flex-direction: column; padding: 16px 14px 14px; border-right: 1px solid var(--line); background: var(--sidebar); }
+      .brand-row { display: flex; align-items: center; gap: 10px; padding: 0 8px 14px; }
+      .brand-mark { width: 32px; height: 32px; flex: none; overflow: hidden; border-radius: 8px; background: #dceef2; box-shadow: 0 2px 7px rgba(36, 112, 130, 0.14); }
+      .brand-mark img { width: 100%; height: 100%; object-fit: cover; }
+      .brand-name { margin: 0; font-size: 14px; line-height: 1.2; font-weight: 760; }
+      .brand-edition { margin-top: 2px; color: var(--ink-3); font-size: 10px; }
+      .capture-panel { display: flex; align-items: center; gap: 8px; margin-bottom: 17px; padding: 9px 10px; border: 1px solid var(--line); border-radius: 9px; background: var(--surface); }
+      .capture-dot { width: 7px; height: 7px; flex: none; border-radius: 50%; background: var(--green); box-shadow: 0 0 0 4px color-mix(in srgb, var(--green) 12%, transparent); }
+      .capture-copy { min-width: 0; flex: 1; }
+      .capture-title { display: block; font-size: 10.5px; font-weight: 700; }
+      .capture-meta { display: block; margin-top: 2px; color: var(--ink-3); font-size: 10px; }
+      .pause-btn { width: 27px; height: 25px; display: grid; place-items: center; border: 1px solid var(--line); border-radius: 7px; background: var(--surface-2); cursor: pointer; }
+      .pause-btn:hover { color: var(--brand); border-color: #bdd1ed; }
+      .pause-btn svg { width: 11px; height: 11px; }
+      .nav-label { padding: 0 10px 7px; color: var(--ink-3); font-size: 10px; font-weight: 750; letter-spacing: 0.12em; }
+      .nav-list { display: flex; flex-direction: column; gap: 3px; }
+      .nav-item { width: 100%; min-height: 37px; display: flex; align-items: center; gap: 10px; padding: 0 10px; border: 0; border-radius: 7px; background: transparent; color: var(--ink-2); font-size: 12px; font-weight: 600; text-align: left; cursor: pointer; }
+      .nav-item:hover { color: var(--ink); background: color-mix(in srgb, var(--surface-3) 78%, transparent); }
+      .nav-item.active { color: var(--brand-strong); background: var(--brand-soft); }
+      .nav-item svg { width: 16px; height: 16px; color: var(--ink-3); }
+      .nav-item.active svg { color: var(--brand); }
+      .sidebar-spacer { flex: 1; }
+      .sidebar-tools { padding: 10px 5px 0; border-top: 1px solid var(--line); }
+      .locale-button { height: 29px; padding: 0 9px; border: 1px solid var(--line); border-radius: 7px; background: var(--surface); color: var(--ink-2); font-size: 10px; font-weight: 700; cursor: pointer; }
+
+      .main { min-width: 0; min-height: 0; background: var(--shell); }
+      .assistant-shell { width: min(1180px, calc(100% - 40px)); height: 100%; margin: 0 auto; padding: 20px 0 12px; display: flex; flex-direction: column; }
+      .page-head { min-height: 36px; flex: 0 0 auto; display: flex; align-items: center; gap: 16px; }
+      .heading-row { min-width: 0; flex: 1; display: flex; align-items: center; gap: 10px; }
+      .heading-icon { width: 31px; height: 31px; display: grid; place-items: center; flex: none; border-radius: 8px; background: var(--brand-soft); color: var(--brand); }
+      .heading-icon svg { width: 16px; height: 16px; }
+      .page-heading h1 { margin: 0; font-size: 20px; line-height: 1.2; }
+      .page-subtitle { margin: 4px 0 0; color: var(--ink-3); font-size: 10.5px; }
+      .header-actions { display: flex; align-items: center; gap: 7px; }
+      .header-action { height: 35px; display: inline-flex; align-items: center; justify-content: center; gap: 7px; padding: 0 11px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--ink-2); font-size: 10.5px; font-weight: 650; cursor: pointer; }
+      .header-action:hover { border-color: #bfd3ee; color: var(--brand-strong); background: #fbfdff; }
+      .header-action.primary { border-color: var(--brand); color: #fff; background: var(--brand); }
+      .header-action.primary:hover { border-color: var(--brand-strong); color: #fff; background: var(--brand-strong); }
+      .header-action svg { width: 13px; height: 13px; }
+
+      .chat-stage { min-height: 0; flex: 1; display: flex; flex-direction: column; margin-top: 12px; }
+      .chat-scroll { min-height: 0; flex: 1; overflow-y: auto; scrollbar-gutter: stable; }
+      .thread { width: min(820px, calc(100% - 24px)); min-height: 100%; margin: 0 auto; padding: 24px 0 36px; }
+      .user-row { display: flex; justify-content: flex-end; }
+      .user-message { max-width: 68%; margin: 0; padding: 9px 12px; border: 1px solid #d9e8fb; border-radius: 10px 10px 3px 10px; background: var(--brand-soft); color: #29445e; font-size: 12px; line-height: 1.65; }
+      .assistant-message { margin-top: 19px; }
+      .assistant-identity { display: flex; align-items: center; gap: 8px; margin-bottom: 9px; color: var(--ink-2); font-size: 10.5px; font-weight: 700; }
+      .assistant-mark { width: 24px; height: 24px; display: grid; place-items: center; border-radius: 7px; background: var(--brand-soft); color: var(--brand); }
+      .assistant-mark svg { width: 13px; height: 13px; }
+      .model-note { margin-left: auto; color: var(--ink-3); font-size: 10px; font-weight: 500; }
+
+      .process { margin: 0 0 14px; border-top: 1px solid var(--line-soft); border-bottom: 1px solid var(--line-soft); }
+      .process summary { min-height: 34px; display: flex; align-items: center; gap: 8px; list-style: none; cursor: pointer; color: var(--ink-2); font-size: 10.5px; }
+      .process summary::-webkit-details-marker, .references summary::-webkit-details-marker { display: none; }
+      .status-dot { width: 6px; height: 6px; flex: none; border-radius: 50%; background: var(--green); }
+      .process-title { min-width: 0; flex: 1; }
+      .process-hint { color: var(--ink-3); font-size: 10px; }
+      .chevron { width: 12px; height: 12px; color: var(--ink-3); transition: transform 0.15s ease; }
+      .process[open] .chevron, .references[open] .chevron { transform: rotate(180deg); }
+      .process-list { padding: 2px 0 9px 14px; }
+      .process-step { position: relative; display: grid; grid-template-columns: 16px minmax(0, 1fr) auto; gap: 7px; align-items: center; min-height: 28px; color: var(--ink-2); font-size: 10.5px; }
+      .process-step::before { content: ""; position: absolute; left: 5px; top: 0; bottom: 0; width: 1px; background: var(--line); }
+      .process-step:first-child::before { top: 50%; }
+      .process-step:last-child::before { bottom: 50%; }
+      .step-check { position: relative; z-index: 1; width: 11px; height: 11px; display: grid; place-items: center; border-radius: 50%; background: #e4f5ef; color: var(--green); }
+      .step-check svg { width: 7px; height: 7px; }
+      .step-meta { color: var(--ink-3); font-size: 10px; }
+
+      .answer { color: var(--ink-2); font-size: 12px; line-height: 1.78; }
+      .answer h2 { margin: 17px 0 6px; color: var(--ink); font-size: 15px; line-height: 1.45; }
+      .answer h2:first-child { margin-top: 0; }
+      .answer p { margin: 7px 0; }
+      .answer ul { margin: 7px 0; padding-left: 19px; }
+      .answer li { margin: 4px 0; }
+      .answer li::marker { color: var(--brand); }
+      .answer strong { color: var(--ink); font-weight: 720; }
+      .next-step { margin-top: 12px; padding: 9px 11px; border-left: 3px solid var(--brand); background: #f6f9fd; color: var(--ink-2); font-size: 11px; line-height: 1.65; }
+      .next-step strong { color: var(--brand-strong); }
+
+      .references { margin-top: 16px; color: var(--ink-3); }
+      .references summary { display: flex; align-items: center; gap: 8px; list-style: none; cursor: pointer; font-size: 10px; }
+      .reference-line { height: 1px; flex: 1; background: var(--line); }
+      .reference-list { margin-top: 8px; border-top: 1px solid var(--line-soft); }
+      .reference-item { display: grid; grid-template-columns: 108px minmax(0, 1fr) auto; gap: 10px; align-items: center; min-height: 39px; border-bottom: 1px solid var(--line-soft); font-size: 10px; }
+      .reference-type { color: var(--ink-3); }
+      .reference-title { overflow: hidden; color: var(--ink-2); text-overflow: ellipsis; white-space: nowrap; }
+      .reference-time { color: var(--ink-3); }
+
+      .welcome { width: min(820px, calc(100% - 24px)); min-height: 100%; margin: 0 auto; display: flex; flex-direction: column; justify-content: center; padding: 24px 0 54px; }
+      .welcome-kicker { display: flex; align-items: center; gap: 9px; color: var(--brand-strong); font-size: 10.5px; font-weight: 720; }
+      .welcome-mark { width: 30px; height: 30px; display: grid; place-items: center; border-radius: 8px; background: var(--brand-soft); color: var(--brand); }
+      .welcome-mark svg { width: 16px; height: 16px; }
+      .welcome h2 { margin: 15px 0 0; color: var(--ink); font-size: 24px; line-height: 1.3; }
+      .welcome > p { max-width: 520px; margin: 7px 0 0; color: var(--ink-2); font-size: 11.5px; line-height: 1.7; }
+      .starter-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-top: 20px; }
+      .starter { min-height: 54px; display: flex; align-items: center; gap: 10px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--ink-2); text-align: left; font-size: 11px; line-height: 1.45; cursor: pointer; }
+      .starter:hover { border-color: #bfd3ee; color: var(--brand-strong); background: #fbfdff; }
+      .starter-index { width: 20px; height: 20px; display: grid; place-items: center; flex: none; border-radius: 6px; background: var(--surface-2); color: var(--ink-3); font-size: 9px; font-weight: 750; }
+      .starter svg { width: 13px; height: 13px; margin-left: auto; color: var(--ink-3); }
+
+      .composer-zone { position: relative; flex: 0 0 auto; padding-top: 8px; background: linear-gradient(180deg, transparent, var(--shell) 26%); }
+      .composer { width: min(820px, calc(100% - 24px)); margin: 0 auto; padding: 8px 9px 7px 11px; border: 1px solid #cbd7df; border-radius: 10px; background: var(--surface); box-shadow: 0 7px 20px rgba(22, 33, 43, 0.08); }
+      .composer:focus-within { border-color: #9bc0f2; box-shadow: 0 0 0 3px rgba(47, 120, 232, 0.09), 0 7px 20px rgba(22, 33, 43, 0.07); }
+      .composer-input { width: 100%; min-height: 35px; max-height: 120px; padding: 4px 2px 6px; resize: none; overflow-y: auto; border: 0; outline: 0; background: transparent; color: var(--ink); font-size: 12px; line-height: 1.55; }
+      .composer-input::placeholder { color: #97a4ae; }
+      .composer-toolbar { display: flex; align-items: center; gap: 5px; }
+      .composer-control { height: 27px; display: inline-flex; align-items: center; gap: 6px; padding: 0 8px; border: 1px solid transparent; border-radius: 6px; background: var(--surface-2); color: var(--ink-2); font-size: 10px; font-weight: 650; cursor: pointer; }
+      .composer-control:hover { border-color: var(--line); color: var(--brand-strong); background: #fbfdff; }
+      .context-live { width: 5px; height: 5px; border-radius: 50%; background: var(--green); box-shadow: 0 0 0 3px rgba(21, 155, 118, 0.1); }
+      .composer-model { height: 27px; max-width: 210px; padding: 0 25px 0 8px; appearance: none; border: 1px solid transparent; border-radius: 6px; outline: 0; background: var(--surface-2) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%2381909c' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") no-repeat right 8px center; color: var(--ink-2); font-size: 10px; font-weight: 650; cursor: pointer; }
+      .composer-spacer { flex: 1; }
+      .send-button { width: 29px; height: 29px; display: grid; place-items: center; border: 0; border-radius: 7px; background: var(--brand); color: #fff; cursor: pointer; }
+      .send-button:hover { background: var(--brand-strong); }
+      .send-button svg { width: 14px; height: 14px; }
+      .composer-hint { margin: 5px auto 0; color: var(--ink-3); font-size: 9.5px; text-align: center; }
+
+      .context-popover { position: fixed; z-index: 70; display: none; width: 280px; padding: 11px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); box-shadow: var(--shadow-float); }
+      .context-popover.open { display: block; }
+      .context-popover strong { display: block; color: var(--ink); font-size: 10.5px; }
+      .context-popover p { margin: 5px 0 0; color: var(--ink-3); font-size: 10px; line-height: 1.55; }
+      .context-summary { display: flex; gap: 6px; margin-top: 9px; padding-top: 9px; border-top: 1px solid var(--line-soft); }
+      .context-tag { padding: 3px 6px; border-radius: 5px; background: var(--surface-2); color: var(--ink-2); font-size: 9.5px; }
+
+      .drawer-backdrop { position: fixed; inset: 0; z-index: 80; display: none; background: rgba(15, 23, 31, 0.34); backdrop-filter: blur(2px); }
+      .drawer-backdrop.open { display: block; }
+      .drawer { position: absolute; top: 28px; right: 0; bottom: 0; width: min(400px, calc(100vw - 230px)); display: flex; flex-direction: column; border-left: 1px solid var(--line); background: var(--surface); box-shadow: var(--shadow-float); transform: translateX(100%); transition: transform 0.18s ease; }
+      .drawer-backdrop.open .drawer { transform: translateX(0); }
+      .drawer-head { min-height: 58px; display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-bottom: 1px solid var(--line); }
+      .drawer-head-copy { min-width: 0; flex: 1; }
+      .drawer-kicker { color: var(--ink-3); font-size: 10px; }
+      .drawer-head h2 { margin: 2px 0 0; font-size: 14px; }
+      .drawer-close { width: 29px; height: 29px; display: grid; place-items: center; border: 1px solid var(--line); border-radius: 7px; background: var(--surface); color: var(--ink-3); cursor: pointer; }
+      .drawer-close svg { width: 13px; height: 13px; }
+      .drawer-body { min-height: 0; flex: 1; overflow-y: auto; padding: 10px; }
+      .history-group-title { margin: 8px 6px 5px; color: var(--ink-3); font-size: 9.5px; font-weight: 750; letter-spacing: 0.08em; }
+      .history-item { width: 100%; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; padding: 9px 10px; border: 1px solid transparent; border-radius: 7px; background: transparent; text-align: left; cursor: pointer; }
+      .history-item:hover { background: var(--surface-2); }
+      .history-item.active { border-color: #d9e8fb; background: var(--brand-soft); }
+      .history-item strong { display: block; overflow: hidden; color: var(--ink-2); font-size: 10.5px; text-overflow: ellipsis; white-space: nowrap; }
+      .history-item span { display: block; margin-top: 3px; color: var(--ink-3); font-size: 9.5px; }
+      .history-item time { color: var(--ink-3); font-size: 9.5px; }
+
+      .toast { position: fixed; left: 50%; bottom: 22px; z-index: 100; display: flex; align-items: center; gap: 7px; max-width: 380px; padding: 9px 12px; border-radius: 8px; background: #17222c; color: #f5f8fa; box-shadow: var(--shadow-float); font-size: 10.5px; opacity: 0; pointer-events: none; transform: translate(-50%, 8px); transition: opacity 0.15s ease, transform 0.15s ease; }
+      .toast.show { opacity: 1; transform: translate(-50%, 0); }
+      .toast svg { width: 13px; height: 13px; color: #82d7bd; }
+
+      @media (max-width: 1040px) {
+        .assistant-shell { width: calc(100% - 28px); }
+        .header-action span { display: none; }
+        .thread, .welcome, .composer { width: min(760px, calc(100% - 16px)); }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="app-window" data-screen-label="助手 · 成熟 AI 产品融合方案" aria-label="Work Review 紧凑助手原型">
+      <header class="windowbar">
+        <span class="windowbar-title">Work Review</span>
+        <div class="window-controls" aria-hidden="true">
+          <button class="window-control" type="button"><svg><use href="#i-min"></use></svg></button>
+          <button class="window-control" type="button"><svg><use href="#i-max"></use></svg></button>
+          <button class="window-control close" type="button"><svg><use href="#i-close"></use></svg></button>
+        </div>
+      </header>
+
+      <div class="workspace">
+        <aside class="sidebar">
+          <div class="brand-row">
+            <span class="brand-mark"><img src="./assets/icon.png" alt="" /></span>
+            <div><h2 class="brand-name">Work Review</h2><div class="brand-edition">本地工作回顾</div></div>
+          </div>
+          <div class="capture-panel"><span class="capture-dot"></span><span class="capture-copy"><span class="capture-title">正在记录</span><span class="capture-meta">仅保存在本机</span></span><button class="pause-btn" type="button" aria-label="暂停记录"><svg><use href="#i-pause"></use></svg></button></div>
+          <div class="nav-label">工作空间</div>
+          <nav class="nav-list" aria-label="主导航">
+            <button class="nav-item" type="button"><svg><use href="#i-overview"></use></svg><span>概览</span></button>
+            <button class="nav-item" type="button"><svg><use href="#i-eye"></use></svg><span>护眼</span></button>
+            <button class="nav-item" type="button"><svg><use href="#i-timeline"></use></svg><span>时间线</span></button>
+            <button class="nav-item" type="button"><svg><use href="#i-report"></use></svg><span>日报</span></button>
+            <button class="nav-item active" type="button"><svg><use href="#i-ask"></use></svg><span>助手</span></button>
+            <button class="nav-item" type="button"><svg><use href="#i-settings"></use></svg><span>设置</span></button>
+            <button class="nav-item" type="button"><svg><use href="#i-info"></use></svg><span>关于</span></button>
+          </nav>
+          <div class="sidebar-spacer"></div>
+          <div class="sidebar-tools"><button class="locale-button" type="button">简体中文⌄</button></div>
+        </aside>
+
+        <section class="main">
+          <div class="assistant-shell">
+            <header class="page-head">
+              <div class="heading-row">
+                <span class="heading-icon"><svg><use href="#i-ask"></use></svg></span>
+                <div class="page-heading"><h1>助手</h1><p class="page-subtitle" id="conversationTitle">复盘今天的前端优化</p></div>
+              </div>
+              <div class="header-actions">
+                <button class="header-action" id="historyButton" type="button"><svg><use href="#i-history"></use></svg><span>历史会话</span></button>
+                <button class="header-action primary" id="newChatButton" type="button"><svg><use href="#i-plus"></use></svg><span>新对话</span></button>
+              </div>
+            </header>
+
+            <div class="chat-stage">
+              <div class="chat-scroll" id="chatScroll">
+                <section class="thread" id="threadView" aria-label="当前会话">
+                  <div class="user-row"><p class="user-message">帮我复盘一下今天的前端优化，重点说说时间投入和下一步。</p></div>
+                  <article class="assistant-message">
+                    <div class="assistant-identity"><span class="assistant-mark"><svg><use href="#i-assistant"></use></svg></span><span>工作助手</span><span class="model-note">MiniMax · 工作分析</span></div>
+                    <details class="process" id="processDetails">
+                      <summary><span class="status-dot"></span><span class="process-title">已完成 2 个步骤</span><span class="process-hint">查看过程</span><svg class="chevron"><use href="#i-chevron"></use></svg></summary>
+                      <div class="process-list">
+                        <div class="process-step"><span class="step-check"><svg><use href="#i-check"></use></svg></span><span>检索今日工作记录</span><span class="step-meta">12 条</span></div>
+                        <div class="process-step"><span class="step-check"><svg><use href="#i-check"></use></svg></span><span>读取今日日报</span><span class="step-meta">已完成</span></div>
+                      </div>
+                    </details>
+                    <div class="answer">
+                      <h2>结论</h2>
+                      <p>今天的前端优化推进顺利，主要时间集中在<strong>界面结构收敛</strong>与<strong>浏览器验证</strong>。目前概览、时间线和日报已经形成统一的固定亮色语言。</p>
+                      <h2>关键发现</h2>
+                      <ul>
+                        <li>全天约投入 <strong>5 小时 47 分钟</strong>，开发与设计验证占据主要时间。</li>
+                        <li>高密度布局减少了无意义滚动，同时保留现有编辑、导出和详情能力。</li>
+                        <li>三个核心页面已经统一蓝色强调、细边框、小圆角和 204px 侧栏。</li>
+                      </ul>
+                      <h2>下一步</h2>
+                      <p>优先收敛助手页，再检查设置页。这样用户最常使用的“查看—复盘—追问”链路会先完整统一。</p>
+                      <div class="next-step"><strong>建议：</strong>先确认本轮助手原型，再进入正式代码，避免一边改交互一边调整视觉。</div>
+                    </div>
+                    <details class="references" id="referenceDetails">
+                      <summary><span>回答依据 · 2 条</span><span class="reference-line"></span><svg class="chevron"><use href="#i-chevron"></use></svg></summary>
+                      <div class="reference-list">
+                        <div class="reference-item"><span class="reference-type">活动记录</span><span class="reference-title">Report.svelte · 日报紧凑阅读布局与验证</span><time class="reference-time">15:20 · 1h30m</time></div>
+                        <div class="reference-item"><span class="reference-type">今日日报</span><span class="reference-title">概览、时间线和日报页面完成统一</span><time class="reference-time">16:20</time></div>
+                      </div>
+                    </details>
+                  </article>
+                </section>
+
+                <section class="welcome is-hidden" id="welcomeView" aria-labelledby="welcomeTitle">
+                  <div class="welcome-kicker"><span class="welcome-mark"><svg><use href="#i-assistant"></use></svg></span><span>基于你的本地工作记录</span></div>
+                  <h2 id="welcomeTitle">今天想复盘什么？</h2>
+                  <p>助手会结合时间线、日报和应用投入回答；默认只读取本机已有记录，执行高风险操作前会再次确认。</p>
+                  <div class="starter-grid">
+                    <button class="starter" type="button"><span class="starter-index">01</span><span>总结我今天主要完成了什么</span><svg><use href="#i-arrow"></use></svg></button>
+                    <button class="starter" type="button"><span class="starter-index">02</span><span>最近的专注时间是在增加还是减少</span><svg><use href="#i-arrow"></use></svg></button>
+                    <button class="starter" type="button"><span class="starter-index">03</span><span>哪些工作应该暂停、委派或删除</span><svg><use href="#i-arrow"></use></svg></button>
+                    <button class="starter" type="button"><span class="starter-index">04</span><span>哪些计划反复出现却一直没有推进</span><svg><use href="#i-arrow"></use></svg></button>
+                  </div>
+                </section>
+              </div>
+
+              <div class="composer-zone">
+                <div class="composer">
+                  <textarea class="composer-input" id="composerInput" rows="1" placeholder="问点什么，比如：我这周主要做了什么？"></textarea>
+                  <div class="composer-toolbar">
+                    <button class="composer-control" id="contextButton" type="button"><span class="context-live"></span><span>参考记录</span><svg class="chevron"><use href="#i-chevron"></use></svg></button>
+                    <select class="composer-model" aria-label="选择模型"><option>MiniMax · 工作分析</option><option>基础模板</option><option>OpenAI · GPT-5</option></select>
+                    <span class="composer-spacer"></span>
+                    <button class="send-button" id="sendButton" type="button" aria-label="发送"><svg><use href="#i-send"></use></svg></button>
+                  </div>
+                </div>
+                <p class="composer-hint">Enter 发送 · Shift+Enter 换行 · 重要操作会先征求确认</p>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+    </main>
+
+    <div class="context-popover" id="contextPopover" role="dialog" aria-label="参考记录范围">
+      <strong>本轮参考范围</strong>
+      <p>助手会读取当前时间线、日报与应用投入，用于给出可追溯的工作复盘。</p>
+      <div class="context-summary"><span class="context-tag">活动记录</span><span class="context-tag">日报</span><span class="context-tag">应用统计</span></div>
+    </div>
+
+    <div class="drawer-backdrop" id="drawerBackdrop" role="presentation">
+      <aside class="drawer" role="dialog" aria-modal="true" aria-labelledby="historyTitle">
+        <header class="drawer-head"><div class="drawer-head-copy"><span class="drawer-kicker">最近 30 个会话</span><h2 id="historyTitle">历史会话</h2></div><button class="drawer-close" id="drawerClose" type="button" aria-label="关闭"><svg><use href="#i-close"></use></svg></button></header>
+        <div class="drawer-body">
+          <p class="history-group-title">今天</p>
+          <button class="history-item active" type="button"><span><strong>复盘今天的前端优化</strong><span>2 条消息 · MiniMax</span></span><time>16:24</time></button>
+          <button class="history-item" type="button"><span><strong>分析本周专注时间变化</strong><span>6 条消息 · 基础模板</span></span><time>11:08</time></button>
+          <p class="history-group-title">昨天</p>
+          <button class="history-item" type="button"><span><strong>整理尚未推进的工作计划</strong><span>4 条消息 · MiniMax</span></span><time>18:42</time></button>
+          <button class="history-item" type="button"><span><strong>检查沟通是否打断开发节奏</strong><span>8 条消息 · MiniMax</span></span><time>14:15</time></button>
+        </div>
+      </aside>
+    </div>
+
+    <div class="toast" id="toast"><svg><use href="#i-check"></use></svg><span></span></div>
+
+    <svg class="sr-only" width="0" height="0" aria-hidden="true">
+      <symbol id="i-overview" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="4" y="4" width="6" height="6" rx="1.5"></rect><rect x="14" y="4" width="6" height="6" rx="1.5"></rect><rect x="4" y="14" width="6" height="6" rx="1.5"></rect><rect x="14" y="14" width="6" height="6" rx="1.5"></rect></symbol>
+      <symbol id="i-eye" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M2.8 12s3.5-5.2 9.2-5.2 9.2 5.2 9.2 5.2-3.5 5.2-9.2 5.2S2.8 12 2.8 12Z"></path><circle cx="12" cy="12" r="2.4"></circle></symbol>
+      <symbol id="i-timeline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="8.5"></circle><path d="M12 7.5v5l3.2 2"></path></symbol>
+      <symbol id="i-report" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M6 3.8h8l4 4V20H6z"></path><path d="M14 3.8V8h4M9 12h6M9 15.5h6"></path></symbol>
+      <symbol id="i-ask" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 5.5h16v12H9l-4.5 3v-3H4z"></path><path d="M8 10h8M8 13.5h5"></path></symbol>
+      <symbol id="i-settings" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="3"></circle><path d="M19 13.5v-3l-2-.6a7 7 0 0 0-.7-1.6l1-1.8-2.1-2.1-1.8 1A7 7 0 0 0 11.5 5l-.6-2h-3l-.6 2a7 7 0 0 0-1.6.7l-1.8-1-2.1 2.1 1 1.8A7 7 0 0 0 2 10.5l-2 .6v3l2 .6a7 7 0 0 0 .7 1.6l-1 1.8 2.1 2.1 1.8-1a7 7 0 0 0 1.6.7l.6 2h3l.6-2a7 7 0 0 0 1.6-.7l1.8 1 2.1-2.1-1-1.8a7 7 0 0 0 .7-1.6Z" transform="translate(2.1 -.6) scale(.82)"></path></symbol>
+      <symbol id="i-info" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="8.5"></circle><path d="M12 10.5v6M12 7.5h.01"></path></symbol>
+      <symbol id="i-pause" viewBox="0 0 24 24" fill="currentColor"><path d="M7 5h3.5v14H7zM13.5 5H17v14h-3.5z"></path></symbol>
+      <symbol id="i-history" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4.8 6.8A8 8 0 1 1 4 15.5M4.8 6.8V3.5m0 3.3H8"></path><path d="M12 8v4l2.5 1.5"></path></symbol>
+      <symbol id="i-plus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M12 5v14M5 12h14"></path></symbol>
+      <symbol id="i-assistant" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M6.8 5.5h7.7a4 4 0 0 1 4 4v2.8a4 4 0 0 1-4 4h-3.6l-3.6 2.5.7-2.5H6.8a4 4 0 0 1-4-4V9.5a4 4 0 0 1 4-4Z"></path><path d="M18.2 3v3.2M16.6 4.6h3.2"></path></symbol>
+      <symbol id="i-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"></path></symbol>
+      <symbol id="i-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m5 12 4 4 10-10"></path></symbol>
+      <symbol id="i-send" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 17V7M8 11l4-4 4 4"></path></symbol>
+      <symbol id="i-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 12h13M14 8l4 4-4 4"></path></symbol>
+      <symbol id="i-close" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="m7 7 10 10M17 7 7 17"></path></symbol>
+      <symbol id="i-min" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M6 12h12"></path></symbol>
+      <symbol id="i-max" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="6" y="6" width="12" height="12"></rect></symbol>
+    </svg>
+
+    <script>
+      const threadView = document.querySelector('#threadView');
+      const welcomeView = document.querySelector('#welcomeView');
+      const conversationTitle = document.querySelector('#conversationTitle');
+      const composerInput = document.querySelector('#composerInput');
+      const historyButton = document.querySelector('#historyButton');
+      const drawerBackdrop = document.querySelector('#drawerBackdrop');
+      const drawerClose = document.querySelector('#drawerClose');
+      const contextButton = document.querySelector('#contextButton');
+      const contextPopover = document.querySelector('#contextPopover');
+
+      function showConversation(question) {
+        threadView.classList.remove('is-hidden');
+        welcomeView.classList.add('is-hidden');
+        conversationTitle.textContent = '复盘今天的前端优化';
+        if (question) threadView.querySelector('.user-message').textContent = question;
+        document.querySelector('#chatScroll').scrollTop = 0;
+      }
+
+      function showWelcome() {
+        threadView.classList.add('is-hidden');
+        welcomeView.classList.remove('is-hidden');
+        conversationTitle.textContent = '新的工作问题';
+        composerInput.value = '';
+        composerInput.focus();
+      }
+
+      document.querySelector('#newChatButton').addEventListener('click', showWelcome);
+      document.querySelectorAll('.starter').forEach((button) => button.addEventListener('click', () => showConversation(button.querySelector('span:nth-child(2)').textContent)));
+
+      function sendQuestion() {
+        const question = composerInput.value.trim();
+        if (!question) { showToast('先输入一个工作问题'); return; }
+        showConversation(question);
+        composerInput.value = '';
+        showToast('已生成示例回答；正式版本会继续使用真实流式结果');
+      }
+      document.querySelector('#sendButton').addEventListener('click', sendQuestion);
+      composerInput.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); sendQuestion(); }
+      });
+
+      historyButton.addEventListener('click', () => drawerBackdrop.classList.add('open'));
+      drawerClose.addEventListener('click', () => drawerBackdrop.classList.remove('open'));
+      drawerBackdrop.addEventListener('click', (event) => { if (event.target === drawerBackdrop) drawerBackdrop.classList.remove('open'); });
+      document.querySelectorAll('.history-item').forEach((button) => button.addEventListener('click', () => {
+        document.querySelectorAll('.history-item').forEach((item) => item.classList.toggle('active', item === button));
+        drawerBackdrop.classList.remove('open');
+        showConversation();
+        conversationTitle.textContent = button.querySelector('strong').textContent;
+      }));
+
+      contextButton.addEventListener('click', () => {
+        const rect = contextButton.getBoundingClientRect();
+        contextPopover.style.left = `${rect.left}px`;
+        contextPopover.style.bottom = `${window.innerHeight - rect.top + 8}px`;
+        contextPopover.classList.toggle('open');
+      });
+      document.addEventListener('click', (event) => {
+        if (!contextButton.contains(event.target) && !contextPopover.contains(event.target)) contextPopover.classList.remove('open');
+      });
+
+      document.querySelectorAll('.nav-item:not(.active), .pause-btn, .locale-button').forEach((button) => button.addEventListener('click', () => showToast('原型只演示助手页面，正式功能保持不变')));
+      window.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape') { drawerBackdrop.classList.remove('open'); contextPopover.classList.remove('open'); }
+      });
+
+      let toastTimer;
+      function showToast(message) {
+        const toast = document.querySelector('#toast');
+        toast.querySelector('span').textContent = message;
+        toast.classList.add('show');
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => toast.classList.remove('show'), 2200);
+      }
+    </script>
+  </body>
+</html>

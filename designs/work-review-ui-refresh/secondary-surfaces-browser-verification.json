@@ -1,0 +1,19 @@
+{
+  "httpStatus": 200,
+  "initialFocus": "取消",
+  "focusInsideStandard": true,
+  "layering": {
+    "dialogs": 1,
+    "drawers": 0,
+    "overlays": 1,
+    "focusedField": "例如：项目周报"
+  },
+  "saveDisabled": false,
+  "returnedToDrawer": true,
+  "responsive": {
+    "horizontalOverflow": false,
+    "dialogWidth": 475,
+    "dialogFits": true
+  },
+  "errors": []
+}

@@ -10,6 +10,7 @@
   import { cache } from '../../lib/stores/cache.js';
   import { formatLocalizedDate, formatLocalizedTime, formatDurationLocalized, locale, t, tm, translateCategoryLabel } from '$lib/i18n/index.js';
   import { formatUserError } from '$lib/utils/errorDisplay.js';
+  import { trapFocus } from '$lib/utils/focusTrap.js';
   import { shouldShowPromptAppliedToast } from './reportPromptFeedback.js';
   import { resolveReportMeta } from './reportMeta.js';
   import {
@@ -48,6 +49,7 @@
   let lastWeekStats = null; // 上周同日基线（KPI 参照系;加载失败保持 null,不显示 delta）
   let isYesterdayReport = false; // 标记是否显示的是昨日日报
   let showPresetModal = false;
+  let presetReturnsToGenerateDrawer = false;
   let presetSaving = false;
   $: activePresetName = (config?.daily_report_prompt_presets || []).find(p => p.prompt === config?.daily_report_custom_prompt)?.name || '';
   let editingPresetIndex = -1;
@@ -251,6 +253,26 @@
     }
   }
 
+  function openPresetEditor(index = -1) {
+    const preset = index >= 0 ? (config?.daily_report_prompt_presets || [])[index] : null;
+    editingPresetIndex = index;
+    editingPresetName = preset?.name || '';
+    editingPresetPrompt = preset?.prompt || '';
+    presetReturnsToGenerateDrawer = showGenerateDrawer;
+    showGenerateDrawer = false;
+    showPresetModal = true;
+  }
+
+  function closePresetEditor({ force = false } = {}) {
+    if (presetSaving && !force) return;
+    showPresetModal = false;
+    const shouldReturnToDrawer = presetReturnsToGenerateDrawer;
+    presetReturnsToGenerateDrawer = false;
+    if (shouldReturnToDrawer) {
+      showGenerateDrawer = true;
+    }
+  }
+
   // 把节点移到 document.body，规避祖先的 backdrop-filter / overflow 对 position:fixed 的干扰
   async function exportReportMarkdown() {
     if (!report) return;
@@ -356,6 +378,12 @@
     showBatchExportModal = true;
   }
 
+  function closeBatchExportModal() {
+    if (!batchExporting) {
+      showBatchExportModal = false;
+    }
+  }
+
   /** 历史周条尾部入口：预填本周范围直接进合并导出（导出与历史在同一处闭环）。 */
   function openWeekBatchExport() {
     applyBatchPreset('thisWeek');
@@ -448,7 +476,7 @@
     const preset = (config?.daily_report_prompt_presets || [])[index];
     if (!preset) return;
     const ok = await confirm({
-      tone: 'warning',
+      tone: 'danger',
       title: t('report.confirmDeletePreset', { name: preset.name }),
       message: preset.prompt,
       confirmText: t('common.confirm'),
@@ -465,6 +493,7 @@
   }
 
   function cancelEditSection() {
+    if (savingSection) return;
     editingSection = -1;
     editingContent = '';
   }
@@ -520,6 +549,13 @@
   $: hiddenBlocks = config?.daily_report_hidden_blocks || [];
 
   $: visibleSections = getVisibleReportSections(reportSections, pinnedBlocks, hiddenBlocks);
+
+  function isReportPrefaceSection(section) {
+    return !section?.title && /^#\s+/m.test(section?.body || '');
+  }
+
+  $: reportPrefaceSection = visibleSections.find(isReportPrefaceSection) || null;
+  $: displaySections = visibleSections.filter((section) => !isReportPrefaceSection(section));
 
   async function togglePinBlock(section) {
     const blockName = extractReportBlockName(section);
@@ -611,7 +647,7 @@
 
   // 「跳到明日建议」：按标题关键词定位建议段,找不到则不显示链接
   const ADVICE_TITLE_RE = /(明日|明天|建议|建議|tomorrow|suggest|advice|recommend|اقتراح|توصي)/i;
-  $: adviceSectionIndex = visibleSections.findIndex((section) => ADVICE_TITLE_RE.test(tocTitle(section)));
+  $: adviceSectionIndex = displaySections.findIndex((section) => ADVICE_TITLE_RE.test(tocTitle(section)));
 
   // ══════════ 历史周条：哪天有报告一眼可见（本周 7 天,点击切换日期,弱化为工具栏下细行） ══════════
   // 带首句摘要的历史列表需 `list_report_dates` 汇总接口,留待后端批次;
@@ -816,9 +852,24 @@
     configRefreshTimer = now;
     loadConfig();
   }
+
+  function handleReportKeydown(event) {
+    if (event.key !== 'Escape') return;
+    if (showPresetModal) {
+      closePresetEditor();
+    } else if (showBatchExportModal) {
+      closeBatchExportModal();
+    } else if (editingSection >= 0) {
+      cancelEditSection();
+    } else if (showGenerateDrawer) {
+      showGenerateDrawer = false;
+    } else if (showExportMenu) {
+      showExportMenu = false;
+    }
+  }
 </script>
 
-<svelte:window on:focusin={refreshConfigOnFocus} on:visibilitychange={() => {
+<svelte:window on:keydown={handleReportKeydown} on:focusin={refreshConfigOnFocus} on:visibilitychange={() => {
   if (document.visibilityState === 'visible') refreshConfigOnFocus();
 }} />
 
@@ -836,6 +887,7 @@
         </div>
         <div class="page-title-copy">
           <h2>{t('sidebar.nav.report')}</h2>
+          <p>{t('report.subtitle')}</p>
         </div>
       </div>
       <div class="report-hero-actions">
@@ -941,7 +993,7 @@
         {/if}
         {#if report}
           <button
-            class="page-action-warn"
+            class="page-action-brand report-regenerate-action"
             on:click={() => generateReport(true)}
             disabled={generating}
           >
@@ -989,12 +1041,28 @@
 
   <!-- 生成设置抽屉：提示词预设 + 系统提示词覆盖 + 已隐藏段落管理（配置只在要生成时出现,解 A4） -->
   {#if showGenerateDrawer && (config?.ai_mode === 'summary' || hiddenBlocks.length > 0)}
-    <div class="page-card report-sheet-controls report-generate-drawer">
+    <div class="report-generate-overlay">
+      <button
+        type="button"
+        class="report-generate-backdrop"
+        aria-label={t('report.cancelEdit')}
+        on:click={() => (showGenerateDrawer = false)}
+      ></button>
+      <aside
+        class="page-card report-sheet-controls report-generate-drawer"
+        use:trapFocus
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="report-generate-drawer-title"
+        tabindex="-1"
+      >
       <div class="report-drawer-head">
-        <h3 class="text-sm font-semibold">{t('report.generateSettings')}</h3>
+        <h3 id="report-generate-drawer-title" class="text-sm font-semibold">{t('report.generateSettings')}</h3>
         <button
-          class="text-slate-400 hover:text-slate-600 dark:text-[#86868b] dark:hover:text-[#98989d]"
-          title={t('report.cancelEdit')}
+          type="button"
+          class="report-layer-close"
+          aria-label={t('window.close')}
+          title={t('window.close')}
           on:click={() => (showGenerateDrawer = false)}
         >
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
@@ -1027,12 +1095,7 @@
                   type="button"
                   class="absolute -top-1.5 left-1/2 -translate-x-1/2 flex h-5 w-5 items-center justify-center rounded-full bg-blue-500 text-xs leading-none text-white opacity-0 shadow-sm transition-opacity hover:bg-blue-600 group-hover/preset:opacity-100 focus-visible:opacity-100 dark:shadow-none"
                   title={t('report.editPreset')}
-                  on:click|stopPropagation={() => {
-                    editingPresetIndex = i;
-                    editingPresetName = preset.name;
-                    editingPresetPrompt = preset.prompt;
-                    showPresetModal = true;
-                  }}
+                  on:click|stopPropagation={() => openPresetEditor(i)}
                 >✎</button>
                 <button
                   type="button"
@@ -1046,12 +1109,7 @@
               <button
                 type="button"
                 class="segment-btn settings-segment-idle flex-none rounded-lg border border-dashed px-3 py-1.5 text-xs"
-                on:click={() => {
-                  editingPresetIndex = -1;
-                  editingPresetName = '';
-                  editingPresetPrompt = '';
-                  showPresetModal = true;
-                }}
+                on:click={() => openPresetEditor()}
               >
                 + {t('report.addPreset')}
               </button>
@@ -1121,12 +1179,13 @@
           </div>
         </div>
       {/if}
+      </aside>
     </div>
   {/if}
 
   <!-- KPI：与报告同页的四个答案（解 A2;实时口径,快照固化留待后端批次;汇总数居中） -->
   {#if report && !loading && !error && !isYesterdayReport && freshStats}
-    <div class="report-kpi-grid grid grid-cols-2 lg:grid-cols-4 gap-3">
+    <div class="report-kpi-grid report-kpi-band">
       <div class="report-stat-card">
         <div class="report-stat-label">{t('report.kpiTotal')}</div>
         <div class="report-stat-value">{formatDurationLocalized(freshStats.total_duration)}</div>
@@ -1210,6 +1269,18 @@
 
         <!-- 文章头（居中）：kicker + 日期大标题 + 元信息行（字数 · 生成时间 · 模式徽章）+ TL;DR lead 段 -->
         <header class="report-article-head">
+          {#if reportPrefaceSection}
+            <button
+              type="button"
+              class="report-article-edit-btn"
+              title={t('report.editSection')}
+              on:click={() => startEditSection(reportSections, reportPrefaceSection.originalIndex ?? 0)}
+            >
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+              </svg>
+            </button>
+          {/if}
           <p class="report-article-kicker">{selectedDate === getLocalDateString() ? t('report.todayReport') : t('report.historyReport')}</p>
           <h1 class="report-article-title">{formatReportDate(isYesterdayReport ? report.date : selectedDate)}</h1>
           <div class="report-hero-meta">
@@ -1238,9 +1309,9 @@
         </header>
 
         <!-- 窄窗口锚点条：目录折叠后的横向导航（<1024px 显示,修 V4） -->
-        {#if visibleSections.length > 1}
+        {#if displaySections.length > 1}
           <div class="report-anchor-bar" role="navigation" aria-label={t('report.tocLabel')}>
-            {#each visibleSections as section, i}
+            {#each displaySections as section, i}
               {@const anchorLabel = tocTitle(section)}
               {#if anchorLabel}
                 <button
@@ -1256,7 +1327,7 @@
         {/if}
 
         <div class="markdown-body report-sheet-body prose prose-slate dark:prose-invert max-w-none">
-          {#each visibleSections as section, i}
+          {#each displaySections as section, i}
             {@const blockName = extractReportBlockName(section)}
             <div class="report-section group/section" id={`report-sec-${i}`} use:tocAnchor={i}>
               <div class="report-section-header">
@@ -1332,11 +1403,11 @@
       </div>
 
       <!-- 段落目录：宽屏贴右侧悬浮（≥1024px,点击平滑滚动,滚动时高亮当前段） -->
-      {#if visibleSections.length > 1}
+      {#if displaySections.length > 1}
         <nav class="report-toc" aria-label={t('report.tocLabel')}>
           <p class="report-toc-title">{t('report.tocLabel')}</p>
           <ul>
-            {#each visibleSections as section, i}
+            {#each displaySections as section, i}
               {@const label = tocTitle(section)}
               {#if label}
                 <li>
@@ -1417,12 +1488,19 @@
 
 <!-- 段落编辑弹窗 -->
 {#if editingSection >= 0}
-  <div class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="report-edit-section-title">
-    <button type="button" class="absolute inset-0 cursor-default" aria-label={t('report.cancelEdit')} on:click={cancelEditSection}></button>
-    <div class="modal-panel relative z-10">
+  <div class="modal-overlay">
+    <button type="button" class="modal-backdrop-button" aria-label={t('report.cancelEdit')} on:click={cancelEditSection} disabled={savingSection}></button>
+    <div
+      class="modal-panel report-modal-panel-editor"
+      use:trapFocus
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="report-edit-section-title"
+      tabindex="-1"
+    >
       <div class="modal-header">
         <h3 id="report-edit-section-title" class="modal-title">{t('report.editSection')}</h3>
-        <button class="modal-close" on:click={cancelEditSection}>
+        <button type="button" class="modal-close" aria-label={t('window.close')} title={t('window.close')} on:click={cancelEditSection} disabled={savingSection}>
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
           </svg>
@@ -1435,11 +1513,12 @@
         ></textarea>
       </div>
       <div class="modal-footer">
-        <button class="page-control-btn" on:click={cancelEditSection}>
+        <button type="button" class="report-modal-button" on:click={cancelEditSection} disabled={savingSection}>
           {t('report.cancelEdit')}
         </button>
         <button
-          class="page-action-brand"
+          type="button"
+          class="report-modal-button report-modal-button-primary"
           on:click={() => saveEditSection(reportSections, editingSection)}
           disabled={savingSection}
         >
@@ -1460,31 +1539,38 @@
 <!-- 表格 / 标题 / 列表等 markdown 样式已统一放到 app.css .markdown-body -->
 
 {#if showPresetModal}
-  <div class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="report-preset-dialog-title">
-    <button type="button" class="absolute inset-0 cursor-default" aria-label={t('report.cancelEdit')} on:click={() => { showPresetModal = false; }}></button>
-    <div class="modal-panel relative z-10" style="max-width: 36rem;">
+  <div class="modal-overlay">
+    <button type="button" class="modal-backdrop-button" aria-label={t('report.cancelEdit')} on:click={closePresetEditor} disabled={presetSaving}></button>
+    <div
+      class="modal-panel report-modal-panel-preset"
+      use:trapFocus
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="report-preset-dialog-title"
+      tabindex="-1"
+    >
       <div class="modal-header">
         <h3 id="report-preset-dialog-title" class="modal-title">{editingPresetIndex >= 0 ? editingPresetName || t('report.presetsTitle') : t('report.addPreset')}</h3>
-        <button class="modal-close" on:click={() => { showPresetModal = false; }}>
+        <button type="button" class="modal-close" aria-label={t('window.close')} title={t('window.close')} on:click={closePresetEditor} disabled={presetSaving}>
           <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
         </button>
       </div>
       <div class="modal-body space-y-4">
         <div>
-          <label for="report-preset-name" class="block text-xs font-medium text-slate-500 dark:text-[#86868b] mb-1.5">{t('report.presetNamePlaceholder')}</label>
+          <label for="report-preset-name" class="report-modal-label">{t('report.presetNamePlaceholder')}</label>
           <input
             id="report-preset-name"
             type="text"
-            class="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-[rgba(255,255,255,0.14)] bg-white dark:bg-[#2c2c2e] text-slate-900 dark:text-[#98989d] placeholder-slate-400 dark:placeholder-[#636c76] focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-400 transition-colors"
+            class="report-modal-input"
             placeholder={t('report.presetNamePlaceholder')}
             bind:value={editingPresetName}
           />
         </div>
         <div>
-          <label for="report-preset-prompt" class="block text-xs font-medium text-slate-500 dark:text-[#86868b] mb-1.5">{t('report.promptLabel')}</label>
+          <label for="report-preset-prompt" class="report-modal-label">{t('report.promptLabel')}</label>
           <textarea
             id="report-preset-prompt"
-            class="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-[rgba(255,255,255,0.14)] bg-white dark:bg-[#2c2c2e] text-slate-900 dark:text-[#98989d] placeholder-slate-400 dark:placeholder-[#636c76] focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-400 transition-colors resize-y min-h-[160px] leading-relaxed"
+            class="report-modal-textarea report-modal-preset-textarea"
             placeholder={t('report.presetPromptPlaceholder')}
             bind:value={editingPresetPrompt}
             rows="6"
@@ -1493,13 +1579,16 @@
       </div>
       <div class="modal-footer">
         <button
-          class="px-4 py-2 text-sm font-medium rounded-lg text-slate-700 dark:text-[#86868b] hover:bg-slate-100 dark:hover:bg-[var(--editorial-surface-subtle)] transition-colors"
-          on:click={() => { showPresetModal = false; }}
+          type="button"
+          class="report-modal-button"
+          on:click={closePresetEditor}
+          disabled={presetSaving}
         >
           {t('report.cancelEdit')}
         </button>
         <button
-          class="px-4 py-2 text-sm font-medium rounded-lg bg-blue-500 hover:bg-blue-600 text-white shadow-sm dark:shadow-none transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          type="button"
+          class="report-modal-button report-modal-button-primary"
           disabled={!editingPresetName.trim() || !editingPresetPrompt.trim() || presetSaving}
           on:click={async () => {
             if (presetSaving) return;
@@ -1514,7 +1603,7 @@
               }
               config.daily_report_prompt_presets = presets;
               await savePresets();
-              showPresetModal = false;
+              closePresetEditor({ force: true });
             } finally {
               presetSaving = false;
             }
@@ -1535,62 +1624,74 @@
 {/if}
 
 {#if showBatchExportModal}
-  <div class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="report-batch-export-dialog-title">
-    <button type="button" class="absolute inset-0 cursor-default" aria-label={t('report.cancelEdit')} on:click={() => { if (!batchExporting) showBatchExportModal = false; }}></button>
-    <div class="modal-panel relative z-10" style="max-width: 32rem;">
+  <div class="modal-overlay">
+    <button type="button" class="modal-backdrop-button" aria-label={t('report.cancelEdit')} on:click={closeBatchExportModal} disabled={batchExporting}></button>
+    <div
+      class="modal-panel report-modal-panel-batch"
+      use:trapFocus
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="report-batch-export-dialog-title"
+      tabindex="-1"
+    >
       <div class="modal-header">
         <h3 id="report-batch-export-dialog-title" class="modal-title">{t('report.batchExportModalTitle')}</h3>
         <button
+          type="button"
           class="modal-close"
-          on:click={() => { if (!batchExporting) showBatchExportModal = false; }}
+          aria-label={t('window.close')}
+          title={t('window.close')}
+          on:click={closeBatchExportModal}
           disabled={batchExporting}
         >
           <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
         </button>
       </div>
       <div class="modal-body space-y-4">
-        <p class="text-xs text-slate-500 dark:text-[#86868b]">{t('report.batchExportHint')}</p>
+        <p class="report-modal-description">{t('report.batchExportHint')}</p>
 
-        <div class="flex flex-wrap gap-2">
-          <button class="page-control-btn" on:click={() => applyBatchPreset('thisWeek')}>{t('report.batchPresetThisWeek')}</button>
-          <button class="page-control-btn" on:click={() => applyBatchPreset('lastWeek')}>{t('report.batchPresetLastWeek')}</button>
-          <button class="page-control-btn" on:click={() => applyBatchPreset('thisMonth')}>{t('report.batchPresetThisMonth')}</button>
-          <button class="page-control-btn" on:click={() => applyBatchPreset('lastMonth')}>{t('report.batchPresetLastMonth')}</button>
+        <div class="report-modal-presets">
+          <button type="button" class="report-modal-preset-button" on:click={() => applyBatchPreset('thisWeek')}>{t('report.batchPresetThisWeek')}</button>
+          <button type="button" class="report-modal-preset-button" on:click={() => applyBatchPreset('lastWeek')}>{t('report.batchPresetLastWeek')}</button>
+          <button type="button" class="report-modal-preset-button" on:click={() => applyBatchPreset('thisMonth')}>{t('report.batchPresetThisMonth')}</button>
+          <button type="button" class="report-modal-preset-button" on:click={() => applyBatchPreset('lastMonth')}>{t('report.batchPresetLastMonth')}</button>
         </div>
 
-        <div class="grid gap-3 grid-cols-2">
+        <div class="report-modal-range-grid">
           <label class="block">
-            <span class="text-xs font-medium text-slate-500 dark:text-[#86868b]">{t('report.batchStartDate')}</span>
+            <span class="report-modal-label">{t('report.batchStartDate')}</span>
             <input
               type="date"
               bind:value={batchStartDate}
               max={getLocalDateString()}
-              class="mt-1 w-full px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-[rgba(255,255,255,0.14)] bg-white dark:bg-[#2c2c2e] text-slate-900 dark:text-[#98989d] focus:outline-none focus:ring-2 focus:ring-blue-500/40"
+              class="report-modal-input"
             />
           </label>
           <label class="block">
-            <span class="text-xs font-medium text-slate-500 dark:text-[#86868b]">{t('report.batchEndDate')}</span>
+            <span class="report-modal-label">{t('report.batchEndDate')}</span>
             <input
               type="date"
               bind:value={batchEndDate}
               max={getLocalDateString()}
-              class="mt-1 w-full px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-[rgba(255,255,255,0.14)] bg-white dark:bg-[#2c2c2e] text-slate-900 dark:text-[#98989d] focus:outline-none focus:ring-2 focus:ring-blue-500/40"
+              class="report-modal-input"
             />
           </label>
         </div>
       </div>
       <div class="modal-footer">
         <button
-          class="px-4 py-2 text-sm font-medium rounded-lg text-slate-700 dark:text-[#86868b] hover:bg-slate-100 dark:hover:bg-[var(--editorial-surface-subtle)] transition-colors"
-          on:click={() => { if (!batchExporting) showBatchExportModal = false; }}
+          type="button"
+          class="report-modal-button"
+          on:click={closeBatchExportModal}
           disabled={batchExporting}
         >
           {t('report.cancelEdit')}
         </button>
         <button
-          class="px-4 py-2 text-sm font-medium rounded-lg bg-blue-500 hover:bg-blue-600 text-white shadow-sm dark:shadow-none transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          type="button"
+          class="report-modal-button report-modal-button-primary"
           on:click={exportReportsRange}
-          disabled={batchExporting || !batchStartDate || !batchEndDate}
+          disabled={batchExporting || !batchStartDate || !batchEndDate || batchStartDate > batchEndDate}
         >
           {#if batchExporting}
             <span class="inline-flex items-center gap-1.5">

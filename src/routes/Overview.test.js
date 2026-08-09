@@ -77,7 +77,7 @@ test('网站语义分类保存应保持并发安全并刷新当前域名详情',
   const saveEnd = source.indexOf('async function refreshOverviewStats', saveStart);
   const saveSource = source.slice(saveStart, saveEnd);
   assert.match(saveSource, /const domainKey = domain\.domain;/);
-  assert.match(saveSource, /const editSessionId = domainSemanticEditSessionId;/);
+  assert.match(saveSource, /const editSessionId = confirmed \? action\?\.editSessionId : domainSemanticEditSessionId;/);
   assert.match(saveSource, /const requestId = \+\+nextDomainSemanticRequestId;/);
   assert.match(saveSource, /setDomainSemanticSavePending\(domainKey, requestId\)/);
   assert.match(saveSource, /isCurrentDomainSemanticSave\(domainKey, requestId, editSessionId\)/);
@@ -113,7 +113,7 @@ test('常驻网站应按需加载完整摘要并在卡片内展开，同时保�
   assert.match(source, /domainOverlayDialog\?\.querySelector\('\[data-domain-summary\]'\)/);
   assert.match(source, /bind:this=\{domainOverlayBackButton\}/);
   assert.match(source, /data-domain-summary/);
-  assert.match(source, /on:click\|self=\{closeDomainOverlay\}/);
+  assert.match(source, /class="modal-backdrop-button"[\s\S]*on:click=\{closeDomainOverlay\}/);
 });
 
 test('概览总时长 KPI 应使用紧凑格式并保持单行', async () => {
@@ -161,6 +161,37 @@ test('网站语义分类应使用含色点、名称与当前项勾选的紧凑 P
   assert.match(source, /getViewportPopoverPlacement/);
   assert.match(source, /style=\{semanticPopoverStyle\}/);
   assert.match(source, /overview-semantic-popover fixed/);
+  assert.match(source, /bind:this=\{semanticCategoryPopover\}[\s\S]*use:trapFocus/);
+});
+
+test('网站语义分类保存应先退出选择 Popover，再进入单一确认层', async () => {
+  const source = await readFile(new URL('./Overview.svelte', import.meta.url), 'utf8');
+
+  assert.match(source, /let pendingDomainSemanticChange = null/);
+  assert.match(
+    source,
+    /if \(!confirmed\) \{[\s\S]*semanticPopoverStyle = '';[\s\S]*editingDomainKey = null;[\s\S]*pendingDomainSemanticChange = \{/
+  );
+  assert.match(source, /function cancelDomainSemanticChange\(\)[\s\S]*restoreDomainSemanticPopover/);
+  assert.match(source, /function confirmDomainSemanticRule\(\)/);
+  assert.match(
+    source,
+    /class="modal-panel overview-semantic-confirm-dialog"\s+use:trapFocus\s+role="dialog"\s+aria-modal="true"/
+  );
+  assert.match(source, /aria-describedby="overview-semantic-confirm-description"/);
+  assert.doesNotMatch(source, /import \{ confirm \} from '\.\.\/lib\/stores\/confirm\.js'/);
+});
+
+test('网站详情应使用固定亮色紧凑弹窗，并在确认层出现时暂停底层交互', async () => {
+  const source = await readFile(new URL('./Overview.svelte', import.meta.url), 'utf8');
+
+  assert.match(source, /class="[^"]*modal-overlay[^"]*overview-domain-overlay[^"]*"/);
+  assert.match(source, /class="modal-panel overview-domain-dialog"/);
+  assert.match(source, /aria-describedby="overview-domain-overlay-description"/);
+  assert.match(source, /inert=\{Boolean\(pendingDomainSemanticChange \|\| pendingDeleteSemanticCategory\)\}/);
+  assert.match(source, /class="modal-close"[\s\S]*aria-label=\{t\('window\.close'\)\}/);
+  assert.match(source, /overview-domain-detail-header/);
+  assert.match(source, /overview-domain-url-row/);
 });
 
 test('网站语义分类弹层的同步说明应只显示一次', async () => {

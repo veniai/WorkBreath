@@ -1,0 +1,28 @@
+{
+  "verifiedAt": "2026-08-09T16:00:00+08:00",
+  "server": "python3 -m http.server 4311 --directory designs",
+  "browser": "Chromium via browser-use",
+  "entries": [
+    {
+      "path": "compact.html",
+      "loaded": true,
+      "interactions": {
+        "weekMode": true,
+        "domainModal": true,
+        "lightOnly": true,
+        "themeControlAbsent": true
+      }
+    },
+    {
+      "path": "conservative.html",
+      "loaded": true,
+      "interactions": {
+        "categoryFilter": true,
+        "recordingToggle": true,
+        "toastFeedback": true
+      }
+    }
+  ],
+  "javascriptSyntax": "node --check app.js passed",
+  "productionSourceChanged": false
+}

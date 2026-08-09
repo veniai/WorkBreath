@@ -6,7 +6,7 @@ async function readAboutSource() {
   return readFile(new URL('./About.svelte', import.meta.url), 'utf8');
 }
 
-test('关于页应保留左对齐标准页头，并将品牌主体居中组织', async () => {
+test('关于页应保留左对齐标准页头，并将品牌主体组织为紧凑产品信息', async () => {
   const source = await readAboutSource();
 
   assert.match(source, /class="page-header page-axis-operation"/);
@@ -18,6 +18,8 @@ test('关于页应保留左对齐标准页头，并将品牌主体居中组织',
   assert.match(source, /about-editorial-shell/);
   assert.match(source, /about-minimal-shell/);
   assert.match(source, /about-brand-card/);
+  assert.match(source, /about-product-panel/);
+  assert.match(source, /about-product-identity/);
   assert.match(source, /about-brand-identity/);
   assert.match(source, /about-brand-title-row/);
   assert.match(source, /about-version-badge/);
@@ -25,9 +27,9 @@ test('关于页应保留左对齐标准页头，并将品牌主体居中组织',
   assert.match(source, /about-action-row/);
 });
 
-test('品牌卡底部应按当前版本、自动检查更新和更新状态分为三列', async () => {
+test('产品面板应按当前版本、自动检查更新和手动检查组织三个更新单元', async () => {
   const source = await readAboutSource();
-  const brandStart = source.indexOf('class="page-card about-brand-card"');
+  const brandStart = source.indexOf('class="page-card about-brand-card about-product-panel"');
   const brandEnd = source.indexOf('</section>', brandStart);
   const brandCard = source.slice(brandStart, brandEnd);
 
@@ -35,7 +37,7 @@ test('品牌卡底部应按当前版本、自动检查更新和更新状态分�
   assert.equal(
     (brandCard.match(/class="about-update-unit(?:\s|\")/g) || []).length,
     3,
-    '更新区域应准确包含三列'
+    '更新区域应准确包含三个管理单元'
   );
   assert.match(brandCard, /v\{appVersion\}/);
   assert.match(brandCard, /role="switch"/);

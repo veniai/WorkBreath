@@ -1,0 +1,32 @@
+{
+  "url": "http://127.0.0.1:4311/work-review-ui-refresh/settings-compact.html",
+  "viewport": {
+    "width": 1440,
+    "height": 1120
+  },
+  "initial": {
+    "colorScheme": "light",
+    "sidebarWidth": 204,
+    "railWidth": 166,
+    "stageWidth": 996,
+    "activeTab": "常规",
+    "tabCount": 6,
+    "activePageCount": 1,
+    "saveDisabled": true,
+    "horizontalOverflow": false
+  },
+  "interaction": {
+    "aiTabOpened": true,
+    "providerCount": 2,
+    "dirtyStateEnablesSave": true,
+    "saveRestoresSavedState": true,
+    "saveToastVisible": true
+  },
+  "responsive1024": {
+    "horizontalOverflow": false,
+    "railWidth": 148,
+    "stageVisibleWidth": 630,
+    "activePageVisible": true
+  },
+  "consoleErrors": []
+}

@@ -153,9 +153,14 @@
       </div>
     </div>
     {#if config}
-      <button class="settings-action-primary eye-care-save" on:click={saveConfig} disabled={saving || !dirty}>
-        {saving ? t('settings.saving') : dirty ? t('settings.save') : t('settings.saved')}
-      </button>
+      <div class="eye-care-save-dock">
+        <span class:eye-care-save-status-dirty={dirty} class="eye-care-save-status" aria-live="polite">
+          {dirty ? t('settings.unsaved') : t('settings.saved')}
+        </span>
+        <button class="settings-action-primary eye-care-save" on:click={saveConfig} disabled={saving || !dirty}>
+          {saving ? t('settings.saving') : t('settings.save')}
+        </button>
+      </div>
     {/if}
   </div>
 
@@ -179,11 +184,15 @@
             <span class="eye-care-live-dot"></span>
             <span>{reasonLabel}</span>
           </div>
-          <p id="current-work-heading" class="eye-care-eyebrow">{t('eyeCare.dashboard.currentWork')}</p>
-          <div class="eye-care-time">{formatDuration(countedWorkSeconds)}</div>
-          <div class="eye-care-remaining-row">
-            <span>{status.phase === 'RESTING' ? t('eyeCare.dashboard.restRemaining') : t('eyeCare.dashboard.remaining')}</span>
-            <strong>{formatDuration(status.remainingSeconds || 0, true)}</strong>
+          <div class="eye-care-cycle-row">
+            <div>
+              <p id="current-work-heading" class="eye-care-eyebrow">{t('eyeCare.dashboard.currentWork')}</p>
+              <div class="eye-care-time">{formatDuration(countedWorkSeconds)}</div>
+            </div>
+            <div class="eye-care-remaining-row">
+              <span>{status.phase === 'RESTING' ? t('eyeCare.dashboard.restRemaining') : t('eyeCare.dashboard.remaining')}</span>
+              <strong>{formatDuration(status.remainingSeconds || 0, true)}</strong>
+            </div>
           </div>
           <div class="eye-care-meta-grid">
             <div>
@@ -193,6 +202,13 @@
             <div>
               <span>{t('eyeCare.dashboard.excluded')}</span>
               <strong>{formatDuration(status.excludedSeconds || 0, true)}</strong>
+            </div>
+            <div>
+              <span>{t('eyeCare.dashboard.cycleRule')}</span>
+              <strong>{t('eyeCare.dashboard.cycleRuleValue', {
+                work: config.eye_care_work_minutes,
+                rest: config.eye_care_rest_minutes,
+              })}</strong>
             </div>
           </div>
         </div>
@@ -216,6 +232,7 @@
         </div>
       </section>
 
+      <div class="eye-care-middle-grid">
       <section class="eye-care-diagnostics" aria-labelledby="diagnostic-heading">
         <div class="eye-care-section-heading">
           <div>
@@ -283,6 +300,7 @@
           </div>
         {/if}
       </section>
+      </div>
 
       <section class="eye-care-settings" aria-label={t('eyeCare.dashboard.settingsTitle')}>
         <SettingsEyeCare bind:config on:change={() => dirty = true} />
@@ -706,6 +724,420 @@
 
     .eye-care-signal-item:nth-child(even) {
       border-inline-start: none;
+    }
+  }
+
+  /* 已确认的紧凑浅色方案：状态、依据、事件和设置在首屏形成完整阅读顺序。 */
+  .eye-care-dashboard {
+    color-scheme: light;
+  }
+
+  .eye-care-dashboard .page-header {
+    min-height: 2.5rem;
+    align-items: center;
+    margin-bottom: 0.8rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid var(--surface-border-subtle);
+  }
+
+  .eye-care-title-badge {
+    width: 1.95rem;
+    height: 1.95rem;
+    border-radius: 0.5rem;
+  }
+
+  .eye-care-title-badge svg {
+    width: 1rem;
+    height: 1rem;
+  }
+
+  .eye-care-dashboard .page-title-copy h2 {
+    font-size: 1.25rem;
+  }
+
+  .eye-care-dashboard .page-title-copy p {
+    margin-top: 0.2rem;
+    font-size: 0.6875rem;
+    line-height: 1.35;
+  }
+
+  .eye-care-save-dock {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.55rem;
+  }
+
+  .eye-care-save-status {
+    min-width: 4.75rem;
+    color: #94a3b8;
+    font-size: 0.6875rem;
+    text-align: end;
+  }
+
+  .eye-care-save-status-dirty {
+    color: #b5691c;
+  }
+
+  .eye-care-save {
+    min-width: 0;
+    min-height: 2.2rem;
+    padding-inline: 0.8rem;
+    border: 1px solid #2f78e8;
+    border-radius: 0.5rem;
+  }
+
+  .eye-care-save:disabled {
+    border-color: var(--surface-border-subtle);
+    background: #ffffff;
+    color: #81909c;
+    opacity: 1;
+  }
+
+  .eye-care-board {
+    gap: 0.75rem;
+  }
+
+  .eye-care-hero,
+  .eye-care-diagnostics,
+  .eye-care-events,
+  .eye-care-settings :global(.eye-care-config-card) {
+    border: 1px solid var(--surface-border-subtle);
+    border-radius: 0.55rem;
+    background: #ffffff;
+    box-shadow: none;
+  }
+
+  .eye-care-hero {
+    min-height: 12.625rem;
+    grid-template-columns: minmax(0, 1fr) 8.625rem;
+    gap: 1.5rem;
+    padding: 1.125rem 1.375rem;
+  }
+
+  .eye-care-live-state {
+    margin-bottom: 0;
+    font-size: 0.6875rem;
+  }
+
+  .eye-care-live-dot {
+    width: 0.4375rem;
+    height: 0.4375rem;
+  }
+
+  .eye-care-cycle-row {
+    display: flex;
+    align-items: flex-end;
+    gap: 1.25rem;
+    margin-top: 0.75rem;
+  }
+
+  .eye-care-eyebrow {
+    font-size: 0.625rem;
+  }
+
+  .eye-care-time {
+    margin-top: 0.125rem;
+    font-size: 2.375rem;
+    letter-spacing: -0.025em;
+  }
+
+  .eye-care-remaining-row {
+    display: block;
+    margin-top: 0;
+    padding-bottom: 0.2rem;
+    font-size: 0.625rem;
+  }
+
+  .eye-care-remaining-row strong {
+    display: block;
+    margin-top: 0.2rem;
+    font-size: 1.0625rem;
+  }
+
+  .eye-care-meta-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0;
+    margin-top: 1rem;
+    border-top: 1px solid var(--surface-border-subtle);
+  }
+
+  .eye-care-meta-grid > div {
+    gap: 0.15rem;
+    padding: 0.625rem 0.75rem 0 0;
+    border-top: 0;
+  }
+
+  .eye-care-meta-grid > div + div {
+    padding-inline-start: 0.75rem;
+    border-inline-start: 1px solid var(--surface-border-subtle);
+  }
+
+  .eye-care-meta-grid span,
+  .eye-care-signal-item span,
+  .eye-care-event-copy span,
+  .eye-care-event-row time {
+    font-size: 0.625rem;
+  }
+
+  .eye-care-meta-grid strong,
+  .eye-care-signal-item strong,
+  .eye-care-breakdown-list strong {
+    font-size: 0.6875rem;
+  }
+
+  .eye-care-progress {
+    width: 7.625rem;
+    height: 7.625rem;
+  }
+
+  .eye-care-progress-label strong {
+    font-size: 1.375rem;
+  }
+
+  .eye-care-progress-label span {
+    margin-top: 0.125rem;
+    font-size: 0.625rem;
+  }
+
+  .eye-care-middle-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.45fr) minmax(19.375rem, 0.8fr);
+    gap: 0.75rem;
+  }
+
+  .eye-care-diagnostics,
+  .eye-care-events {
+    padding: 0;
+    overflow: hidden;
+  }
+
+  .eye-care-section-heading {
+    min-height: 3rem;
+    align-items: center;
+    padding: 0.5rem 0.8rem;
+    border-bottom: 1px solid var(--surface-border-subtle);
+    background: #fbfcfd;
+  }
+
+  .eye-care-section-heading h3 {
+    font-size: 0.75rem;
+  }
+
+  .eye-care-section-heading p {
+    margin-top: 0.15rem;
+    font-size: 0.625rem;
+  }
+
+  .eye-care-reason-chip {
+    padding: 0.25rem 0.45rem;
+    border-radius: 0.4rem;
+    font-size: 0.625rem;
+  }
+
+  .eye-care-signal-grid {
+    margin-top: 0;
+    border-top: 0;
+    border-bottom: 1px solid var(--surface-border-subtle);
+  }
+
+  .eye-care-signal-item {
+    padding: 0.625rem 0.75rem;
+  }
+
+  .eye-care-breakdown {
+    margin-top: 0;
+  }
+
+  .eye-care-breakdown > p {
+    margin: 0;
+    padding: 0.6rem 0.75rem 0.3rem;
+    font-size: 0.625rem;
+  }
+
+  .eye-care-breakdown-list {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 0;
+    padding: 0 0.75rem 0.7rem;
+  }
+
+  .eye-care-breakdown-list > div {
+    gap: 0.15rem;
+    padding: 0.35rem 0.55rem;
+    border-radius: 0;
+    background: transparent;
+  }
+
+  .eye-care-breakdown-list > div + div {
+    border-inline-start: 1px solid var(--surface-border-subtle);
+  }
+
+  .eye-care-breakdown-list span {
+    overflow: hidden;
+    font-size: 0.625rem;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .eye-care-event-list {
+    margin-top: 0;
+    padding-inline: 0.75rem;
+  }
+
+  .eye-care-event-row {
+    min-height: 2.5625rem;
+    gap: 0.5rem;
+  }
+
+  .eye-care-event-copy strong {
+    font-size: 0.625rem;
+  }
+
+  .eye-care-event-marker {
+    width: 0.375rem;
+    height: 0.375rem;
+  }
+
+  .eye-care-settings :global(.eye-care-config-card) {
+    padding: 0;
+    overflow: hidden;
+  }
+
+  .eye-care-settings :global(.eye-care-config-master) {
+    min-height: 3.25rem;
+    display: flex;
+    align-items: center;
+    gap: 0.875rem;
+    padding: 0.55rem 0.8rem;
+    border-bottom: 1px solid var(--surface-border-subtle);
+  }
+
+  .eye-care-settings :global(.eye-care-config-master-copy) {
+    min-width: 0;
+    flex: 1;
+  }
+
+  .eye-care-settings :global(.settings-card-title) {
+    margin: 0;
+    color: #263645;
+    font-size: 0.6875rem;
+    letter-spacing: 0;
+    text-transform: none;
+  }
+
+  .eye-care-settings :global(.eye-care-config-master-copy .settings-muted) {
+    margin-top: 0.15rem;
+    font-size: 0.625rem;
+  }
+
+  .eye-care-settings :global(.eye-care-config-grid) {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    border-bottom: 1px solid var(--surface-border-subtle);
+  }
+
+  .eye-care-settings :global(.eye-care-config-field) {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    padding: 0.7rem 0.75rem;
+  }
+
+  .eye-care-settings :global(.eye-care-config-field + .eye-care-config-field) {
+    border-inline-start: 1px solid var(--surface-border-subtle);
+  }
+
+  .eye-care-settings :global(.eye-care-config-field .settings-text) {
+    font-size: 0.625rem;
+  }
+
+  .eye-care-settings :global(.eye-care-config-field .settings-muted) {
+    min-height: 2rem;
+    margin-top: 0.2rem;
+    font-size: 0.625rem;
+    line-height: 1.45;
+  }
+
+  .eye-care-settings :global(.eye-care-config-field .control-input) {
+    min-height: 1.95rem;
+    margin-top: 0.45rem;
+    padding: 0 0.5rem;
+    border-radius: 0.45rem;
+    background: #f6f8fa;
+    font-size: 0.6875rem;
+  }
+
+  .eye-care-settings :global(.eye-care-config-pause-row) {
+    min-height: 3.2rem;
+    display: flex;
+    align-items: center;
+    gap: 0.875rem;
+    padding: 0.5rem 0.8rem;
+  }
+
+  .eye-care-settings :global(.eye-care-config-pause-copy) {
+    min-width: 0;
+    flex: 1;
+  }
+
+  .eye-care-settings :global(.eye-care-config-pause-copy .settings-text) {
+    font-size: 0.65625rem;
+  }
+
+  .eye-care-settings :global(.eye-care-config-pause-copy .settings-muted),
+  .eye-care-settings :global(.eye-care-config-estimate) {
+    margin-top: 0.15rem;
+    font-size: 0.625rem;
+  }
+
+  .eye-care-settings :global(.eye-care-config-estimate) {
+    max-width: 22rem;
+    margin-inline-start: auto;
+    text-align: end;
+  }
+
+  @media (max-width: 1080px) {
+    .eye-care-middle-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .eye-care-settings :global(.eye-care-config-grid) {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .eye-care-settings :global(.eye-care-config-field:nth-child(4)) {
+      border-inline-start: 0;
+    }
+  }
+
+  @media (max-width: 720px) {
+    .eye-care-save-status {
+      display: none;
+    }
+
+    .eye-care-hero {
+      grid-template-columns: 1fr;
+    }
+
+    .eye-care-progress {
+      grid-row: 1;
+      width: 6.75rem;
+      height: 6.75rem;
+    }
+
+    .eye-care-meta-grid,
+    .eye-care-settings :global(.eye-care-config-grid) {
+      grid-template-columns: 1fr;
+    }
+
+    .eye-care-meta-grid > div + div,
+    .eye-care-settings :global(.eye-care-config-field + .eye-care-config-field) {
+      border-inline-start: 0;
+      border-top: 1px solid var(--surface-border-subtle);
+    }
+
+    .eye-care-settings :global(.eye-care-config-estimate) {
+      display: none;
     }
   }
 </style>

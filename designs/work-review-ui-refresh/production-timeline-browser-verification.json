@@ -1,0 +1,19 @@
+{
+  "httpStatus": 200,
+  "status": "complete",
+  "darkClass": false,
+  "title": "时间线",
+  "entries": 12,
+  "featured": 2,
+  "boardRadius": "10.4px",
+  "entryRadius": "0px",
+  "sidebarWidth": 204,
+  "firstRowHeight": 62,
+  "columnHead": true,
+  "previewImages": 3,
+  "bodyOverflow": false,
+  "detailDrawerOpen": true,
+  "summaryDrawerOpen": true,
+  "summaryDrawerWidth": 440,
+  "consoleErrors": []
+}

@@ -1,0 +1,13 @@
+{
+  "httpStatus": 200,
+  "status": "complete",
+  "darkClass": false,
+  "colorScheme": "light",
+  "themeControl": false,
+  "summaryCards": 4,
+  "sidebarWidth": 204,
+  "summaryBorder": "1px",
+  "insightVisible": true,
+  "title": "概览",
+  "consoleErrors": []
+}

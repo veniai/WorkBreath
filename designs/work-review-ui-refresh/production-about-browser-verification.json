@@ -1,0 +1,37 @@
+{
+  "httpStatus": 200,
+  "desktop": {
+    "viewport": { "width": 1440, "height": 1120 },
+    "fixedLight": true,
+    "sidebarWidth": 204,
+    "contentWidth": 1024,
+    "productHeight": 245,
+    "productColumns": 2,
+    "principleHeight": 117,
+    "principleColumns": 3,
+    "updateUnits": 3,
+    "supportActions": 3,
+    "techItems": 4,
+    "autoCheckEnabled": true,
+    "horizontalOverflow": false
+  },
+  "interaction": {
+    "autoCheckCanDisable": true,
+    "updateStatus": "当前已是最新版本",
+    "supportDialogRole": "dialog",
+    "supportDialogWidth": 900,
+    "supportMethodCount": 3,
+    "qrButtonCount": 3,
+    "qrZoomOpen": true,
+    "escapeClosesZoom": true,
+    "escapeClosesDialog": true
+  },
+  "responsive1024": {
+    "viewport": { "width": 1024, "height": 900 },
+    "productColumns": 1,
+    "updateColumns": 3,
+    "principleColumns": 3,
+    "horizontalOverflow": false
+  },
+  "consoleErrors": []
+}

@@ -2,14 +2,16 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 
-test('时间线应渲染编辑部轨道布局与重点卡片容器', async () => {
+test('时间线应渲染紧凑列标题、时间轨道与统一记录行', async () => {
   const source = await readFile(new URL('./Timeline.svelte', import.meta.url), 'utf8');
 
   assert.match(source, /timeline-editorial-board[\s\S]*timeline-summary-strip/);
+  assert.match(source, /timeline-column-head/);
+  assert.match(source, /timeline-column-head-content/);
   assert.match(source, /timeline-editorial-shell/);
   assert.match(source, /timeline-rail/);
-  assert.match(source, /timeline-entry-card-featured/);
-  assert.match(source, /timeline-entry-card-compact/);
+  assert.match(source, /timeline-entry-card-unified/);
+  assert.match(source, /timeline-entry-preview/);
 });
 
 test('时间线应通过显式函数判断重点卡片并读取缩略图', async () => {
@@ -22,20 +24,23 @@ test('时间线应通过显式函数判断重点卡片并读取缩略图', async
   assert.match(source, /shouldPreferTimelineFallbackIcon/);
 });
 
-test('时间线重点卡片应使用横向标题区与胶囊分类，避免标题和分类互相挤压', async () => {
+test('时间线统一记录行应保留应用身份、分类标记与活动标题', async () => {
   const source = await readFile(new URL('./Timeline.svelte', import.meta.url), 'utf8');
 
-  assert.match(source, /timeline-entry-meta-featured/);
-  assert.match(source, /timeline-entry-heading-featured/);
+  assert.match(source, /timeline-entry-app-compact/);
   assert.match(source, /timeline-entry-category-pill/);
+  assert.match(source, /timeline-entry-category-dot/);
+  assert.match(source, /timeline-entry-copy/);
 });
 
-test('时间线紧凑卡片应显式定义信息区与标题区的排版区域，避免标题挤占应用信息宽度', async () => {
+test('时间线截图应降级为辅助预览，所有记录使用同一行结构', async () => {
   const source = await readFile(new URL('./Timeline.svelte', import.meta.url), 'utf8');
 
   assert.match(source, /timeline-entry-card-compact-grid/);
-  assert.match(source, /timeline-entry-app-compact/);
+  assert.match(source, /timeline-entry-preview-image/);
+  assert.match(source, /getTimelineThumbnail\(activity\)/);
   assert.match(source, /timeline-entry-tail-compact/);
+  assert.doesNotMatch(source, /\{#if featured\}/);
 });
 
 test('640px 以下时间线应取消独立轨道列，把完整宽度留给活动卡片', async () => {
@@ -226,4 +231,47 @@ test('640px 及以下活动详情抽屉应全屏展示并移除圆角', async ()
     mobileSource,
     /\.timeline-detail-drawer\s*\{[\s\S]*?width:\s*100%;[\s\S]*?height:\s*100vh;[\s\S]*?border-radius:\s*0;/
   );
+});
+
+test('清理记录应使用单层紧凑弹窗，并在最终确认前退出范围选择层', async () => {
+  const source = await readFile(new URL('./Timeline.svelte', import.meta.url), 'utf8');
+
+  assert.match(source, /bind:this=\{cleanupTrigger\}[\s\S]*aria-haspopup="dialog"[\s\S]*on:click=\{openCleanupPanel\}/);
+  assert.match(
+    source,
+    /class="modal-panel timeline-cleanup-dialog"\s+use:trapFocus\s+role="dialog"\s+aria-modal="true"\s+aria-labelledby="timeline-cleanup-title"/
+  );
+  assert.match(source, /class="timeline-cleanup-modes" role="radiogroup"/);
+  assert.match(source, /role="radio"[\s\S]*aria-checked=\{cleanupMode === tab\.key\}/);
+  assert.match(
+    source,
+    /function queueCleanupAction\(action\)[\s\S]*cleanupTrigger\?\.focus\(\);[\s\S]*showCleanupPanel = false;[\s\S]*pendingCleanupAction = action;/
+  );
+  assert.match(
+    source,
+    /function closeCleanupConfirmation\(\)[\s\S]*pendingCleanupAction = null;[\s\S]*showCleanupPanel = true;/
+  );
+  assert.match(source, /disabled=\{cleanupBusy \|\| !cleanupSelectionValid\}/);
+  assert.doesNotMatch(source, /import \{ confirm \} from '\.\.\/\.\.\/lib\/stores\/confirm\.js'/);
+});
+
+test('清理和分类确认应复用已确认的亮色 12px 二级交互规范', async () => {
+  const source = await readFile(new URL('./Timeline.svelte', import.meta.url), 'utf8');
+  const appCss = await readFile(new URL('../../app.css', import.meta.url), 'utf8');
+  const cleanupStart = source.indexOf('<!-- 批量清理记录面板');
+  const actionStart = source.indexOf('<!-- 清理与分类修改确认');
+  const styleStart = source.indexOf('<style>', actionStart);
+  const cleanupMarkup = source.slice(cleanupStart, actionStart);
+  const actionMarkup = source.slice(actionStart, styleStart);
+
+  assert.ok(cleanupStart >= 0 && actionStart > cleanupStart && styleStart > actionStart);
+  assert.doesNotMatch(cleanupMarkup, /dark:/);
+  assert.doesNotMatch(actionMarkup, /dark:/);
+  assert.match(source, /\.timeline-cleanup-dialog\s*\{[\s\S]*width:\s*min\(34rem/);
+  assert.match(source, /\.timeline-action-confirm-dialog\s*\{[\s\S]*width:\s*min\(26\.25rem/);
+  assert.match(source, /\.timeline-cleanup-mode-active\s*\{[\s\S]*background:\s*#fff0f2/);
+  assert.match(source, /\.timeline-modal-button-danger\s*\{[\s\S]*background:\s*#d34b5d/);
+  assert.match(appCss, /\.modal-panel\s*\{[\s\S]*border-radius:\s*0\.75rem/);
+  assert.match(actionMarkup, /aria-label=\{t\('window\.close'\)\}/);
+  assert.match(actionMarkup, /aria-describedby="timeline-action-confirm-description"/);
 });

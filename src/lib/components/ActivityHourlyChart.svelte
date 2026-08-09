@@ -104,8 +104,8 @@
     : 'rounded-2xl border border-slate-100 bg-white p-4 dark:border-[var(--surface-border-default)]/60 dark:bg-[#2c2c2e]/80';
 </script>
 
-<div class="space-y-4" data-locale={currentLocale}>
-  <div class="grid grid-cols-4 gap-2">
+<div class="activity-hourly-root space-y-4" data-locale={currentLocale}>
+  <div class="activity-hourly-summary-grid grid grid-cols-4 gap-2">
     <div class={summaryCardClass}>
       <p class="text-[13px] font-medium text-slate-400 dark:text-[#636c76]">{peakHourLabel || t('hourlyChart.peakHour')}</p>
       <p class={summaryValueClass}>
@@ -159,7 +159,7 @@
         </p>
       </div>
       {#if topBuckets.length > 0}
-        <div class="hidden items-center gap-2 lg:flex">
+        <div class="activity-hourly-top-buckets hidden items-center gap-2 lg:flex">
           {#each topBuckets as bucket, index}
             <span class="rounded-full bg-slate-100 px-2.5 py-1 text-xs text-slate-500 dark:bg-[var(--editorial-surface-subtle)]/70 dark:text-[#98989d]">
               {t('hourlyChart.topHour', { index: index + 1, hour: formatHourLabel(bucket.hour) })}
@@ -169,7 +169,7 @@
       {/if}
     </div>
     {#if usedCategories.length}
-      <div class="mb-3 flex flex-wrap items-center gap-x-3 gap-y-1.5">
+      <div class="activity-hourly-category-legend mb-3 flex flex-wrap items-center gap-x-3 gap-y-1.5">
         {#each usedCategories as cat}
           <span class="inline-flex items-center gap-1.5 text-xs text-slate-500 dark:text-[#86868b]">
             <span class="inline-block h-2.5 w-2.5 rounded-[3px]" style={`background: ${(categoryColors && categoryColors[cat.category]) || '#94a3b8'};`}></span>

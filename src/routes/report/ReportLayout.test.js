@@ -15,6 +15,7 @@ test('日报页头部应使用独立布局以适配英文长标题与日期信�
   assert.match(reportSource, /report-hero-date-row/);
   assert.match(reportSource, /report-hero-mode-chip/);
   assert.match(reportSource, /report-hero-mode-note/);
+  assert.match(reportSource, /report-regenerate-action/);
   assert.doesNotMatch(reportSource, /<div class="page-header">/);
 
   assert.match(appCssSource, /\.report-hero\b/);
@@ -24,6 +25,47 @@ test('日报页头部应使用独立布局以适配英文长标题与日期信�
   assert.match(appCssSource, /\.report-hero-date-row\b/);
   assert.match(appCssSource, /\.report-hero-mode-chip\b/);
   assert.match(appCssSource, /\.report-hero-mode-note\b/);
+});
+
+test('日报生成设置应使用独立右侧抽屉，不挤压正文阅读区', async () => {
+  const [reportSource, appCssSource] = await Promise.all([
+    readFile(new URL('./Report.svelte', import.meta.url), 'utf8'),
+    readFile(new URL('../../app.css', import.meta.url), 'utf8'),
+  ]);
+
+  assert.match(reportSource, /class="report-generate-overlay"/);
+  assert.match(reportSource, /class="report-generate-backdrop"/);
+  assert.match(reportSource, /role="dialog"/);
+  assert.match(reportSource, /aria-modal="true"/);
+  assert.match(appCssSource, /\.report-generate-overlay\s*\{[\s\S]*position:\s*fixed/);
+  assert.match(appCssSource, /\.report-editorial-shell \.report-generate-drawer\s*\{[\s\S]*width:\s*min\(27\.5rem, 100%\)/);
+});
+
+test('日报抽屉进入预设编辑时应切换为单一弹窗层，并统一键盘与视觉规范', async () => {
+  const [reportSource, appCssSource] = await Promise.all([
+    readFile(new URL('./Report.svelte', import.meta.url), 'utf8'),
+    readFile(new URL('../../app.css', import.meta.url), 'utf8'),
+  ]);
+
+  assert.match(reportSource, /import \{ trapFocus \} from '\$lib\/utils\/focusTrap\.js'/);
+  assert.match(
+    reportSource,
+    /function openPresetEditor[\s\S]*presetReturnsToGenerateDrawer = showGenerateDrawer;[\s\S]*showGenerateDrawer = false;[\s\S]*showPresetModal = true;/,
+  );
+  assert.match(
+    reportSource,
+    /function closePresetEditor[\s\S]*showPresetModal = false;[\s\S]*showGenerateDrawer = true;/,
+  );
+  assert.match(reportSource, /on:keydown=\{handleReportKeydown\}/);
+  assert.equal((reportSource.match(/use:trapFocus/g) || []).length, 4);
+  assert.equal((reportSource.match(/role="dialog"/g) || []).length, 4);
+  assert.match(reportSource, /class="modal-panel report-modal-panel-preset"[\s\S]*aria-modal="true"/);
+  assert.doesNotMatch(reportSource, /style="max-width:\s*(?:32|36)rem;"/);
+
+  assert.match(appCssSource, /\.modal-overlay\s*\{[\s\S]*z-index:\s*150/);
+  assert.match(appCssSource, /\.modal-panel\s*\{[\s\S]*border-radius:\s*0\.75rem/);
+  assert.match(appCssSource, /\.report-modal-button-primary\s*\{/);
+  assert.match(appCssSource, /\.report-layer-close\s*\{/);
 });
 
 test('昨日日报提示条应为独立动作区提供响应式布局，避免生成中按钮被压扁', async () => {

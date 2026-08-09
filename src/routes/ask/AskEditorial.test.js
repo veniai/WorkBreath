@@ -43,15 +43,18 @@ test('欢迎态应使用短标题和短说明，并保持四条快捷问题', ()
   const welcome = source.match(/<section class="[^"]*ask-welcome-panel[^"]*"[\s\S]*?<\/section>/)?.[0] ?? '';
 
   assert.ok(welcome, '应保留欢迎态容器');
-  assert.match(welcome, /ask-welcome-product-mark/);
-  assert.match(welcome, /src="\/icons\/128x128\.png" alt=""/);
-  assert.doesNotMatch(welcome, /ask-welcome-mark/);
+  assert.match(welcome, /ask-welcome-kicker/);
+  assert.match(welcome, /ask-assistant-mark/);
+  assert.match(welcome, /t\('ask\.subtitle'\)/);
+  assert.doesNotMatch(welcome, /ask-welcome-product-mark|\/icons\/128x128\.png/);
   assert.match(welcome, /t\('ask\.welcomeTitle'\)/);
   assert.match(welcome, /t\('ask\.welcomeBrief'\)/);
   assert.match(welcome, /ask-starter-grid/);
   assert.match(welcome, /starterPrompts\.slice\(0, 4\)/);
-  assert.match(appCssSource, /\.ask-starter-card\s*\{[^}]*justify-content:\s*center[^}]*text-align:\s*center/s);
-  assert.doesNotMatch(welcome, /ask-kicker|ask-starter-index/);
+  assert.match(welcome, /ask-starter-index/);
+  assert.match(welcome, /String\(promptIndex \+ 1\)\.padStart\(2, '0'\)/);
+  assert.match(welcome, /ask-starter-arrow/);
+  assert.match(appCssSource, /\.ask-workbench-shell \.ask-starter-card\s*\{[^}]*justify-content:\s*flex-start[^}]*text-align:\s*start/s);
 });
 
 test('快捷问题应从扩展问题池随机抽取，并在关键操作后刷新', () => {
@@ -134,30 +137,35 @@ test('流式回答、错误状态和历史会话能力应继续保留', () => {
   assert.match(source, /ask-history-delete/);
 });
 
-test('欢迎态应减少空白、调整字体并固定为两列两行', () => {
-  const markRule = appCssSource.match(/\.ask-welcome-product-mark\s*\{[^}]*\}/)?.[0] ?? '';
-  const markImageRule = appCssSource.match(/\.ask-welcome-product-mark img\s*\{[^}]*\}/)?.[0] ?? '';
-  const welcomeRule = appCssSource.match(/\.ask-welcome-panel\s*\{[^}]*\}/)?.[0] ?? '';
-  const titleRule = appCssSource.match(/\.ask-welcome-copy h2\s*\{[^}]*\}/)?.[0] ?? '';
-  const gridRule = appCssSource.match(/\.ask-starter-grid\s*\{[^}]*\}/)?.[0] ?? '';
-  const cardRule = appCssSource.match(/\.ask-starter-card\s*\{[^}]*\}/)?.[0] ?? '';
-  const mobileBlock = appCssSource.match(/@media \(max-width: 520px\) \{[\s\S]*?\n\}/)?.[0] ?? '';
+test('欢迎态应使用成熟 AI 产品常见的左对齐阅读轴和两列快捷入口', () => {
+  const welcomeRule = appCssSource.match(/\.ask-workbench-shell \.ask-welcome-panel\s*\{[^}]*\}/)?.[0] ?? '';
+  const kickerRule = appCssSource.match(/\.ask-workbench-shell \.ask-welcome-kicker\s*\{[^}]*\}/)?.[0] ?? '';
+  const titleRule = appCssSource.match(/\.ask-workbench-shell \.ask-welcome-copy h2\s*\{[^}]*\}/)?.[0] ?? '';
+  const gridRule = appCssSource.match(/\.ask-workbench-shell \.ask-starter-grid\s*\{[^}]*\}/)?.[0] ?? '';
+  const cardRule = appCssSource.match(/\.ask-workbench-shell \.ask-starter-card\s*\{[^}]*\}/)?.[0] ?? '';
+  const mobileBlock = appCssSource.match(/@media \(max-width: 560px\) \{[\s\S]*?\n\}/)?.[0] ?? '';
 
-  assert.match(markRule, /width:\s*3\.75rem/);
-  assert.match(markImageRule, /object-fit:\s*contain/);
-  assert.match(markImageRule, /filter:\s*drop-shadow/);
-  assert.match(welcomeRule, /min-height:\s*clamp\((?:18|19|20)rem/);
-  assert.match(welcomeRule, /padding:\s*clamp\((?:1\.5|2|2\.25)rem/);
-  assert.match(titleRule, /font-family:\s*inherit/);
-  assert.match(titleRule, /white-space:\s*nowrap/);
+  assert.match(welcomeRule, /max-width:\s*51\.25rem/);
+  assert.match(welcomeRule, /align-items:\s*stretch/);
+  assert.match(welcomeRule, /text-align:\s*start/);
+  assert.match(kickerRule, /color:\s*#1d64d6/);
+  assert.match(titleRule, /font-size:\s*1\.5rem/);
+  assert.match(titleRule, /white-space:\s*normal/);
   assert.match(gridRule, /grid-template-columns:\s*repeat\(2, minmax\(0, 1fr\)\)/);
-  assert.match(cardRule, /font-size:\s*(?:0\.78|0\.8|0\.82|0\.84)rem/);
-  assert.match(cardRule, /overflow-wrap:\s*anywhere/);
-  assert.doesNotMatch(mobileBlock, /\.ask-starter-grid\s*\{[^}]*grid-template-columns:\s*1fr/s);
+  assert.match(cardRule, /border-radius:\s*0\.5rem/);
+  assert.match(cardRule, /justify-content:\s*flex-start/);
+  assert.match(mobileBlock, /\.ask-workbench-shell \.ask-starter-grid\s*\{[^}]*grid-template-columns:\s*minmax\(0, 1fr\)/s);
 });
 
-test('新聊天画布应继续保留阅读轴、输入框和深色低对比边界', () => {
-  assert.match(appCssSource, /\.ask-thread-shell\s*\{[^}]*max-width:\s*(?:47|48|50)rem/s);
-  assert.match(appCssSource, /\.ask-composer-shell\s*\{[^}]*max-width:\s*(?:50|52)rem/s);
-  assert.match(appCssSource, /\.dark \.ask-composer-shell\s*\{[^}]*border-color:\s*var\(--surface-border-default\)[^}]*box-shadow:\s*none/s);
+test('对话正文与输入框应共用同一阅读轴，并采用固定亮色蓝色主动作', () => {
+  assert.match(appCssSource, /\.ask-workbench-shell \.ask-thread-shell\s*\{[^}]*max-width:\s*51\.25rem/s);
+  assert.match(appCssSource, /\.ask-workbench-shell \.ask-composer-shell\s*\{[^}]*max-width:\s*51\.25rem/s);
+  assert.match(appCssSource, /\.ask-workbench-shell\s*\{[^}]*background:\s*#f8fafb[^}]*--ask-accent:\s*#2f78e8/s);
+  assert.match(appCssSource, /\.ask-workbench-shell \.ask-send-button\s*\{[^}]*border-radius:\s*0\.42rem[^}]*background:\s*#2f78e8/s);
+});
+
+test('工具过程、回答依据和历史会话应保持紧凑且可展开', () => {
+  assert.match(appCssSource, /\.ask-workbench-shell \.ask-tool-summary\s*\{[^}]*border-block-color:\s*#ebf0f3/s);
+  assert.match(appCssSource, /\.ask-workbench-shell \.ask-reference-line\s*\{[^}]*background:\s*#dfe6eb/s);
+  assert.match(appCssSource, /\.ask-history-drawer\s*\{[^}]*width:\s*min\(25rem, 85vw\)/s);
 });
