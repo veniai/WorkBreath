@@ -1,0 +1,401 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="design-variant" content="compact-light-report" />
+    <title>Work Review · 紧凑日报原型</title>
+    <!--
+      设计上下文：延续已确认的方案 A，固定亮色、204px 侧栏、细边框、小圆角和紧凑信息密度。
+      产品假设：日报页既是快速复盘入口，也是可编辑、可导出的工作文档。
+      设计取舍：保留轻量纸面感，但移除大面积卡片堆叠和重复日期标题；四项 KPI 收拢为统一摘要带。
+      原型范围：日期、周日期条、导出菜单、生成设置、重新生成、目录定位和章节动作均提供可点击反馈。
+    -->
+    <style>
+      :root {
+        color-scheme: light;
+        --page: #eef1f4;
+        --shell: #f8fafb;
+        --sidebar: #f2f5f7;
+        --surface: #fff;
+        --surface-2: #f6f8fa;
+        --surface-3: #edf2f6;
+        --ink: #16212b;
+        --ink-2: #4d5c68;
+        --ink-3: #81909c;
+        --line: #dfe6eb;
+        --line-soft: #ebf0f3;
+        --brand: #2f78e8;
+        --brand-strong: #1d64d6;
+        --brand-soft: #e9f2ff;
+        --green: #159b76;
+        --red: #d34b5d;
+        --violet: #835ad8;
+        --amber: #cf812c;
+        --shadow-float: 0 18px 52px rgba(22, 33, 43, .2);
+        font-family: Inter, "SF Pro Text", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+      }
+
+      * { box-sizing: border-box; }
+      html, body { margin: 0; min-width: 1024px; min-height: 100%; }
+      body { background: var(--page); color: var(--ink); font-size: 14px; -webkit-font-smoothing: antialiased; }
+      button, input, textarea { font: inherit; }
+      button { color: inherit; }
+      svg { display: block; }
+      .num { font-variant-numeric: tabular-nums; }
+      .sr-only {
+        position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+        overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
+      }
+
+      .app-window { width: 100%; min-height: 100vh; overflow: hidden; background: var(--shell); }
+      .windowbar { height: 28px; display: flex; align-items: center; border-bottom: 1px solid var(--line-soft); background: var(--shell); user-select: none; }
+      .windowbar-title { flex: 1; padding-left: 16px; color: var(--ink-3); font-size: 10px; font-weight: 700; }
+      .window-controls { height: 100%; display: flex; }
+      .window-control { width: 46px; border: 0; background: transparent; color: var(--ink-3); display: grid; place-items: center; cursor: default; }
+      .window-control:hover { background: var(--surface-3); color: var(--ink); }
+      .window-control.close:hover { background: #e74b55; color: #fff; }
+      .window-control svg { width: 10px; height: 10px; }
+
+      .workspace { min-height: calc(100vh - 28px); display: grid; grid-template-columns: 204px minmax(0, 1fr); }
+      .sidebar { min-width: 0; display: flex; flex-direction: column; padding: 16px 14px 14px; border-right: 1px solid var(--line); background: var(--sidebar); }
+      .brand-row { display: flex; align-items: center; gap: 10px; padding: 0 8px 14px; }
+      .brand-mark { width: 32px; height: 32px; flex: none; overflow: hidden; border-radius: 8px; background: #dceef2; box-shadow: 0 2px 7px rgba(36, 112, 130, .14); }
+      .brand-mark img { width: 100%; height: 100%; object-fit: cover; }
+      .brand-name { margin: 0; font-size: 14px; line-height: 1.2; font-weight: 760; letter-spacing: -.015em; }
+      .brand-edition { margin-top: 2px; color: var(--ink-3); font-size: 10px; }
+      .capture-panel { display: flex; align-items: center; gap: 8px; margin-bottom: 17px; padding: 9px 10px; border: 1px solid var(--line); border-radius: 9px; background: var(--surface); }
+      .capture-dot { width: 7px; height: 7px; flex: none; border-radius: 50%; background: var(--green); box-shadow: 0 0 0 4px color-mix(in srgb, var(--green) 12%, transparent); }
+      .capture-panel.paused .capture-dot { background: var(--ink-3); box-shadow: none; }
+      .capture-copy { min-width: 0; flex: 1; }
+      .capture-title { display: block; font-size: 10.5px; font-weight: 700; }
+      .capture-meta { display: block; margin-top: 2px; color: var(--ink-3); font-size: 10px; }
+      .pause-btn { width: 27px; height: 25px; display: grid; place-items: center; border: 1px solid var(--line); border-radius: 7px; background: var(--surface-2); cursor: pointer; }
+      .pause-btn:hover { color: var(--brand); border-color: #bdd1ed; }
+      .pause-btn svg { width: 11px; height: 11px; }
+      .nav-label { padding: 0 10px 7px; color: var(--ink-3); font-size: 10px; font-weight: 750; letter-spacing: .12em; }
+      .nav-list { display: flex; flex-direction: column; gap: 3px; }
+      .nav-item { width: 100%; min-height: 37px; display: flex; align-items: center; gap: 10px; padding: 0 10px; border: 0; border-radius: 7px; background: transparent; color: var(--ink-2); font-size: 12px; font-weight: 600; text-align: left; cursor: pointer; }
+      .nav-item:hover { color: var(--ink); background: color-mix(in srgb, var(--surface-3) 78%, transparent); }
+      .nav-item.active { color: var(--brand-strong); background: var(--brand-soft); }
+      .nav-item svg { width: 16px; height: 16px; color: var(--ink-3); }
+      .nav-item.active svg { color: var(--brand); }
+      .nav-count { margin-left: auto; min-width: 18px; padding: 1px 5px; border-radius: 5px; background: color-mix(in srgb, var(--brand) 10%, white); color: var(--brand-strong); font-size: 10px; text-align: center; }
+      .sidebar-spacer { flex: 1; }
+      .sidebar-tools { padding: 10px 5px 0; border-top: 1px solid var(--line); }
+      .locale-button { height: 29px; padding: 0 9px; border: 1px solid var(--line); border-radius: 7px; background: var(--surface); color: var(--ink-2); font-size: 10px; font-weight: 700; cursor: pointer; }
+
+      .main { min-width: 0; background: var(--shell); }
+      .main-inner { width: min(1180px, calc(100% - 40px)); margin: 0 auto; padding: 20px 0 26px; }
+      .page-head { display: flex; align-items: center; gap: 16px; margin-bottom: 12px; }
+      .heading-row { min-width: 0; flex: 1; display: flex; align-items: center; gap: 10px; }
+      .heading-icon { width: 31px; height: 31px; display: grid; place-items: center; flex: none; border-radius: 8px; background: var(--brand-soft); color: var(--brand); }
+      .heading-icon svg { width: 16px; height: 16px; }
+      .page-heading h1 { margin: 0; font-size: 20px; line-height: 1.2; letter-spacing: -.025em; }
+      .page-subtitle { margin: 4px 0 0; color: var(--ink-3); font-size: 10.5px; }
+      .toolbar { display: flex; align-items: center; gap: 7px; }
+      .range-control { display: flex; align-items: center; gap: 3px; padding: 3px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface-2); }
+      .range-button { height: 29px; padding: 0 11px; border: 0; border-radius: 6px; background: transparent; color: var(--ink-2); font-size: 10.5px; font-weight: 650; cursor: pointer; }
+      .range-button.active { background: var(--surface); color: var(--brand-strong); box-shadow: 0 1px 3px rgba(27, 46, 60, .1); }
+      .date-control, .action-button { height: 35px; display: inline-flex; align-items: center; justify-content: center; gap: 7px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--ink-2); font-size: 10.5px; font-weight: 650; cursor: pointer; }
+      .date-control { min-width: 106px; padding: 0 10px; }
+      .action-button { padding: 0 11px; }
+      .action-button.icon-only { width: 35px; padding: 0; }
+      .action-button.primary { border-color: #2f78e8; color: #fff; background: #2f78e8; }
+      .action-button:hover, .date-control:hover { border-color: #bfd3ee; color: var(--brand-strong); background: #fbfdff; }
+      .action-button.primary:hover { border-color: #1d64d6; color: #fff; background: #1d64d6; }
+      .date-control svg, .action-button svg { width: 13px; height: 13px; }
+
+      .week-strip { min-height: 38px; display: flex; align-items: center; gap: 9px; margin-bottom: 10px; padding: 4px 7px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
+      .week-label { padding-left: 4px; color: var(--ink-3); font-size: 10px; font-weight: 700; }
+      .week-days { min-width: 0; display: flex; align-items: center; gap: 3px; }
+      .week-day { min-width: 48px; height: 28px; display: inline-flex; align-items: center; justify-content: center; gap: 5px; border: 0; border-radius: 6px; background: transparent; color: var(--ink-2); font-size: 10px; cursor: pointer; }
+      .week-day:hover { background: var(--surface-2); }
+      .week-day.active { color: var(--brand-strong); background: var(--brand-soft); font-weight: 750; }
+      .report-dot { width: 4px; height: 4px; border-radius: 50%; background: var(--brand); }
+      .week-meta { margin-left: auto; display: flex; align-items: center; gap: 8px; color: var(--ink-3); font-size: 10px; }
+      .week-link { padding: 0; border: 0; background: transparent; color: var(--brand-strong); font-size: 10px; font-weight: 700; cursor: pointer; }
+
+      .summary-band { display: grid; grid-template-columns: repeat(4, 1fr); margin-bottom: 10px; border: 1px solid var(--line); border-radius: 9px; background: var(--surface); }
+      .metric { position: relative; min-width: 0; padding: 11px 14px; }
+      .metric + .metric::before { content: ""; position: absolute; left: 0; top: 11px; bottom: 11px; width: 1px; background: var(--line-soft); }
+      .metric-label { color: var(--ink-2); font-size: 10px; font-weight: 650; }
+      .metric-value { margin-top: 4px; overflow: hidden; font-size: 20px; line-height: 1.15; font-weight: 750; letter-spacing: -.025em; text-overflow: ellipsis; white-space: nowrap; }
+      .metric-value small { margin-left: 1px; color: var(--ink-2); font-size: 11px; font-weight: 650; }
+      .metric-sub { margin-top: 4px; overflow: hidden; color: var(--ink-3); font-size: 10px; text-overflow: ellipsis; white-space: nowrap; }
+      .positive { color: var(--brand-strong); }
+      .better { color: var(--green); }
+
+      .reading-layout { display: grid; grid-template-columns: minmax(0, 1fr) 168px; gap: 10px; align-items: start; }
+      .report-sheet { overflow: hidden; border: 1px solid var(--line); border-radius: 9px; background: var(--surface); }
+      .article-head { padding: 22px 44px 19px; border-bottom: 1px solid var(--line-soft); text-align: center; }
+      .article-kicker { margin: 0 0 5px; color: var(--brand); font-size: 10px; font-weight: 750; letter-spacing: .08em; }
+      .article-title { margin: 0; font-size: 22px; line-height: 1.3; letter-spacing: -.025em; }
+      .article-meta { margin-top: 7px; display: flex; justify-content: center; align-items: center; gap: 6px; color: var(--ink-3); font-size: 10px; }
+      .meta-chip { padding: 2px 6px; border: 1px solid var(--line); border-radius: 5px; color: var(--ink-2); background: var(--surface-2); }
+      .article-insight { max-width: 700px; margin: 13px auto 0; color: var(--ink-2); font-size: 12px; line-height: 1.65; }
+      .insight-link { margin-top: 7px; padding: 0; border: 0; background: transparent; color: var(--brand-strong); font-size: 10.5px; font-weight: 700; cursor: pointer; }
+      .article-body { max-width: 780px; margin: 0 auto; padding: 5px 42px 30px; }
+      .report-section { position: relative; padding: 19px 0 18px; border-bottom: 1px solid var(--line-soft); scroll-margin-top: 20px; }
+      .report-section:last-child { border-bottom: 0; }
+      .section-head { display: flex; align-items: center; gap: 8px; }
+      .section-mark { width: 3px; height: 15px; flex: none; border-radius: 2px; background: var(--brand); }
+      .section-head h2 { margin: 0; font-size: 14px; line-height: 1.4; }
+      .section-actions { margin-left: auto; display: flex; gap: 3px; opacity: 0; transition: opacity .12s ease; }
+      .report-section:hover .section-actions, .section-actions:focus-within { opacity: 1; }
+      .section-action { width: 26px; height: 26px; display: grid; place-items: center; border: 0; border-radius: 6px; background: transparent; color: var(--ink-3); cursor: pointer; }
+      .section-action:hover { color: var(--brand); background: var(--surface-2); }
+      .section-action svg { width: 12px; height: 12px; }
+      .report-section p { margin: 10px 0 0; color: var(--ink-2); font-size: 12px; line-height: 1.75; }
+      .report-section ul, .report-section ol { margin: 9px 0 0; padding-left: 21px; color: var(--ink-2); font-size: 12px; line-height: 1.8; }
+      .report-section li::marker { color: var(--brand); }
+      .proof-details { margin: 5px 0 0; padding: 13px 0; border-top: 1px solid var(--line-soft); color: var(--ink-3); font-size: 10px; }
+      .proof-details summary { cursor: pointer; }
+
+      .toc { position: sticky; top: 20px; padding: 13px 11px; border: 1px solid var(--line); border-radius: 9px; background: var(--surface); }
+      .toc-title { margin: 0 0 8px; padding: 0 5px; color: var(--ink-3); font-size: 10px; font-weight: 750; letter-spacing: .08em; }
+      .toc-item { width: 100%; min-height: 31px; display: flex; align-items: center; padding: 0 7px; border: 0; border-radius: 6px; background: transparent; color: var(--ink-2); font-size: 10.5px; text-align: left; cursor: pointer; }
+      .toc-item:hover { background: var(--surface-2); }
+      .toc-item.active { color: var(--brand-strong); background: var(--brand-soft); font-weight: 700; }
+      .toc-foot { margin-top: 9px; padding: 10px 5px 0; border-top: 1px solid var(--line-soft); color: var(--ink-3); font-size: 10px; line-height: 1.55; }
+
+      .popover { position: fixed; z-index: 70; display: none; width: 260px; overflow: hidden; border: 1px solid var(--line); border-radius: 9px; background: var(--surface); box-shadow: var(--shadow-float); }
+      .popover.open { display: block; }
+      .export-menu { top: 62px; right: 126px; }
+      .popover-item { width: 100%; display: block; padding: 10px 12px; border: 0; border-top: 1px solid var(--line-soft); background: transparent; text-align: left; cursor: pointer; }
+      .popover-item:first-child { border-top: 0; }
+      .popover-item:hover { background: var(--surface-2); }
+      .popover-item strong { display: block; color: var(--ink); font-size: 10.5px; }
+      .popover-item span { display: block; margin-top: 3px; color: var(--ink-3); font-size: 10px; }
+
+      .drawer-backdrop { position: fixed; inset: 0; z-index: 80; display: none; background: rgba(15, 23, 31, .34); backdrop-filter: blur(2px); }
+      .drawer-backdrop.open { display: block; }
+      .drawer { position: absolute; top: 28px; right: 0; bottom: 0; width: min(440px, calc(100vw - 230px)); display: flex; flex-direction: column; border-left: 1px solid var(--line); background: var(--surface); box-shadow: var(--shadow-float); transform: translateX(100%); transition: transform .18s ease; }
+      .drawer-backdrop.open .drawer { transform: translateX(0); }
+      .drawer-head { min-height: 58px; display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-bottom: 1px solid var(--line); }
+      .drawer-head-copy { min-width: 0; flex: 1; }
+      .drawer-kicker { display: block; color: var(--ink-3); font-size: 10px; }
+      .drawer-head h2 { margin: 2px 0 0; font-size: 14px; }
+      .drawer-close { width: 29px; height: 29px; display: grid; place-items: center; border: 1px solid var(--line); border-radius: 7px; background: var(--surface); color: var(--ink-3); cursor: pointer; }
+      .drawer-close svg { width: 13px; height: 13px; }
+      .drawer-body { min-height: 0; flex: 1; overflow: auto; padding: 14px; }
+      .form-section { padding: 13px 0; border-top: 1px solid var(--line-soft); }
+      .form-section:first-child { padding-top: 0; border-top: 0; }
+      .form-label { display: block; margin-bottom: 7px; color: var(--ink-2); font-size: 10.5px; font-weight: 700; }
+      .preset-row { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+      .preset { padding: 5px 8px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); color: var(--ink-2); font-size: 10px; cursor: pointer; }
+      .preset.active { border-color: #bfd3ee; color: var(--brand-strong); background: var(--brand-soft); }
+      .form-textarea { width: 100%; min-height: 90px; padding: 9px 10px; resize: vertical; border: 1px solid var(--line); border-radius: 7px; outline: 0; color: var(--ink-2); background: var(--surface-2); font-size: 10.5px; line-height: 1.6; }
+      .form-textarea:focus { border-color: #9bc0f2; box-shadow: 0 0 0 3px rgba(47, 120, 232, .1); }
+      .hidden-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 0; border-top: 1px solid var(--line-soft); color: var(--ink-2); font-size: 10.5px; }
+      .hidden-row button { padding: 3px 7px; border: 1px solid var(--line); border-radius: 5px; background: var(--surface); color: var(--brand-strong); font-size: 10px; cursor: pointer; }
+
+      .modal-backdrop { position: fixed; inset: 0; z-index: 90; display: none; place-items: center; padding: 24px; background: rgba(15, 23, 31, .36); backdrop-filter: blur(2px); }
+      .modal-backdrop.open { display: grid; }
+      .modal { width: min(480px, 100%); overflow: hidden; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); box-shadow: var(--shadow-float); }
+      .modal-head { display: flex; align-items: center; gap: 10px; padding: 13px 14px; border-bottom: 1px solid var(--line); }
+      .modal-head h2 { min-width: 0; flex: 1; margin: 0; font-size: 14px; }
+      .modal-body { padding: 14px; }
+      .batch-presets { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 13px; }
+      .date-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+      .date-fields label { color: var(--ink-3); font-size: 10px; }
+      .date-fields input { width: 100%; height: 33px; margin-top: 5px; padding: 0 8px; border: 1px solid var(--line); border-radius: 7px; color: var(--ink-2); background: var(--surface); }
+      .modal-foot { display: flex; justify-content: flex-end; gap: 7px; padding: 11px 14px; border-top: 1px solid var(--line); }
+      .toast { position: fixed; left: 50%; bottom: 24px; z-index: 100; display: flex; align-items: center; gap: 7px; max-width: 380px; padding: 10px 13px; border-radius: 8px; background: #17222c; color: #f5f8fa; box-shadow: var(--shadow-float); font-size: 10.5px; opacity: 0; pointer-events: none; transform: translate(-50%, 8px); transition: opacity .15s ease, transform .15s ease; }
+      .toast.show { opacity: 1; transform: translate(-50%, 0); }
+      .toast svg { width: 13px; height: 13px; color: #82d7bd; }
+
+      @media (max-width: 1120px) {
+        .main-inner { width: calc(100% - 28px); }
+        .toolbar .action-button span { display: none; }
+        .reading-layout { grid-template-columns: minmax(0, 1fr) 150px; }
+        .article-head { padding-inline: 26px; }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="app-window" aria-label="Work Review 紧凑日报原型">
+      <header class="windowbar"><span class="windowbar-title">Work Review</span><div class="window-controls" aria-hidden="true"><button class="window-control"><svg><use href="#i-min"></use></svg></button><button class="window-control"><svg><use href="#i-max"></use></svg></button><button class="window-control close"><svg><use href="#i-close"></use></svg></button></div></header>
+      <div class="workspace">
+        <aside class="sidebar">
+          <div class="brand-row"><span class="brand-mark"><img src="./assets/icon.png" alt="" /></span><div><h2 class="brand-name">Work Review</h2><div class="brand-edition">本地工作回顾</div></div></div>
+          <div class="capture-panel" id="capturePanel"><span class="capture-dot"></span><span class="capture-copy"><span class="capture-title">正在记录</span><span class="capture-meta">仅保存在本机</span></span><button class="pause-btn" id="pauseButton" type="button" aria-label="暂停记录"><svg><use href="#i-pause"></use></svg></button></div>
+          <div class="nav-label">工作空间</div>
+          <nav class="nav-list" aria-label="主导航">
+            <button class="nav-item" data-nav="overview" type="button"><svg><use href="#i-overview"></use></svg><span>概览</span></button>
+            <button class="nav-item" data-nav="eye" type="button"><svg><use href="#i-eye"></use></svg><span>护眼</span></button>
+            <button class="nav-item" data-nav="timeline" type="button"><svg><use href="#i-timeline"></use></svg><span>时间线</span></button>
+            <button class="nav-item active" data-nav="report" type="button"><svg><use href="#i-report"></use></svg><span>日报</span><span class="nav-count">1</span></button>
+            <button class="nav-item" data-nav="ask" type="button"><svg><use href="#i-ask"></use></svg><span>助手</span></button>
+            <button class="nav-item" data-nav="settings" type="button"><svg><use href="#i-settings"></use></svg><span>设置</span></button>
+            <button class="nav-item" data-nav="info" type="button"><svg><use href="#i-info"></use></svg><span>关于</span></button>
+          </nav>
+          <div class="sidebar-spacer"></div>
+          <div class="sidebar-tools"><button class="locale-button" type="button">简体中文⌄</button></div>
+        </aside>
+
+        <section class="main">
+          <div class="main-inner">
+            <header class="page-head">
+              <div class="heading-row"><span class="heading-icon"><svg><use href="#i-report"></use></svg></span><div class="page-heading"><h1>日报</h1><p class="page-subtitle">回顾今天的投入、进展与下一步</p></div></div>
+              <div class="toolbar">
+                <div class="range-control" role="group" aria-label="快捷日期"><button class="range-button active" data-range="today" type="button">今天</button><button class="range-button" data-range="yesterday" type="button">昨天</button></div>
+                <button class="date-control" id="dateButton" type="button"><svg><use href="#i-calendar"></use></svg><span class="num">2026/08/09</span><svg><use href="#i-down"></use></svg></button>
+                <button class="action-button" id="exportButton" type="button"><svg><use href="#i-export"></use></svg><span>导出</span><svg><use href="#i-down"></use></svg></button>
+                <button class="action-button" id="settingsButton" type="button"><svg><use href="#i-settings"></use></svg><span>生成设置</span></button>
+                <button class="action-button primary" id="regenerateButton" type="button"><svg><use href="#i-refresh"></use></svg><span>重新生成</span></button>
+              </div>
+            </header>
+
+            <section class="week-strip" aria-label="本周日报">
+              <span class="week-label">本周</span>
+              <div class="week-days">
+                <button class="week-day" type="button">一 3 <i class="report-dot"></i></button><button class="week-day" type="button">二 4 <i class="report-dot"></i></button><button class="week-day" type="button">三 5 <i class="report-dot"></i></button><button class="week-day" type="button">四 6 <i class="report-dot"></i></button><button class="week-day" type="button">五 7 <i class="report-dot"></i></button><button class="week-day" type="button">六 8 <i class="report-dot"></i></button><button class="week-day active" type="button">日 9 <i class="report-dot"></i></button>
+              </div>
+              <div class="week-meta"><span>已生成 7/7 天</span><button class="week-link" id="weekExportButton" type="button">合并导出本周 →</button></div>
+            </section>
+
+            <section class="summary-band" aria-label="日报关键指标">
+              <article class="metric"><div class="metric-label">总投入</div><div class="metric-value num">7<small>h</small>24<small>m</small></div><div class="metric-sub"><span class="positive">↑ 42m</span> 较上周日</div></article>
+              <article class="metric"><div class="metric-label">专注峰值</div><div class="metric-value num">10:00–12:00</div><div class="metric-sub">峰值段合计 1h39m</div></article>
+              <article class="metric"><div class="metric-label">沟通占比</div><div class="metric-value num">12<small>%</small></div><div class="metric-sub"><span class="better">↓ 1pt</span> 较上周日</div></article>
+              <article class="metric"><div class="metric-label">数据底座</div><div class="metric-value num">214</div><div class="metric-sub">6 个应用 · 实时口径</div></article>
+            </section>
+
+            <div class="reading-layout">
+              <article class="report-sheet">
+                <header class="article-head">
+                  <p class="article-kicker">今日日报</p><h1 class="article-title">2026年8月9日星期日</h1>
+                  <div class="article-meta"><span class="num">309 字</span><span>·</span><span>生成于 16:20</span><span class="meta-chip">AI 增强</span><span class="meta-chip">实时统计</span></div>
+                  <p class="article-insight">今天围绕 Work Review 前端体验优化展开，概览与时间线页面已完成原型确认和正式落地。</p>
+                  <button class="insight-link" data-scroll="plan" type="button">跳到明日建议 →</button>
+                </header>
+                <div class="article-body">
+                  <section class="report-section" id="overview"><div class="section-head"><span class="section-mark"></span><h2>一、今日概览</h2><div class="section-actions"><button class="section-action" data-section-action="置顶" type="button" aria-label="置顶"><svg><use href="#i-pin"></use></svg></button><button class="section-action" data-section-action="编辑" type="button" aria-label="编辑"><svg><use href="#i-edit"></use></svg></button><button class="section-action" data-section-action="隐藏" type="button" aria-label="隐藏"><svg><use href="#i-eye-off"></use></svg></button></div></div><p>完成应用外壳、概览页与时间线的信息层级收敛，统一固定亮色和紧凑工作台结构。全天有效投入 <strong>5 小时 47 分钟</strong>，主要集中在开发、设计验证和测试。</p></section>
+                  <section class="report-section" id="progress"><div class="section-head"><span class="section-mark"></span><h2>二、重点进展</h2><div class="section-actions"><button class="section-action" data-section-action="置顶" type="button" aria-label="置顶"><svg><use href="#i-pin"></use></svg></button><button class="section-action" data-section-action="编辑" type="button" aria-label="编辑"><svg><use href="#i-edit"></use></svg></button><button class="section-action" data-section-action="隐藏" type="button" aria-label="隐藏"><svg><use href="#i-eye-off"></use></svg></button></div></div><ul><li>完成概览页的统一指标带和节奏区优化。</li><li>将时间线改为高密度记录行，并保留截图与详情能力。</li><li>全量测试、正式构建和真实浏览器验证均通过。</li></ul></section>
+                  <section class="report-section" id="focus"><div class="section-head"><span class="section-mark"></span><h2>三、专注与协作</h2><div class="section-actions"><button class="section-action" data-section-action="置顶" type="button" aria-label="置顶"><svg><use href="#i-pin"></use></svg></button><button class="section-action" data-section-action="编辑" type="button" aria-label="编辑"><svg><use href="#i-edit"></use></svg></button><button class="section-action" data-section-action="隐藏" type="button" aria-label="隐藏"><svg><use href="#i-eye-off"></use></svg></button></div></div><p>上午用于实现与验证概览页，下午集中处理时间线原型、正式落地和回归测试。沟通占比较低，没有明显打断主要开发节奏。</p></section>
+                  <section class="report-section" id="plan"><div class="section-head"><span class="section-mark"></span><h2>四、明日计划</h2><div class="section-actions"><button class="section-action" data-section-action="置顶" type="button" aria-label="置顶"><svg><use href="#i-pin"></use></svg></button><button class="section-action" data-section-action="编辑" type="button" aria-label="编辑"><svg><use href="#i-edit"></use></svg></button><button class="section-action" data-section-action="隐藏" type="button" aria-label="隐藏"><svg><use href="#i-eye-off"></use></svg></button></div></div><ol><li>继续优化日报页面的阅读和操作结构。</li><li>检查其他页面与方案 A 的一致性。</li><li>整理最终变更并准备提交。</li></ol></section>
+                  <details class="proof-details"><summary>查看生成依据与小时分布</summary><p>数据来自 214 条本地记录，已按隐私规则过滤。</p></details>
+                </div>
+              </article>
+
+              <nav class="toc" aria-label="本篇目录"><p class="toc-title">本篇目录</p><button class="toc-item active" data-target="overview" type="button">今日概览</button><button class="toc-item" data-target="progress" type="button">重点进展</button><button class="toc-item" data-target="focus" type="button">专注与协作</button><button class="toc-item" data-target="plan" type="button">明日计划</button><div class="toc-foot">生成于 16:20<br />AI 增强 · 实时统计</div></nav>
+            </div>
+          </div>
+        </section>
+      </div>
+    </main>
+
+    <div class="popover export-menu" id="exportMenu" role="menu"><button class="popover-item" data-export="current" type="button"><strong>导出当前日报</strong><span>保存为 Markdown 文件</span></button><button class="popover-item" data-export="range" type="button"><strong>批量导出</strong><span>选择本周、本月或自定义范围</span></button><button class="popover-item" data-export="copy" type="button"><strong>复制正文</strong><span>复制纯文本到剪贴板</span></button></div>
+
+    <div class="drawer-backdrop" id="settingsBackdrop" aria-hidden="true"><aside class="drawer" role="dialog" aria-modal="true" aria-labelledby="drawerTitle"><header class="drawer-head"><span class="heading-icon"><svg><use href="#i-settings"></use></svg></span><div class="drawer-head-copy"><span class="drawer-kicker">日报生成</span><h2 id="drawerTitle">生成设置</h2></div><button class="drawer-close" id="drawerClose" type="button" aria-label="关闭"><svg><use href="#i-close"></use></svg></button></header><div class="drawer-body"><section class="form-section"><label class="form-label" for="prompt">本次附加要求</label><div class="preset-row"><button class="preset active" type="button">简洁复盘</button><button class="preset" type="button">项目汇报</button><button class="preset" type="button">个人反思</button></div><textarea class="form-textarea" id="prompt">突出今天完成的 UI 改版，并列出可执行的下一步。</textarea></section><section class="form-section"><label class="form-label" for="systemPrompt">高级系统提示词</label><textarea class="form-textarea" id="systemPrompt" placeholder="留空时使用默认日报模板"></textarea></section><section class="form-section"><span class="form-label">已隐藏模块</span><div class="hidden-row"><span>暂无隐藏模块</span><button type="button">管理</button></div></section></div></aside></div>
+
+    <div class="modal-backdrop" id="batchModal" role="presentation"><section class="modal" role="dialog" aria-modal="true" aria-labelledby="batchTitle"><header class="modal-head"><h2 id="batchTitle">批量导出日报</h2><button class="drawer-close" id="batchClose" type="button" aria-label="关闭"><svg><use href="#i-close"></use></svg></button></header><div class="modal-body"><div class="batch-presets"><button class="preset active" type="button">本周</button><button class="preset" type="button">上周</button><button class="preset" type="button">本月</button><button class="preset" type="button">上月</button></div><div class="date-fields"><label>开始日期<input value="2026-08-03" /></label><label>结束日期<input value="2026-08-09" /></label></div></div><footer class="modal-foot"><button class="action-button" id="batchCancel" type="button">取消</button><button class="action-button primary" id="batchConfirm" type="button">导出 7 篇日报</button></footer></section></div>
+
+    <div class="toast" id="toast"><svg><use href="#i-check"></use></svg><span></span></div>
+
+    <svg class="sr-only" width="0" height="0" aria-hidden="true">
+      <symbol id="i-overview" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="4" y="4" width="6" height="6" rx="1.5"/><rect x="14" y="4" width="6" height="6" rx="1.5"/><rect x="4" y="14" width="6" height="6" rx="1.5"/><rect x="14" y="14" width="6" height="6" rx="1.5"/></symbol>
+      <symbol id="i-eye" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M2.8 12s3.5-5.2 9.2-5.2 9.2 5.2 9.2 5.2-3.5 5.2-9.2 5.2S2.8 12 2.8 12Z"/><circle cx="12" cy="12" r="2.4"/></symbol>
+      <symbol id="i-timeline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5v5l3.2 2"/></symbol>
+      <symbol id="i-report" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M6 3.8h8l4 4V20H6z"/><path d="M14 3.8V8h4M9 12h6M9 15.5h6"/></symbol>
+      <symbol id="i-ask" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 5.5h16v12H9l-4.5 3v-3H4z"/><path d="M8 10h8M8 13.5h5"/></symbol>
+      <symbol id="i-settings" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="3"/><path d="M19 13.5v-3l-2-.6a7 7 0 0 0-.7-1.6l1-1.8-2.1-2.1-1.8 1A7 7 0 0 0 11.5 5l-.6-2h-3l-.6 2a7 7 0 0 0-1.6.7l-1.8-1-2.1 2.1 1 1.8A7 7 0 0 0 2 10.5l-2 .6v3l2 .6a7 7 0 0 0 .7 1.6l-1 1.8 2.1 2.1 1.8-1a7 7 0 0 0 1.6.7l.6 2h3l.6-2a7 7 0 0 0 1.6-.7l1.8 1 2.1-2.1-1-1.8a7 7 0 0 0 .7-1.6Z" transform="translate(2.1 -.6) scale(.82)"/></symbol>
+      <symbol id="i-info" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="8.5"/><path d="M12 10.5v6M12 7.5h.01"/></symbol>
+      <symbol id="i-pause" viewBox="0 0 24 24" fill="currentColor"><path d="M7 5h3.5v14H7zM13.5 5H17v14h-3.5z"/></symbol>
+      <symbol id="i-play" viewBox="0 0 24 24" fill="currentColor"><path d="m7 4 13 8-13 8z"/></symbol>
+      <symbol id="i-calendar" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="5.5" width="16" height="14" rx="2"/><path d="M8 3.5v4M16 3.5v4M4 9.5h16"/></symbol>
+      <symbol id="i-export" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 4v11M8 11l4 4 4-4M5 19h14"/></symbol>
+      <symbol id="i-refresh" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20 7v5h-5M4 17v-5h5"/><path d="M18.2 9A7 7 0 0 0 6 6.5L4 9M5.8 15A7 7 0 0 0 18 17.5l2-2.5"/></symbol>
+      <symbol id="i-down" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m7 10 5 5 5-5"/></symbol>
+      <symbol id="i-close" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="m7 7 10 10M17 7 7 17"/></symbol>
+      <symbol id="i-min" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M6 12h12"/></symbol>
+      <symbol id="i-max" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="6" y="6" width="12" height="12"/></symbol>
+      <symbol id="i-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m5 12 4 4 10-10"/></symbol>
+      <symbol id="i-pin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="m9 4 6 2-1 5 3 3-5 1-3 5-.5-6L5 11l4-2z"/></symbol>
+      <symbol id="i-edit" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="m4 16-.5 4.5L8 20l10-10-4-4zM12.5 7.5l4 4"/></symbol>
+      <symbol id="i-eye-off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="m3 3 18 18M10.6 10.6A2 2 0 0 0 13.4 13.4M9.2 5.7A10 10 0 0 1 12 5c5.6 0 9 7 9 7a16 16 0 0 1-2.2 3.2M6.2 6.2C4.2 7.7 3 10 3 12c0 0 3.4 7 9 7a10 10 0 0 0 3.5-.6"/></symbol>
+    </svg>
+
+    <script>
+      const exportMenu = document.querySelector('#exportMenu');
+      const settingsBackdrop = document.querySelector('#settingsBackdrop');
+      const batchModal = document.querySelector('#batchModal');
+      const exportButton = document.querySelector('#exportButton');
+
+      exportButton.addEventListener('click', event => {
+        event.stopPropagation();
+        exportMenu.classList.toggle('open');
+      });
+      document.addEventListener('click', event => {
+        if (!exportMenu.contains(event.target) && event.target !== exportButton) exportMenu.classList.remove('open');
+      });
+      document.querySelectorAll('[data-export]').forEach(button => button.addEventListener('click', () => {
+        exportMenu.classList.remove('open');
+        if (button.dataset.export === 'range') batchModal.classList.add('open');
+        else showToast(button.dataset.export === 'copy' ? '日报正文已复制（原型演示）' : '已准备导出当前日报');
+      }));
+
+      document.querySelector('#settingsButton').addEventListener('click', () => {
+        settingsBackdrop.classList.add('open');
+        settingsBackdrop.setAttribute('aria-hidden', 'false');
+      });
+      function closeSettings() { settingsBackdrop.classList.remove('open'); settingsBackdrop.setAttribute('aria-hidden', 'true'); }
+      document.querySelector('#drawerClose').addEventListener('click', closeSettings);
+      settingsBackdrop.addEventListener('click', event => { if (event.target === settingsBackdrop) closeSettings(); });
+      document.querySelectorAll('.preset').forEach(button => button.addEventListener('click', () => {
+        const group = button.parentElement;
+        group.querySelectorAll('.preset').forEach(item => item.classList.toggle('active', item === button));
+      }));
+
+      function closeBatch() { batchModal.classList.remove('open'); }
+      document.querySelector('#batchClose').addEventListener('click', closeBatch);
+      document.querySelector('#batchCancel').addEventListener('click', closeBatch);
+      document.querySelector('#batchConfirm').addEventListener('click', () => { closeBatch(); showToast('已准备导出 7 篇日报'); });
+      batchModal.addEventListener('click', event => { if (event.target === batchModal) closeBatch(); });
+      document.querySelector('#weekExportButton').addEventListener('click', () => batchModal.classList.add('open'));
+
+      document.querySelectorAll('.toc-item').forEach(button => button.addEventListener('click', () => {
+        document.querySelectorAll('.toc-item').forEach(item => item.classList.toggle('active', item === button));
+        document.querySelector(`#${button.dataset.target}`).scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }));
+      document.querySelector('[data-scroll="plan"]').addEventListener('click', () => document.querySelector('[data-target="plan"]').click());
+      document.querySelectorAll('[data-section-action]').forEach(button => button.addEventListener('click', () => showToast(`${button.dataset.sectionAction}章节入口保持原功能`)));
+
+      document.querySelectorAll('.range-button').forEach(button => button.addEventListener('click', () => {
+        document.querySelectorAll('.range-button').forEach(item => item.classList.toggle('active', item === button));
+        showToast(button.dataset.range === 'today' ? '已切换到今天' : '已切换到昨天');
+      }));
+      document.querySelectorAll('.week-day').forEach(button => button.addEventListener('click', () => {
+        document.querySelectorAll('.week-day').forEach(item => item.classList.toggle('active', item === button));
+        showToast(`已选择 ${button.textContent.trim().replace(/\s+/g, ' ')}`);
+      }));
+      document.querySelector('#dateButton').addEventListener('click', () => showToast('日期选择继续复用现有控件'));
+      document.querySelector('#regenerateButton').addEventListener('click', () => showToast('已开始重新生成日报（原型演示）'));
+      document.querySelectorAll('[data-nav]').forEach(button => button.addEventListener('click', () => { if (button.dataset.nav !== 'report') showToast('本原型只展示日报页面'); }));
+      document.querySelector('.locale-button').addEventListener('click', () => showToast('语言切换入口保持不变'));
+
+      let recording = true;
+      const capturePanel = document.querySelector('#capturePanel');
+      document.querySelector('#pauseButton').addEventListener('click', event => {
+        recording = !recording;
+        capturePanel.classList.toggle('paused', !recording);
+        capturePanel.querySelector('.capture-title').textContent = recording ? '正在记录' : '记录已暂停';
+        event.currentTarget.innerHTML = recording ? '<svg><use href="#i-pause"></use></svg>' : '<svg><use href="#i-play"></use></svg>';
+        showToast(recording ? '记录已继续' : '记录已暂停');
+      });
+      window.addEventListener('keydown', event => {
+        if (event.key === 'Escape') { exportMenu.classList.remove('open'); closeSettings(); closeBatch(); }
+      });
+
+      let toastTimer;
+      function showToast(message) {
+        const toast = document.querySelector('#toast');
+        toast.querySelector('span').textContent = message;
+        toast.classList.add('show');
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => toast.classList.remove('show'), 2100);
+      }
+    </script>
+  </body>
+</html>

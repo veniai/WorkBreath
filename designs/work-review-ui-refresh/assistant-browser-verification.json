@@ -1,0 +1,24 @@
+{
+  "httpStatus": 200,
+  "readyState": "complete",
+  "colorScheme": "light",
+  "sidebarWidth": 204,
+  "threadWidth": 820,
+  "composerWidth": 820,
+  "assistantCards": 1,
+  "userMessages": 1,
+  "processRows": 2,
+  "answerSections": 3,
+  "noBodyOverflow": true,
+  "processExpanded": true,
+  "referencesExpanded": true,
+  "historyDrawer": {
+    "width": 400,
+    "rightAligned": true,
+    "itemCount": 4
+  },
+  "contextTags": 3,
+  "welcomeStarterCount": 4,
+  "newChatTitle": "新的工作问题",
+  "consoleErrors": []
+}

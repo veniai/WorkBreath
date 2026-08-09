@@ -1,0 +1,34 @@
+{
+  "desktop": {
+    "viewport": { "width": 1440, "height": 1120 },
+    "fixedLight": true,
+    "sidebarWidth": 204,
+    "heroHeight": 202,
+    "middleColumns": 2,
+    "middleHeight": 221,
+    "settingsTop": 552,
+    "settingsBottom": 780,
+    "settingsGridTop": 608,
+    "settingsGridColumns": 5,
+    "settingsEntersFirstViewport": true,
+    "progress": "72%",
+    "visibleEvents": 4,
+    "saveDisabled": true,
+    "saveStatus": "已保存",
+    "horizontalOverflow": false
+  },
+  "interaction": {
+    "dirtyStateEnablesSave": true,
+    "dirtyStatus": "有未保存修改",
+    "dirtyTone": true,
+    "saveRestoresSavedState": true,
+    "savedStatus": "已保存"
+  },
+  "responsive1024": {
+    "viewport": { "width": 1024, "height": 900 },
+    "middleColumns": 1,
+    "settingsGridColumns": 3,
+    "horizontalOverflow": false
+  },
+  "consoleErrors": []
+}

@@ -1,0 +1,86 @@
+{
+  "verifiedAt": "2026-08-09T14:17:33.759Z",
+  "url": "http://127.0.0.1:4313/designs/work-review-ui-refresh/secondary-surfaces.html",
+  "viewport": {
+    "width": 1280,
+    "height": 820
+  },
+  "status": 200,
+  "initial": {
+    "title": "选择导出内容",
+    "radioCount": 2,
+    "checkedCount": 1,
+    "excludeChecked": "true",
+    "includeChecked": "false",
+    "recommendedVisible": true,
+    "focusedLabel": "不包含 OCR 推荐仅导出时间、应用、标题、分类等结构化记录。"
+  },
+  "styles": {
+    "width": "420px",
+    "borderRadius": "12px",
+    "backgroundColor": "rgb(255, 255, 255)",
+    "colorScheme": "light"
+  },
+  "dialogBox": {
+    "x": 430,
+    "y": 217.71875,
+    "width": 420,
+    "height": 384.5625
+  },
+  "layout": {
+    "viewportWidth": 1280,
+    "documentScrollWidth": 1280,
+    "bodyScrollWidth": 1280
+  },
+  "afterIncludeSelection": {
+    "checkedCount": 1,
+    "excludeChecked": "false",
+    "includeChecked": "true"
+  },
+  "includeToast": "已模拟导出：包含 OCR 文本",
+  "escape": {
+    "focusRestored": true,
+    "activeElementLabel": "OCR 选择"
+  },
+  "mobile": {
+    "viewport": {
+      "width": 430,
+      "height": 820
+    },
+    "dialogBox": {
+      "x": 28,
+      "y": 217.71875,
+      "width": 374,
+      "height": 384.5625
+    },
+    "layout": {
+      "viewportWidth": 430,
+      "documentScrollWidth": 1024,
+      "dialogFullyVisible": true
+    }
+  },
+  "errors": {
+    "console": [],
+    "page": [],
+    "mobile": []
+  },
+  "checks": {
+    "httpOk": true,
+    "titleMatches": true,
+    "twoExclusiveOptions": true,
+    "safeDefault": true,
+    "recommendedShown": true,
+    "safeDefaultFocused": true,
+    "fixedLightSurface": true,
+    "targetWidth": true,
+    "targetRadius": true,
+    "noDesktopHorizontalOverflow": true,
+    "includeSelectionExclusive": true,
+    "includeCompletionExplained": true,
+    "escapeClosesAndRestoresFocus": true,
+    "mobileDialogFits": true,
+    "mobileOverlayStaysInViewport": true,
+    "noBrowserErrors": true
+  },
+  "passed": true
+}

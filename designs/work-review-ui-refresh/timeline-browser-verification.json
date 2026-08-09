@@ -1,0 +1,17 @@
+{
+  "httpStatus": 200,
+  "readyState": "complete",
+  "colorScheme": "light",
+  "rows": 12,
+  "selectedRows": 1,
+  "sidebarWidth": 204,
+  "firstRowHeight": 62,
+  "footerVisible": true,
+  "bodyScrollWidth": 1440,
+  "viewportWidth": 1440,
+  "detailOpen": true,
+  "detailTitle": "Figma",
+  "summaryOpen": true,
+  "toastText": "时间线已刷新",
+  "consoleErrors": []
+}

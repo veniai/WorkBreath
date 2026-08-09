@@ -1,0 +1,30 @@
+{
+  "tested_at": "2026-08-09T15:01:40Z",
+  "scope": "Timeline OCR export in a real Tauri desktop shell",
+  "environment": {
+    "runtime": "Tauri/WebKitGTK native Linux application",
+    "os": "Ubuntu 24.04 container",
+    "display": "Xvfb 1440x900 with Openbox",
+    "data": "ephemeral test database with one activity containing OCR text"
+  },
+  "checks": {
+    "native_app_launched": true,
+    "ocr_choice_modal_rendered": true,
+    "default_choice": "exclude OCR",
+    "escape_closed_modal_without_opening_native_dialog": true,
+    "continue_opened_native_save_dialog": true,
+    "native_save_dialog_title": "Save File",
+    "exclude_export": {
+      "include_ocr": false,
+      "ocr_text": null
+    },
+    "include_export": {
+      "include_ocr": true,
+      "ocr_text": "test OCR text"
+    }
+  },
+  "screenshots": [
+    "tauri-timeline-ocr-export-modal.png",
+    "tauri-timeline-native-save-dialog.png"
+  ]
+}

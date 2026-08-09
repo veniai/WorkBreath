@@ -1,0 +1,549 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="design-variant" content="compact-light-timeline" />
+    <title>Work Review · 紧凑时间线原型</title>
+    <!--
+      设计上下文：沿用已确认的方案 A（固定亮色、204px 侧栏、细边框、小圆角、低装饰）。
+      产品假设：时间线首先用于快速扫读与定位，其次才是查看截图和修改单条记录。
+      设计取舍：把原先的大卡片改为统一的高密度行；截图缩为辅助预览，完整内容保留在详情抽屉。
+      原型范围：日期、刷新、导出、清理、时段摘要、暂停记录、行详情均提供可点击反馈。
+    -->
+    <style>
+      :root {
+        color-scheme: light;
+        --page: #eef1f4;
+        --shell: #f8fafb;
+        --sidebar: #f2f5f7;
+        --surface: #ffffff;
+        --surface-2: #f6f8fa;
+        --surface-3: #edf2f6;
+        --ink: #16212b;
+        --ink-2: #4d5c68;
+        --ink-3: #81909c;
+        --line: #dfe6eb;
+        --line-soft: #ebf0f3;
+        --brand: #2f78e8;
+        --brand-strong: #1d64d6;
+        --brand-soft: #e9f2ff;
+        --green: #159b76;
+        --red: #d34b5d;
+        --amber: #cf812c;
+        --violet: #835ad8;
+        --cyan: #319ab3;
+        --slate: #8b9aa6;
+        --shadow-float: 0 18px 52px rgba(22, 33, 43, 0.2);
+        font-family: Inter, "SF Pro Text", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+      }
+
+      * { box-sizing: border-box; }
+      html, body { margin: 0; min-width: 980px; min-height: 100%; }
+      body {
+        background: var(--page);
+        color: var(--ink);
+        font-size: 14px;
+        -webkit-font-smoothing: antialiased;
+      }
+      button, input { font: inherit; }
+      button { color: inherit; }
+      svg { display: block; }
+      .num { font-variant-numeric: tabular-nums; }
+      .sr-only {
+        position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+        overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
+      }
+
+      .app-window {
+        width: 100%; min-height: 100vh; overflow: hidden;
+        background: var(--shell);
+      }
+      .windowbar {
+        height: 28px; display: flex; align-items: center;
+        border-bottom: 1px solid var(--line-soft); background: var(--shell); user-select: none;
+      }
+      .windowbar-title {
+        flex: 1; padding-left: 16px; color: var(--ink-3);
+        font-size: 10px; font-weight: 700; letter-spacing: .02em;
+      }
+      .window-controls { height: 100%; display: flex; }
+      .window-control {
+        width: 46px; border: 0; background: transparent; color: var(--ink-3);
+        display: grid; place-items: center; cursor: default;
+      }
+      .window-control:hover { background: var(--surface-3); color: var(--ink); }
+      .window-control.close:hover { background: #e74b55; color: #fff; }
+      .window-control svg { width: 10px; height: 10px; }
+
+      .workspace { min-height: calc(100vh - 28px); display: grid; grid-template-columns: 204px minmax(0, 1fr); }
+      .sidebar {
+        min-width: 0; display: flex; flex-direction: column; padding: 16px 14px 14px;
+        border-right: 1px solid var(--line); background: var(--sidebar);
+      }
+      .brand-row { display: flex; align-items: center; gap: 10px; padding: 0 8px 14px; }
+      .brand-mark {
+        width: 32px; height: 32px; flex: none; border-radius: 8px; overflow: hidden;
+        background: #dceef2; box-shadow: 0 2px 7px rgba(36, 112, 130, .14);
+      }
+      .brand-mark img { width: 100%; height: 100%; object-fit: cover; }
+      .brand-copy { min-width: 0; }
+      .brand-name { margin: 0; font-size: 14px; line-height: 1.2; font-weight: 760; letter-spacing: -.015em; }
+      .brand-edition { margin-top: 2px; color: var(--ink-3); font-size: 9.5px; font-weight: 550; }
+      .capture-panel {
+        display: flex; align-items: center; gap: 8px; margin: 0 0 17px; padding: 9px 10px;
+        border: 1px solid var(--line); border-radius: 9px; background: var(--surface);
+      }
+      .capture-dot {
+        width: 7px; height: 7px; flex: none; border-radius: 50%; background: var(--green);
+        box-shadow: 0 0 0 4px color-mix(in srgb, var(--green) 12%, transparent);
+      }
+      .capture-panel.paused .capture-dot { background: var(--ink-3); box-shadow: none; }
+      .capture-copy { min-width: 0; flex: 1; }
+      .capture-title { display: block; font-size: 10.5px; font-weight: 700; }
+      .capture-meta { display: block; margin-top: 2px; color: var(--ink-3); font-size: 8.5px; }
+      .pause-btn {
+        width: 27px; height: 25px; display: grid; place-items: center; flex: none;
+        border: 1px solid var(--line); border-radius: 7px; background: var(--surface-2); cursor: pointer;
+      }
+      .pause-btn:hover { border-color: #bdd1ed; color: var(--brand); }
+      .pause-btn svg { width: 11px; height: 11px; }
+      .nav-label { padding: 0 10px 7px; color: var(--ink-3); font-size: 9px; font-weight: 750; letter-spacing: .12em; }
+      .nav-list { display: flex; flex-direction: column; gap: 3px; }
+      .nav-item {
+        width: 100%; min-height: 37px; display: flex; align-items: center; gap: 10px;
+        padding: 0 10px; border: 0; border-radius: 7px; background: transparent;
+        color: var(--ink-2); font-size: 12px; font-weight: 600; text-align: left; cursor: pointer;
+      }
+      .nav-item:hover { color: var(--ink); background: color-mix(in srgb, var(--surface-3) 78%, transparent); }
+      .nav-item.active { color: var(--brand-strong); background: var(--brand-soft); }
+      .nav-item svg { width: 16px; height: 16px; color: var(--ink-3); }
+      .nav-item.active svg { color: var(--brand); }
+      .nav-count {
+        margin-left: auto; min-width: 18px; padding: 1px 5px; border-radius: 5px;
+        background: var(--surface-3); color: var(--ink-3); font-size: 8.5px; text-align: center;
+      }
+      .sidebar-spacer { flex: 1; }
+      .sidebar-tools { padding: 10px 5px 0; border-top: 1px solid var(--line); }
+      .locale-button {
+        height: 29px; padding: 0 9px; border: 1px solid var(--line); border-radius: 7px;
+        background: var(--surface); color: var(--ink-2); font-size: 9.5px; font-weight: 700; cursor: pointer;
+      }
+
+      .main { min-width: 0; background: var(--shell); }
+      .main-inner { width: min(1180px, calc(100% - 40px)); margin: 0 auto; padding: 20px 0 24px; }
+      .page-head { display: flex; align-items: center; gap: 18px; margin-bottom: 15px; }
+      .heading-row { min-width: 0; flex: 1; display: flex; align-items: center; gap: 10px; }
+      .heading-icon {
+        width: 31px; height: 31px; display: grid; place-items: center; flex: none;
+        border-radius: 8px; background: var(--brand-soft); color: var(--brand);
+      }
+      .heading-icon svg { width: 16px; height: 16px; }
+      .page-heading { min-width: 0; }
+      .page-heading h1 { margin: 0; font-size: 20px; line-height: 1.2; letter-spacing: -.025em; }
+      .page-subtitle { margin: 4px 0 0; color: var(--ink-3); font-size: 10.5px; }
+      .live-time { margin-left: 7px; color: var(--green); font-weight: 650; }
+      .live-time::before {
+        content: ""; display: inline-block; width: 5px; height: 5px; margin-right: 5px;
+        border-radius: 50%; background: var(--green); vertical-align: 1px;
+      }
+      .toolbar { display: flex; align-items: center; gap: 7px; }
+      .date-control {
+        height: 33px; display: flex; align-items: center; gap: 8px; padding: 0 10px;
+        border: 1px solid var(--line); border-radius: 8px; background: var(--surface);
+        color: var(--ink-2); font-size: 10.5px; font-weight: 650; cursor: pointer;
+      }
+      .date-control svg { width: 13px; height: 13px; color: var(--ink-3); }
+      .tool-button {
+        width: 33px; height: 33px; display: grid; place-items: center;
+        border: 1px solid var(--line); border-radius: 8px; background: var(--surface);
+        color: var(--ink-3); cursor: pointer;
+      }
+      .tool-button:hover { color: var(--brand); border-color: #bfd3ee; background: #fbfdff; }
+      .tool-button.danger:hover { color: var(--red); border-color: #efc6cb; }
+      .tool-button svg { width: 14px; height: 14px; }
+
+      .timeline-panel {
+        overflow: hidden; border: 1px solid var(--line); border-radius: 10px; background: var(--surface);
+      }
+      .timeline-summary {
+        min-height: 48px; display: flex; align-items: center; gap: 12px; padding: 0 14px;
+        border-bottom: 1px solid var(--line); background: var(--surface);
+      }
+      .summary-copy { min-width: 0; flex: 1; display: flex; align-items: center; gap: 9px; color: var(--ink-2); font-size: 10.5px; }
+      .summary-copy strong { color: var(--ink); font-size: 11px; }
+      .summary-divider { width: 1px; height: 13px; background: var(--line); }
+      .summary-filter {
+        display: inline-flex; align-items: center; gap: 5px; padding: 4px 7px;
+        border-radius: 6px; background: var(--surface-2); color: var(--ink-3); font-size: 9.5px;
+      }
+      .summary-action {
+        height: 30px; display: inline-flex; align-items: center; gap: 7px; padding: 0 10px;
+        border: 1px solid var(--line); border-radius: 7px; background: var(--surface);
+        color: var(--ink-2); font-size: 10.5px; font-weight: 650; cursor: pointer;
+      }
+      .summary-action:hover { color: var(--brand-strong); border-color: #bfd3ee; background: #fbfdff; }
+      .summary-action svg { width: 13px; height: 13px; }
+      .summary-badge {
+        min-width: 17px; height: 17px; display: inline-grid; place-items: center;
+        border-radius: 5px; background: var(--brand-soft); color: var(--brand-strong); font-size: 8.5px;
+      }
+      .timeline-columns {
+        height: 31px; display: grid; grid-template-columns: 82px 178px minmax(240px, 1fr) 104px 62px 20px;
+        align-items: center; gap: 10px; padding: 0 13px;
+        border-bottom: 1px solid var(--line-soft); background: var(--surface-2);
+        color: var(--ink-3); font-size: 8.5px; font-weight: 750; letter-spacing: .08em;
+      }
+      .timeline-columns span:nth-last-child(-n+2) { text-align: right; }
+      .timeline-list { position: relative; }
+      .timeline-list::before {
+        content: ""; position: absolute; top: 0; bottom: 0; left: 64px; width: 1px;
+        background: var(--line); pointer-events: none;
+      }
+      .timeline-row {
+        position: relative; width: 100%; min-height: 62px;
+        display: grid; grid-template-columns: 82px 178px minmax(240px, 1fr) 104px 62px 20px;
+        align-items: center; gap: 10px; padding: 6px 13px;
+        border: 0; border-bottom: 1px solid var(--line-soft); background: var(--surface);
+        text-align: left; cursor: pointer; transition: background-color .12s ease;
+      }
+      .timeline-row:hover { background: #f7faff; }
+      .timeline-row.selected { background: #f1f6fd; box-shadow: inset 3px 0 0 var(--brand); }
+      .time-cell { position: relative; align-self: stretch; display: flex; align-items: center; color: var(--ink-2); font-size: 10.5px; font-weight: 680; }
+      .rail-dot {
+        position: absolute; right: 10px; top: 50%; width: 9px; height: 9px; transform: translateY(-50%);
+        border: 2px solid var(--surface); border-radius: 50%; background: var(--slate); box-shadow: 0 0 0 1px var(--line);
+      }
+      .timeline-row:hover .rail-dot, .timeline-row.selected .rail-dot { background: var(--brand); }
+      .app-cell { min-width: 0; display: flex; align-items: center; gap: 9px; }
+      .app-icon {
+        width: 30px; height: 30px; display: grid; place-items: center; flex: none;
+        border-radius: 8px; color: white; font-size: 9px; font-weight: 800; letter-spacing: -.02em;
+      }
+      .app-copy { min-width: 0; }
+      .app-name { display: block; overflow: hidden; color: var(--ink); font-size: 10.5px; font-weight: 720; text-overflow: ellipsis; white-space: nowrap; }
+      .category { display: flex; align-items: center; gap: 4px; margin-top: 3px; color: var(--ink-3); font-size: 8.5px; }
+      .category-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--category); }
+      .title-cell { min-width: 0; }
+      .activity-title { display: block; overflow: hidden; color: var(--ink-2); font-size: 10.5px; font-weight: 580; text-overflow: ellipsis; white-space: nowrap; }
+      .activity-context { display: block; margin-top: 3px; overflow: hidden; color: var(--ink-3); font-size: 8.5px; text-overflow: ellipsis; white-space: nowrap; }
+      .preview-cell { height: 46px; display: flex; justify-content: flex-end; align-items: center; }
+      .mini-shot {
+        width: 78px; height: 44px; overflow: hidden; display: grid; grid-template-columns: 18px 1fr;
+        border: 1px solid var(--line); border-radius: 6px; background: #f7f9fb;
+      }
+      .mini-shot-side { padding-top: 5px; background: #edf2f6; }
+      .mini-shot-side::before, .mini-shot-side::after { content: ""; display: block; width: 9px; height: 2px; margin: 0 auto 4px; border-radius: 2px; background: #cad5dd; }
+      .mini-shot-main { padding: 6px 5px; }
+      .mini-shot-main i { display: block; height: 3px; margin-bottom: 4px; border-radius: 2px; background: #c8d6e2; }
+      .mini-shot-main i:nth-child(2) { width: 72%; background: #87b7f5; }
+      .mini-shot-main i:nth-child(3) { width: 88%; }
+      .no-shot { color: #b1bcc4; font-size: 8.5px; }
+      .duration { color: var(--ink-2); font-size: 10px; font-weight: 700; text-align: right; }
+      .row-arrow { width: 13px; height: 13px; color: #aab5bd; }
+      .timeline-footer {
+        min-height: 38px; display: flex; align-items: center; justify-content: center;
+        color: var(--ink-3); background: var(--surface-2); font-size: 9px;
+      }
+
+      .drawer-backdrop {
+        position: fixed; inset: 0; z-index: 60; display: none;
+        background: rgba(15, 23, 31, .34); backdrop-filter: blur(2px);
+      }
+      .drawer-backdrop.open { display: block; }
+      .drawer {
+        position: absolute; top: 28px; right: 0; bottom: 0; width: min(440px, calc(100vw - 240px));
+        display: flex; flex-direction: column; border-left: 1px solid var(--line);
+        background: var(--surface); box-shadow: var(--shadow-float);
+        transform: translateX(100%); transition: transform .18s ease;
+      }
+      .drawer-backdrop.open .drawer { transform: translateX(0); }
+      .drawer-head { min-height: 64px; display: flex; align-items: center; gap: 10px; padding: 12px 15px; border-bottom: 1px solid var(--line); }
+      .drawer-head-copy { min-width: 0; flex: 1; }
+      .drawer-kicker { display: block; margin-bottom: 3px; color: var(--ink-3); font-size: 8.5px; font-weight: 700; letter-spacing: .08em; }
+      .drawer-head h2 { margin: 0; overflow: hidden; font-size: 14px; text-overflow: ellipsis; white-space: nowrap; }
+      .drawer-close {
+        width: 29px; height: 29px; display: grid; place-items: center; flex: none;
+        border: 1px solid var(--line); border-radius: 7px; background: var(--surface); color: var(--ink-3); cursor: pointer;
+      }
+      .drawer-close:hover { color: var(--ink); background: var(--surface-2); }
+      .drawer-close svg { width: 13px; height: 13px; }
+      .drawer-body { min-height: 0; flex: 1; overflow: auto; padding: 15px; }
+      .drawer-preview {
+        height: 214px; display: grid; grid-template-columns: 49px 1fr; overflow: hidden;
+        border: 1px solid var(--line); border-radius: 9px; background: #f7f9fb;
+      }
+      .drawer-preview-side { padding: 15px 9px; border-right: 1px solid #dae3e9; background: #eef3f6; }
+      .drawer-preview-side i { display: block; width: 29px; height: 5px; margin-bottom: 10px; border-radius: 3px; background: #c8d4dc; }
+      .drawer-preview-main { padding: 18px; }
+      .drawer-preview-main .preview-title { width: 42%; height: 9px; margin-bottom: 14px; border-radius: 5px; background: #9ebce3; }
+      .preview-summary { display: grid; grid-template-columns: repeat(4, 1fr); gap: 7px; margin-bottom: 14px; }
+      .preview-summary i { height: 28px; border-radius: 5px; background: #e3eaf0; }
+      .preview-chart { height: 77px; display: flex; align-items: end; gap: 5px; padding: 8px 5px 0; border-top: 1px solid #dde5eb; }
+      .preview-chart i { flex: 1; border-radius: 3px 3px 0 0; background: #6fa7ef; }
+      .detail-section { margin-top: 16px; padding-top: 15px; border-top: 1px solid var(--line); }
+      .detail-section:first-of-type { margin-top: 14px; }
+      .detail-label { margin: 0 0 9px; color: var(--ink-3); font-size: 8.5px; font-weight: 760; letter-spacing: .1em; }
+      .detail-grid { display: grid; grid-template-columns: 82px 1fr; gap: 8px 12px; font-size: 10.5px; }
+      .detail-grid dt { color: var(--ink-3); }
+      .detail-grid dd { min-width: 0; margin: 0; overflow: hidden; color: var(--ink-2); text-overflow: ellipsis; white-space: nowrap; }
+      .segment-control { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+      .segment-button {
+        height: 31px; border: 1px solid var(--line); border-radius: 7px;
+        background: var(--surface); color: var(--ink-2); font-size: 9.5px; cursor: pointer;
+      }
+      .segment-button.active { border-color: #b7cdf0; background: var(--brand-soft); color: var(--brand-strong); font-weight: 700; }
+      .summary-drawer .drawer-preview { height: auto; display: block; padding: 0; border: 0; background: transparent; }
+      .summary-stat-band { display: grid; grid-template-columns: repeat(3, 1fr); border: 1px solid var(--line); border-radius: 9px; }
+      .summary-stat { padding: 11px 12px; }
+      .summary-stat + .summary-stat { border-left: 1px solid var(--line-soft); }
+      .summary-stat span { display: block; color: var(--ink-3); font-size: 8.5px; }
+      .summary-stat strong { display: block; margin-top: 5px; font-size: 15px; }
+      .summary-hours { margin-top: 14px; border: 1px solid var(--line); border-radius: 9px; }
+      .summary-hour { display: grid; grid-template-columns: 52px 1fr 44px; gap: 9px; padding: 11px 12px; border-top: 1px solid var(--line-soft); }
+      .summary-hour:first-child { border-top: 0; }
+      .summary-hour time { color: var(--ink); font-size: 10px; font-weight: 700; }
+      .summary-hour p { margin: 0; color: var(--ink-2); font-size: 10px; line-height: 1.5; }
+      .summary-hour span { color: var(--ink-3); font-size: 9px; text-align: right; }
+
+      .toast {
+        position: fixed; left: 50%; bottom: 24px; z-index: 100; display: flex; align-items: center; gap: 7px;
+        max-width: 380px; padding: 10px 13px; border-radius: 8px; background: #17222c; color: #f5f8fa;
+        box-shadow: var(--shadow-float); font-size: 10.5px; opacity: 0; pointer-events: none;
+        transform: translate(-50%, 8px); transition: opacity .15s ease, transform .15s ease;
+      }
+      .toast.show { opacity: 1; transform: translate(-50%, 0); }
+      .toast svg { width: 13px; height: 13px; color: #82d7bd; }
+
+      @media (max-width: 1120px) {
+        .timeline-columns, .timeline-row { grid-template-columns: 76px 152px minmax(190px, 1fr) 74px 56px 16px; gap: 7px; }
+        .preview-cell { justify-content: center; }
+        .mini-shot { width: 66px; }
+        .main-inner { width: calc(100% - 28px); }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="app-window" aria-label="Work Review 紧凑时间线原型">
+      <header class="windowbar">
+        <span class="windowbar-title">Work Review</span>
+        <div class="window-controls" aria-hidden="true">
+          <button class="window-control"><svg><use href="#i-min"></use></svg></button>
+          <button class="window-control"><svg><use href="#i-max"></use></svg></button>
+          <button class="window-control close"><svg><use href="#i-close"></use></svg></button>
+        </div>
+      </header>
+
+      <div class="workspace">
+        <aside class="sidebar">
+          <div class="brand-row">
+            <span class="brand-mark"><img src="./assets/icon.png" alt="" /></span>
+            <div class="brand-copy"><h2 class="brand-name">Work Review</h2><div class="brand-edition">本地工作回顾</div></div>
+          </div>
+
+          <div class="capture-panel" id="capturePanel">
+            <span class="capture-dot"></span>
+            <span class="capture-copy"><span class="capture-title">正在记录</span><span class="capture-meta">仅保存在本机</span></span>
+            <button class="pause-btn" id="pauseButton" type="button" aria-label="暂停记录"><svg><use href="#i-pause"></use></svg></button>
+          </div>
+
+          <div class="nav-label">工作空间</div>
+          <nav class="nav-list" aria-label="主导航">
+            <button class="nav-item" data-nav="overview" type="button"><svg><use href="#i-overview"></use></svg><span>概览</span></button>
+            <button class="nav-item" data-nav="eye" type="button"><svg><use href="#i-eye"></use></svg><span>护眼</span></button>
+            <button class="nav-item active" data-nav="timeline" type="button"><svg><use href="#i-timeline"></use></svg><span>时间线</span></button>
+            <button class="nav-item" data-nav="report" type="button"><svg><use href="#i-report"></use></svg><span>日报</span><span class="nav-count">1</span></button>
+            <button class="nav-item" data-nav="ask" type="button"><svg><use href="#i-ask"></use></svg><span>助手</span></button>
+            <button class="nav-item" data-nav="settings" type="button"><svg><use href="#i-settings"></use></svg><span>设置</span></button>
+            <button class="nav-item" data-nav="info" type="button"><svg><use href="#i-info"></use></svg><span>关于</span></button>
+          </nav>
+          <div class="sidebar-spacer"></div>
+          <div class="sidebar-tools"><button class="locale-button" type="button">简体中文⌄</button></div>
+        </aside>
+
+        <section class="main">
+          <div class="main-inner">
+            <header class="page-head">
+              <div class="heading-row">
+                <span class="heading-icon"><svg><use href="#i-timeline"></use></svg></span>
+                <div class="page-heading"><h1>时间线</h1><p class="page-subtitle">按时间回看今天的活动记录<span class="live-time num">16:45</span></p></div>
+              </div>
+              <div class="toolbar">
+                <button class="date-control" id="dateButton" type="button"><svg><use href="#i-calendar"></use></svg><span class="num">2026/08/09</span><svg><use href="#i-down"></use></svg></button>
+                <button class="tool-button danger" data-action="cleanup" type="button" aria-label="清理记录"><svg><use href="#i-trash"></use></svg></button>
+                <button class="tool-button" data-action="refresh" type="button" aria-label="刷新"><svg><use href="#i-refresh"></use></svg></button>
+                <button class="tool-button" data-action="export" type="button" aria-label="导出"><svg><use href="#i-export"></use></svg></button>
+              </div>
+            </header>
+
+            <section class="timeline-panel" aria-label="今日活动记录">
+              <div class="timeline-summary">
+                <div class="summary-copy"><strong>今日 12 条记录</strong><span class="summary-divider"></span><span class="num">09:12–16:45</span><span class="summary-filter">已合并连续活动</span></div>
+                <button class="summary-action" id="summaryButton" type="button"><svg><use href="#i-summary"></use></svg><span>时段摘要</span><span class="summary-badge">2</span><svg><use href="#i-chevron"></use></svg></button>
+              </div>
+
+              <div class="timeline-columns" aria-hidden="true"><span>时间</span><span>应用 / 分类</span><span>活动内容</span><span>截图</span><span>时长</span><span></span></div>
+              <div class="timeline-list" id="timelineList"></div>
+              <div class="timeline-footer">已显示今天的全部记录 · 点击任意一行查看完整截图与详情</div>
+            </section>
+          </div>
+        </section>
+      </div>
+    </main>
+
+    <div class="drawer-backdrop" id="detailBackdrop" aria-hidden="true">
+      <aside class="drawer" role="dialog" aria-modal="true" aria-labelledby="detailTitle">
+        <header class="drawer-head">
+          <span class="app-icon" id="detailIcon">CU</span>
+          <div class="drawer-head-copy"><span class="drawer-kicker">活动详情</span><h2 id="detailTitle">Cursor</h2></div>
+          <button class="drawer-close" data-close="detail" type="button" aria-label="关闭"><svg><use href="#i-close"></use></svg></button>
+        </header>
+        <div class="drawer-body">
+          <div class="drawer-preview" id="detailPreview">
+            <div class="drawer-preview-side"><i></i><i></i><i></i><i></i></div>
+            <div class="drawer-preview-main"><div class="preview-title"></div><div class="preview-summary"><i></i><i></i><i></i><i></i></div><div class="preview-chart"><i style="height:34%"></i><i style="height:52%"></i><i style="height:75%"></i><i style="height:44%"></i><i style="height:88%"></i><i style="height:61%"></i><i style="height:72%"></i><i style="height:48%"></i></div></div>
+          </div>
+          <section class="detail-section"><p class="detail-label">记录信息</p><dl class="detail-grid"><dt>开始时间</dt><dd class="num" id="detailTime">16:45:41</dd><dt>持续时长</dt><dd class="num" id="detailDuration">28 分钟</dd><dt>窗口标题</dt><dd id="detailActivity">实现时间线筛选与详情抽屉</dd><dt>页面地址</dt><dd id="detailContext">github.com/example/work-review/pull/142</dd></dl></section>
+          <section class="detail-section"><p class="detail-label">应用分类</p><div class="segment-control" id="categorySegments"><button class="segment-button active" type="button">开发工具</button><button class="segment-button" type="button">办公软件</button><button class="segment-button" type="button">其他</button></div></section>
+          <section class="detail-section"><p class="detail-label">截图隐私</p><div class="segment-control" id="privacySegments"><button class="segment-button active" type="button">完整保存</button><button class="segment-button" type="button">仅标题</button><button class="segment-button" type="button">不记录</button></div></section>
+        </div>
+      </aside>
+    </div>
+
+    <div class="drawer-backdrop summary-drawer" id="summaryBackdrop" aria-hidden="true">
+      <aside class="drawer" role="dialog" aria-modal="true" aria-labelledby="summaryTitle">
+        <header class="drawer-head">
+          <span class="heading-icon"><svg><use href="#i-summary"></use></svg></span>
+          <div class="drawer-head-copy"><span class="drawer-kicker">2026/08/09</span><h2 id="summaryTitle">时段摘要</h2></div>
+          <button class="drawer-close" data-close="summary" type="button" aria-label="关闭"><svg><use href="#i-close"></use></svg></button>
+        </header>
+        <div class="drawer-body">
+          <div class="drawer-preview">
+            <div class="summary-stat-band"><div class="summary-stat"><span>有效记录</span><strong class="num">7h24m</strong></div><div class="summary-stat"><span>主要分类</span><strong>开发</strong></div><div class="summary-stat"><span>最长专注</span><strong class="num">1h47m</strong></div></div>
+            <div class="summary-hours"><article class="summary-hour"><time class="num">09–12</time><p>集中完成概览页落地和验证，期间短暂查看文档。</p><span class="num">2h31m</span></article><article class="summary-hour"><time class="num">14–17</time><p>梳理时间线页面结构，并制作紧凑列表原型。</p><span class="num">2h18m</span></article></div>
+          </div>
+        </div>
+      </aside>
+    </div>
+
+    <div class="toast" id="toast"><svg><use href="#i-check"></use></svg><span></span></div>
+
+    <svg class="sr-only" width="0" height="0" aria-hidden="true">
+      <symbol id="i-overview" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="4" y="4" width="6" height="6" rx="1.5"/><rect x="14" y="4" width="6" height="6" rx="1.5"/><rect x="4" y="14" width="6" height="6" rx="1.5"/><rect x="14" y="14" width="6" height="6" rx="1.5"/></symbol>
+      <symbol id="i-eye" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M2.8 12s3.5-5.2 9.2-5.2 9.2 5.2 9.2 5.2-3.5 5.2-9.2 5.2S2.8 12 2.8 12Z"/><circle cx="12" cy="12" r="2.4"/></symbol>
+      <symbol id="i-timeline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5v5l3.2 2"/></symbol>
+      <symbol id="i-report" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M6 3.8h8l4 4V20H6z"/><path d="M14 3.8V8h4M9 12h6M9 15.5h6"/></symbol>
+      <symbol id="i-ask" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 5.5h16v12H9l-4.5 3v-3H4z"/><path d="M8 10h8M8 13.5h5"/></symbol>
+      <symbol id="i-settings" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="3"/><path d="M19 13.5v-3l-2-.6a7 7 0 0 0-.7-1.6l1-1.8-2.1-2.1-1.8 1A7 7 0 0 0 11.5 5l-.6-2h-3l-.6 2a7 7 0 0 0-1.6.7l-1.8-1-2.1 2.1 1 1.8A7 7 0 0 0 2 10.5l-2 .6v3l2 .6a7 7 0 0 0 .7 1.6l-1 1.8 2.1 2.1 1.8-1a7 7 0 0 0 1.6.7l.6 2h3l.6-2a7 7 0 0 0 1.6-.7l1.8 1 2.1-2.1-1-1.8a7 7 0 0 0 .7-1.6Z" transform="translate(2.1 -.6) scale(.82)"/></symbol>
+      <symbol id="i-info" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="8.5"/><path d="M12 10.5v6M12 7.5h.01"/></symbol>
+      <symbol id="i-pause" viewBox="0 0 24 24" fill="currentColor"><path d="M7 5h3.5v14H7zM13.5 5H17v14h-3.5z"/></symbol>
+      <symbol id="i-play" viewBox="0 0 24 24" fill="currentColor"><path d="m7 4 13 8-13 8z"/></symbol>
+      <symbol id="i-calendar" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="5.5" width="16" height="14" rx="2"/><path d="M8 3.5v4M16 3.5v4M4 9.5h16"/></symbol>
+      <symbol id="i-down" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m7 10 5 5 5-5"/></symbol>
+      <symbol id="i-trash" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 7h14M9 7V4h6v3M7 7l1 13h8l1-13M10 11v5M14 11v5"/></symbol>
+      <symbol id="i-refresh" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20 7v5h-5M4 17v-5h5"/><path d="M18.2 9A7 7 0 0 0 6 6.5L4 9M5.8 15A7 7 0 0 0 18 17.5l2-2.5"/></symbol>
+      <symbol id="i-export" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 4v11M8 11l4 4 4-4M5 19h14"/></symbol>
+      <symbol id="i-summary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 19V9h3v10M10.5 19V5h3v14M16 19v-7h3v7"/></symbol>
+      <symbol id="i-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 6 6 6-6 6"/></symbol>
+      <symbol id="i-close" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="m7 7 10 10M17 7 7 17"/></symbol>
+      <symbol id="i-min" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M6 12h12"/></symbol>
+      <symbol id="i-max" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="6" y="6" width="12" height="12"/></symbol>
+      <symbol id="i-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m5 12 4 4 10-10"/></symbol>
+    </svg>
+
+    <script>
+      const activities = [
+        { time: '16:45', app: 'Cursor', icon: 'CU', color: '#4d83e8', category: '开发工具', categoryColor: '#2f78e8', title: '实现时间线筛选与详情抽屉', context: 'github.com/example/work-review/pull/142', duration: '28分钟', shot: true },
+        { time: '16:35', app: 'Chrome', icon: 'CH', color: '#d78a31', category: '办公软件', categoryColor: '#cf812c', title: 'Svelte component lifecycle — documentation', context: 'svelte.dev/docs/svelte/lifecycle-hooks', duration: '8分钟', shot: false },
+        { time: '16:25', app: '微信', icon: '微', color: '#28a67f', category: '通讯协作', categoryColor: '#159b76', title: '产品评审群：确认概览页紧凑方案', context: '工作群聊', duration: '6分钟', shot: false },
+        { time: '16:14', app: 'Figma', icon: 'FI', color: '#8a62db', category: '设计工具', categoryColor: '#835ad8', title: 'Work Review · Timeline exploration', context: '时间线密度与详情交互', duration: '22分钟', shot: true },
+        { time: '16:04', app: 'Terminal', icon: 'TE', color: '#547fdd', category: '开发工具', categoryColor: '#2f78e8', title: 'npm run test -- TimelineLayout', context: '~/projects/002-eye-review-worktrees/ui', duration: '7分钟', shot: false },
+        { time: '15:52', app: 'Obsidian', icon: 'OB', color: '#7762b6', category: '办公软件', categoryColor: '#cf812c', title: '002 Eye Review UI 改版记录', context: '原型优先工作流', duration: '12分钟', shot: false },
+        { time: '15:37', app: 'Chrome', icon: 'CH', color: '#d78a31', category: '开发工具', categoryColor: '#2f78e8', title: 'GitHub · review timeline implementation', context: 'github.com/example/work-review', duration: '15分钟', shot: false },
+        { time: '15:29', app: 'Slack', icon: 'SL', color: '#bf566d', category: '通讯协作', categoryColor: '#159b76', title: 'Design sync / product-ui', context: '确认时间线信息层级', duration: '8分钟', shot: false },
+        { time: '15:09', app: 'Cursor', icon: 'CU', color: '#4d83e8', category: '开发工具', categoryColor: '#2f78e8', title: 'ActivityHourlyChart.svelte', context: '整理概览页重复模块', duration: '20分钟', shot: true },
+        { time: '14:58', app: 'Preview', icon: 'PR', color: '#319ab3', category: '开发工具', categoryColor: '#2f78e8', title: 'Work Review local preview', context: '127.0.0.1:4312', duration: '11分钟', shot: false },
+        { time: '14:46', app: 'Finder', icon: 'FD', color: '#7790a4', category: '其他', categoryColor: '#8b9aa6', title: 'UI assets', context: 'designs/work-review-ui-refresh', duration: '4分钟', shot: false },
+        { time: '14:37', app: 'Music', icon: 'MU', color: '#d65f78', category: '娱乐摸鱼', categoryColor: '#d34b5d', title: 'Focus playlist', context: 'Deep work mix', duration: '6分钟', shot: false }
+      ];
+
+      const list = document.querySelector('#timelineList');
+      list.innerHTML = activities.map((item, index) => `
+        <button class="timeline-row ${index === 0 ? 'selected' : ''}" type="button" data-index="${index}">
+          <span class="time-cell num">${item.time}<i class="rail-dot"></i></span>
+          <span class="app-cell"><span class="app-icon" style="background:${item.color}">${item.icon}</span><span class="app-copy"><span class="app-name">${item.app}</span><span class="category"><i class="category-dot" style="--category:${item.categoryColor}"></i>${item.category}</span></span></span>
+          <span class="title-cell"><span class="activity-title">${item.title}</span><span class="activity-context">${item.context}</span></span>
+          <span class="preview-cell">${item.shot ? '<span class="mini-shot" aria-label="有截图"><span class="mini-shot-side"></span><span class="mini-shot-main"><i></i><i></i><i></i><i></i></span></span>' : '<span class="no-shot">—</span>'}</span>
+          <span class="duration num">${item.duration}</span><svg class="row-arrow"><use href="#i-chevron"></use></svg>
+        </button>`).join('');
+
+      const detailBackdrop = document.querySelector('#detailBackdrop');
+      const summaryBackdrop = document.querySelector('#summaryBackdrop');
+      function openDetail(index) {
+        const item = activities[index];
+        document.querySelectorAll('.timeline-row').forEach((row, rowIndex) => row.classList.toggle('selected', rowIndex === index));
+        const icon = document.querySelector('#detailIcon');
+        icon.textContent = item.icon;
+        icon.style.background = item.color;
+        document.querySelector('#detailTitle').textContent = item.app;
+        document.querySelector('#detailTime').textContent = `${item.time}:41`;
+        document.querySelector('#detailDuration').textContent = item.duration;
+        document.querySelector('#detailActivity').textContent = item.title;
+        document.querySelector('#detailContext').textContent = item.context;
+        document.querySelector('#detailPreview').style.display = item.shot ? 'grid' : 'none';
+        detailBackdrop.classList.add('open');
+        detailBackdrop.setAttribute('aria-hidden', 'false');
+      }
+      function closeDrawer(backdrop) {
+        backdrop.classList.remove('open');
+        backdrop.setAttribute('aria-hidden', 'true');
+      }
+      document.querySelectorAll('.timeline-row').forEach(row => row.addEventListener('click', () => openDetail(Number(row.dataset.index))));
+      document.querySelector('#summaryButton').addEventListener('click', () => {
+        summaryBackdrop.classList.add('open');
+        summaryBackdrop.setAttribute('aria-hidden', 'false');
+      });
+      document.querySelectorAll('[data-close="detail"]').forEach(button => button.addEventListener('click', () => closeDrawer(detailBackdrop)));
+      document.querySelectorAll('[data-close="summary"]').forEach(button => button.addEventListener('click', () => closeDrawer(summaryBackdrop)));
+      [detailBackdrop, summaryBackdrop].forEach(backdrop => backdrop.addEventListener('click', event => {
+        if (event.target === backdrop) closeDrawer(backdrop);
+      }));
+      window.addEventListener('keydown', event => {
+        if (event.key === 'Escape') { closeDrawer(detailBackdrop); closeDrawer(summaryBackdrop); }
+      });
+
+      document.querySelectorAll('.segment-control').forEach(group => group.querySelectorAll('.segment-button').forEach(button => button.addEventListener('click', () => {
+        group.querySelectorAll('.segment-button').forEach(item => item.classList.toggle('active', item === button));
+        showToast(`已选择“${button.textContent}”（原型演示）`);
+      })));
+
+      let recording = true;
+      const capturePanel = document.querySelector('#capturePanel');
+      document.querySelector('#pauseButton').addEventListener('click', event => {
+        recording = !recording;
+        capturePanel.classList.toggle('paused', !recording);
+        capturePanel.querySelector('.capture-title').textContent = recording ? '正在记录' : '记录已暂停';
+        event.currentTarget.innerHTML = recording ? '<svg><use href="#i-pause"></use></svg>' : '<svg><use href="#i-play"></use></svg>';
+        showToast(recording ? '记录已继续' : '记录已暂停');
+      });
+      document.querySelectorAll('[data-action]').forEach(button => button.addEventListener('click', () => {
+        const messages = { cleanup: '清理记录会继续使用现有确认流程', refresh: '时间线已刷新', export: '已准备导出 JSON' };
+        showToast(messages[button.dataset.action]);
+      }));
+      document.querySelector('#dateButton').addEventListener('click', () => showToast('日期选择继续复用现有控件'));
+      document.querySelectorAll('[data-nav]').forEach(button => button.addEventListener('click', () => {
+        if (button.dataset.nav !== 'timeline') showToast('本原型只展示时间线页面；导航结构保持一致');
+      }));
+      document.querySelector('.locale-button').addEventListener('click', () => showToast('语言切换入口保持不变'));
+
+      let toastTimer;
+      function showToast(message) {
+        const toast = document.querySelector('#toast');
+        toast.querySelector('span').textContent = message;
+        toast.classList.add('show');
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => toast.classList.remove('show'), 2100);
+      }
+    </script>
+  </body>
+</html>

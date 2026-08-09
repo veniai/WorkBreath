@@ -1,0 +1,44 @@
+{
+  "httpStatus": 200,
+  "readyState": "complete",
+  "fixedLight": true,
+  "cleanupDialog": {
+    "role": "dialog",
+    "ariaModal": "true",
+    "width": 544,
+    "radius": "12px",
+    "modes": 3,
+    "selectedModes": 1,
+    "focusInside": true,
+    "closeAriaLabel": "关闭",
+    "fixedLight": true
+  },
+  "cleanupTransition": {
+    "dialogCount": 1,
+    "cleanupDialogCount": 0,
+    "confirmDialogCount": 1,
+    "title": "删除当天全部记录",
+    "width": 420,
+    "radius": "12px",
+    "focusInside": true,
+    "closeAriaLabel": "关闭"
+  },
+  "cleanupReturned": true,
+  "categoryConfirm": {
+    "role": "dialog",
+    "ariaModal": "true",
+    "title": "修改应用默认分类",
+    "width": 420,
+    "radius": "12px",
+    "popoverCount": 0,
+    "focusInside": true,
+    "closeAriaLabel": "关闭"
+  },
+  "categoryFocusReturned": true,
+  "responsiveCleanup": {
+    "noHorizontalOverflow": true,
+    "width": 539,
+    "fitsViewport": true
+  },
+  "consoleErrors": []
+}

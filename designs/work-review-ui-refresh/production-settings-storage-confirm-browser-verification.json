@@ -1,0 +1,42 @@
+{
+  "httpStatus": 200,
+  "readyState": "complete",
+  "fixedLight": true,
+  "clearDialog": {
+    "title": "确认清理历史数据",
+    "dangerButton": true,
+    "focusedCancel": true,
+    "escape": {
+      "commandCount": 0,
+      "focusReturned": true
+    },
+    "confirmedCommandCount": 1
+  },
+  "migrateDialog": {
+    "title": "确认迁移数据目录",
+    "message": "将把当前数据迁移到新目录：\n/data/work-review-default\n\n若目标目录已有 Work Review 历史数据，会被当前数据覆盖。此过程可能持续几秒，是否继续？",
+    "width": 420,
+    "radius": "12px",
+    "dangerButton": true,
+    "closeAriaLabel": "关闭",
+    "escape": {
+      "commandCount": 0,
+      "focusReturned": true
+    },
+    "responsive": {
+      "width": 390,
+      "fitsViewport": true,
+      "fitsHeight": true,
+      "noHorizontalOverflow": true
+    },
+    "confirmedCommandCount": 1
+  },
+  "cleanupDialog": {
+    "title": "确认清理旧目录",
+    "message": "将清理旧目录中的 Work Review 数据：\n/data/work-review-current\n\n只会删除应用管理的配置、数据库、截图、OCR 日志等文件；若目录内还有其他文件，会保留它们。是否继续？",
+    "dangerButton": true,
+    "confirmedCommandCount": 1,
+    "pendingPanelRemoved": true
+  },
+  "consoleErrors": []
+}

@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="design-variant" content="compact-light-secondary-surfaces" />
+    <title>Work Review · 二级交互规范原型</title>
+    <!--
+      设计上下文：延续已确认的固定亮色紧凑工作台，不改主页面结构，只收敛弹窗、确认框和抽屉。
+      关键原则：所有遮罩共用同一视觉层级；抽屉进入编辑时先退出抽屉，再打开表单弹窗，避免双层遮挡。
+      交互范围：普通确认、中性 OCR 二选一、危险清理、批量导出、生成设置抽屉与预设编辑；包含 Escape、焦点锁定、焦点恢复和表单校验。
+      实现边界：这是可点击原型，不调用真实 Tauri 命令，不修改任何业务数据。
+    -->
+    <link rel="stylesheet" href="./secondary-surfaces.css" />
+  </head>
+  <body>
+    <div id="root"></div>
+
+    <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+    <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+    <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+    <script type="text/babel" src="./secondary-surfaces.jsx"></script>
+  </body>
+</html>

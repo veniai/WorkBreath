@@ -1,0 +1,30 @@
+{
+  "url": "http://127.0.0.1:4311/work-review-ui-refresh/eye-care-compact.html",
+  "viewport": { "width": 1440, "height": 1120 },
+  "initial": {
+    "colorScheme": "light",
+    "sidebarWidth": 204,
+    "heroHeight": 202,
+    "middleHeight": 218,
+    "settingsHeight": 261,
+    "horizontalOverflow": false,
+    "saveDisabled": true,
+    "state": "正在计时",
+    "progress": "72%"
+  },
+  "interaction": {
+    "awayState": "无输入超过宽限，暂不计时",
+    "restState": "正在强制休息",
+    "restProgress": "26%",
+    "dirtyStateEnablesSave": true,
+    "saveRestoresSavedState": true,
+    "saveToastVisible": true
+  },
+  "responsive1024": {
+    "horizontalOverflow": false,
+    "middleGridSingleColumn": true,
+    "settingsGridColumns": 3,
+    "heroVisible": true
+  },
+  "consoleErrors": []
+}

@@ -1,0 +1,17 @@
+{
+  "httpStatus": 200,
+  "readyState": "complete",
+  "colorScheme": "light",
+  "summaryItems": 4,
+  "dateTitles": 1,
+  "sections": 4,
+  "sidebarWidth": 204,
+  "bodyOverflow": false,
+  "summaryBorder": "1px",
+  "articleRadius": "9px",
+  "exportMenuOpen": true,
+  "batchModalOpen": true,
+  "settingsDrawerOpen": true,
+  "activeToc": "重点进展",
+  "consoleErrors": []
+}

@@ -1,0 +1,47 @@
+{
+  "httpStatus": 200,
+  "readyState": "complete",
+  "fixedLight": true,
+  "dialog": {
+    "role": "dialog",
+    "ariaModal": "true",
+    "labelledBy": "confirm-dialog-title",
+    "describedBy": "confirm-dialog-description",
+    "title": "确定删除预设\"项目复盘\"？",
+    "message": "突出本日完成事项、阻塞风险与下一步计划。",
+    "width": 420,
+    "radius": "12px",
+    "background": "rgb(255, 255, 255)",
+    "focusedCancel": true,
+    "confirmBackground": "rgb(211, 75, 93)",
+    "closeAriaLabel": "关闭",
+    "darkClasses": false,
+    "visible": true,
+    "dialogOnTop": true,
+    "escape": {
+      "drawerStillOpen": true,
+      "focusReturnedToDelete": true
+    },
+    "backdropCancels": true,
+    "responsive": {
+      "width": 390,
+      "fitsViewport": true,
+      "fitsHeight": true,
+      "noHorizontalOverflow": true
+    }
+  },
+  "consoleErrors": [],
+  "timelineDialog": {
+    "title": "删除该活动记录",
+    "message": "确定删除该条活动（Cursor，21:36）？对应截图也会一并删除，此操作不可恢复。",
+    "messageIsObjectFallback": false,
+    "dangerButton": true,
+    "focusedCancel": true,
+    "detailDrawerStillOpen": true,
+    "escape": {
+      "detailDrawerStillOpen": true,
+      "focusReturnedToDelete": true
+    },
+    "consoleErrors": []
+  }
+}

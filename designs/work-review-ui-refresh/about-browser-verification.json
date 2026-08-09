@@ -1,0 +1,35 @@
+{
+  "url": "http://127.0.0.1:4311/work-review-ui-refresh/about-compact.html",
+  "viewport": { "width": 1440, "height": 1120 },
+  "initial": {
+    "httpStatus": 200,
+    "readyState": "complete",
+    "colorScheme": "light",
+    "sidebarWidth": 204,
+    "contentWidth": 1024,
+    "productHeight": 244,
+    "productColumns": 2,
+    "principlesHeight": 141,
+    "principleColumns": 3,
+    "versionTags": 1,
+    "actionCount": 3,
+    "autoCheckEnabled": true,
+    "horizontalOverflow": false
+  },
+  "interaction": {
+    "autoCheckCanDisable": true,
+    "updateStatus": "已是最新版本",
+    "supportDialogOpen": true,
+    "supportDialogRole": "dialog",
+    "supportMethodCount": 3,
+    "qrZoomOpen": true,
+    "escapeClosesLayers": true
+  },
+  "responsive1024": {
+    "productColumns": 1,
+    "updateColumns": 3,
+    "principleColumns": 3,
+    "horizontalOverflow": false
+  },
+  "consoleErrors": []
+}
