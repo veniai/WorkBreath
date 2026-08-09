@@ -14,8 +14,11 @@ test('设置页应接入编辑部风格壳层并强化保存操作区', async ()
   assert.match(settingsSource, /<nav class="settings-tab-rail" aria-label=\{t\('settings\.title'\)\}>/);
   assert.match(settingsSource, /aria-current=\{activeTab === tab\.id \? 'page' : undefined\}/);
   assert.match(settingsSource, /settings-stage-shell/);
+  assert.match(settingsSource, /settings-stage-intro/);
+  assert.match(settingsSource, /settings-tab-rail-note/);
   assert.match(settingsSource, /settings-ai-shell/);
   assert.match(settingsSource, /settings-save-dock/);
+  assert.match(settingsSource, /settings-save-status/);
   assert.doesNotMatch(settingsSource, /<div class="page-card">[\s\S]*<SettingsAI/);
   assert.doesNotMatch(settingsSource, /settings-summary-grid/);
   assert.doesNotMatch(settingsSource, /settings-summary-toolbar/);
@@ -79,10 +82,28 @@ test('设置页应使用居中的操作工作台并避免外壳套外壳', async
   assert.match(css, /\.settings-stage-shell\s*\{[^}]*min-width:\s*0/);
   assert.doesNotMatch(css, /\.settings-stage-shell\s*\{[^}]*(?:background|border|box-shadow):/);
   assert.match(css, /\.settings-editorial-shell \.page-header\s*\{[\s\S]*?border-bottom:\s*1px solid var\(--surface-border-subtle\)/);
-  assert.match(css, /\.settings-tab-rail\s*\{[\s\S]*?border:\s*1px solid var\(--surface-border-subtle\)/);
+  assert.match(css, /\.settings-tab-rail\s*\{[\s\S]*?border-right:\s*1px solid var\(--surface-border-subtle\)/);
   assert.match(css, /\.settings-tab-rail-item\s*\{[^}]*border:\s*1px solid transparent/);
   assert.match(css, /\.settings-tab-rail-item\s*\{[^}]*text-align:\s*start/);
   assert.doesNotMatch(css, /\.settings-tab-rail-item:hover\s*\{[^}]*transform:/);
+});
+
+test('设置页应按确认原型使用紧凑浅色导航与仅脏状态保存', async () => {
+  const [source, css] = await Promise.all([
+    readFile(new URL('./Settings.svelte', import.meta.url), 'utf8'),
+    readFile(new URL('../../app.css', import.meta.url), 'utf8'),
+  ]);
+
+  assert.match(source, /descriptionKey:\s*'settings\.tabDescriptions\.general'/);
+  assert.match(source, /disabled=\{loading \|\| saving \|\| !dirty\}/);
+  assert.match(source, /dirty \? t\('settings\.unsaved'\) : t\('settings\.saved'\)/);
+  assert.match(source, /settings-tab-rail-spacer/);
+  assert.match(source, /settings-tab-rail-note/);
+  assert.match(css, /\.settings-editorial-shell\s*\{[^}]*color-scheme:\s*light/);
+  assert.match(css, /\.settings-stage-layout\s*\{[^}]*grid-template-columns:\s*10\.375rem minmax\(0, 1fr\)/);
+  assert.match(css, /\.settings-tab-rail-item-active::before/);
+  assert.match(css, /\.settings-stage-shell\s*\{[^}]*width:\s*min\(54\.375rem, 100%\)/);
+  assert.match(css, /\.settings-editorial-shell \.settings-card\s*\{[^}]*border-radius:\s*0\.55rem/);
 });
 
 test('设置页全部功能区应共享低对比卡片和分隔线', async () => {

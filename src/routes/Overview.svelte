@@ -8,7 +8,6 @@
   import LocalizedDatePicker from '../lib/components/LocalizedDatePicker.svelte';
   import { cache } from '../lib/stores/cache.js';
   import { recordingStore, isActiveRecording } from '../lib/stores/recording.js';
-  import { confirm } from '../lib/stores/confirm.js';
   import { showToast } from '../lib/stores/toast.js';
   import { preloadAppIcons } from '../lib/stores/iconCache.js';
   import {
@@ -483,7 +482,8 @@
   let showCreateSemanticCategory = false;
   let newSemanticCategoryName = '';
   let semanticCategorySaving = false;
-  let pendingDeleteSemanticCategory = null; // { key, name }
+  let pendingDeleteSemanticCategory = null; // { key, name, domainKey, editingCategory }
+  let pendingDomainSemanticChange = null; // { domain, domainKey, nextCategory, categoryName, editSessionId }
 
   // 重命名语义分类
   let showRenameSemanticCategory = false;
@@ -516,15 +516,46 @@
     }
   }
 
-  function cancelDeleteSemanticCategory() { pendingDeleteSemanticCategory = null; }
-  async function confirmDeleteSemanticCategory() {
-    if (!pendingDeleteSemanticCategory) return;
-    const { key, name } = pendingDeleteSemanticCategory;
+  function restoreDomainSemanticPopover(domainKey, categoryKey) {
+    if (!domainOverlayOpen || selectedDomainDetail?.domain !== domainKey) return;
+    editingDomainKey = domainKey;
+    editingSemanticCategory = categoryKey;
+    tick().then(async () => {
+      updateSemanticPopoverPosition();
+      await tick();
+      semanticCategoryPopover?.focus();
+    });
+  }
+
+  function requestDeleteSemanticCategory(cat, domain) {
+    if (!cat || !domain || semanticCategorySaving) return;
+    const domainKey = domain.domain;
+    domainSemanticTriggers.get(domainKey)?.focus();
+    semanticPopoverStyle = '';
+    editingDomainKey = null;
+    pendingDeleteSemanticCategory = {
+      key: cat.key,
+      name: getSemanticCategoryDisplayName(cat),
+      domainKey,
+      editingCategory: editingSemanticCategory,
+    };
+  }
+
+  function cancelDeleteSemanticCategory() {
+    if (semanticCategorySaving) return;
+    const action = pendingDeleteSemanticCategory;
     pendingDeleteSemanticCategory = null;
+    if (action) restoreDomainSemanticPopover(action.domainKey, action.editingCategory);
+  }
+
+  async function confirmDeleteSemanticCategory() {
+    if (!pendingDeleteSemanticCategory || semanticCategorySaving) return;
+    const { key, name } = pendingDeleteSemanticCategory;
     semanticCategorySaving = true;
     try {
       const affected = await invoke('delete_custom_semantic_category', { key });
       await semanticCategoryStore.refresh();
+      pendingDeleteSemanticCategory = null;
       showToast(
         t('overview.semanticCategoryDeleted', { category: name, count: affected }),
         'success'
@@ -768,7 +799,10 @@
 
   function isCurrentDomainSemanticEdit(domainKey, editSessionId) {
     return domainSemanticEditSessionId === editSessionId
-      && editingDomainKey === domainKey
+      && (
+        editingDomainKey === domainKey
+        || pendingDomainSemanticChange?.domainKey === domainKey
+      )
       && domainOverlayOpen
       && selectedDomainDetail?.domain === domainKey;
   }
@@ -779,7 +813,9 @@
   }
 
   function cancelDomainSemanticEdit({ restoreFocus = true } = {}) {
-    const domainKey = editingDomainKey;
+    const domainKey = editingDomainKey
+      || pendingDomainSemanticChange?.domainKey
+      || pendingDeleteSemanticCategory?.domainKey;
     domainSemanticEditSessionId += 1;
     editingDomainKey = null;
     editingSemanticCategory = '';
@@ -789,8 +825,26 @@
     showRenameSemanticCategory = false;
     renameSemanticKey = '';
     renameSemanticName = '';
+    pendingDomainSemanticChange = null;
+    pendingDeleteSemanticCategory = null;
     if (!restoreFocus) return;
     tick().then(() => domainSemanticTriggers.get(domainKey)?.focus());
+  }
+
+  function cancelDomainSemanticChange() {
+    if (!pendingDomainSemanticChange) return;
+    const action = pendingDomainSemanticChange;
+    if (isDomainSemanticSavePending(action.domainKey)) return;
+    pendingDomainSemanticChange = null;
+    restoreDomainSemanticPopover(action.domainKey, action.nextCategory);
+  }
+
+  function isOverviewSemanticActionBusy() {
+    if (pendingDeleteSemanticCategory) return semanticCategorySaving;
+    return Boolean(
+      pendingDomainSemanticChange
+      && isDomainSemanticSavePending(pendingDomainSemanticChange.domainKey)
+    );
   }
 
   function closeDomainOverlay() {
@@ -996,30 +1050,36 @@
     handleOverviewDateChange();
   }
 
-  async function saveDomainSemanticRule(domain) {
-    const nextCategory = editingSemanticCategory.trim();
+  async function saveDomainSemanticRule(domain, { confirmed = false } = {}) {
+    const action = confirmed ? pendingDomainSemanticChange : null;
+    const nextCategory = (confirmed ? action?.nextCategory : editingSemanticCategory)?.trim() || '';
     if (!domain) return;
     const domainKey = domain.domain;
     if (!domainKey || !nextCategory || isDomainSemanticSavePending(domainKey)) return;
 
-    const editSessionId = domainSemanticEditSessionId;
+    const editSessionId = confirmed ? action?.editSessionId : domainSemanticEditSessionId;
     if ((domain.semantic_category?.trim() || '') === nextCategory) {
       cancelDomainSemanticEdit();
       return;
     }
 
-    const confirmed = await confirm({
-      title: t('overview.changeDomainCategoryTitle'),
-      message: t('overview.changeDomainCategoryMessage', {
-        domain: domainKey,
-        category: semanticCategoryStore.getSemanticCategoryDisplayName(nextCategory),
-      }),
-      confirmText: t('overview.confirmChange'),
-      cancelText: t('overview.cancel'),
-      tone: 'warning',
-    });
+    if (!confirmed) {
+      domainSemanticTriggers.get(domainKey)?.focus();
+      semanticPopoverStyle = '';
+      editingDomainKey = null;
+      pendingDomainSemanticChange = {
+        domain,
+        domainKey,
+        nextCategory,
+        categoryName: semanticCategoryStore.getSemanticCategoryDisplayName(nextCategory),
+        editSessionId,
+      };
+      return;
+    }
+
     if (
-      !confirmed
+      !action
+      || action.domainKey !== domainKey
       || !isCurrentDomainSemanticEdit(domainKey, editSessionId)
       || isDomainSemanticSavePending(domainKey)
     ) return;
@@ -1059,6 +1119,11 @@
     } finally {
       clearDomainSemanticSavePending(domainKey, requestId);
     }
+  }
+
+  function confirmDomainSemanticRule() {
+    if (!pendingDomainSemanticChange) return;
+    void saveDomainSemanticRule(pendingDomainSemanticChange.domain, { confirmed: true });
   }
 
   async function refreshOverviewStats({ silent = false } = {}) {
@@ -1250,6 +1315,8 @@
     // 弹窗 Escape 统一在 window 层处理（遮罩不再依赖自身聚焦才能响应）
     if (pendingDeleteSemanticCategory) {
       cancelDeleteSemanticCategory();
+    } else if (pendingDomainSemanticChange) {
+      cancelDomainSemanticChange();
     } else if (editingDomainKey) {
       cancelDomainSemanticEdit();
     } else if (domainOverlayOpen) {
@@ -1258,7 +1325,7 @@
   }}
 />
 
-<div class="page-shell" data-locale={currentLocale}>
+<div class="page-shell overview-page-shell" data-locale={currentLocale}>
   <!-- 页面标题 -->
   <div class="page-header">
     <div class="page-title-group">
@@ -1349,7 +1416,7 @@
   <!-- 洞察条：仅 today 模式、数据非空且上周同日基线可用时组句显示 -->
   {#if overviewMode === 'today' && insightSentence}
     <!-- 窄屏精修：flex-wrap 允许洞察句换行,链接自动下移到第二行,避免最小窗口横向溢出 -->
-    <div class="mb-4 flex flex-wrap items-center gap-3.5 rounded-[22px] border border-blue-100 bg-gradient-to-r from-blue-50 via-white to-white px-5 py-3.5 dark:border-blue-900/40 dark:from-blue-950/35 dark:via-[#1c1c1e] dark:to-[#1c1c1e]">
+    <div class="overview-insight-strip mb-4 flex flex-wrap items-center gap-3.5 rounded-[22px] border border-blue-100 bg-gradient-to-r from-blue-50 via-white to-white px-5 py-3.5 dark:border-blue-900/40 dark:from-blue-950/35 dark:via-[#1c1c1e] dark:to-[#1c1c1e]">
       <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-blue-100 text-blue-500 dark:bg-blue-900/40 dark:text-blue-300">
         <svg class="h-[17px] w-[17px]" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
           <path d="M12 2.5l2 6.4 6.5 2.1-6.5 2.1-2 6.4-2-6.4L3.5 11l6.5-2.1zM19 15.5l.9 2.6 2.6.9-2.6.9-.9 2.6-.9-2.6-2.6-.9 2.6-.9z" />
@@ -1365,7 +1432,7 @@
     </div>
   {/if}
 
-  <div class="overview-summary-grid grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
+  <div class="overview-summary-grid mb-4">
     {#if loading || !stats}
       {#each [1,2,3,4] as _}
         <div class="min-h-[116px] rounded-2xl border border-slate-100 bg-white p-5 animate-pulse dark:border-[var(--surface-border-default)]/60 dark:bg-[#2c2c2e]/80">
@@ -1381,6 +1448,7 @@
     {:else}
       <!-- 改版 KPI：总投入 / 工作时长 / 专注峰值 / 娱乐占比（原浏览器时长、应用数两卡移除） -->
       <StatsCard
+        compact
         title={overviewTotalActivityTitle}
         value={formatDurationLocalized(stats.total_duration, { compact: true })}
         icon="duration"
@@ -1388,6 +1456,7 @@
         subtitle={totalDeltaSubtitle}
       />
       <StatsCard
+        compact
         title={overviewWorkDurationTitle}
         value={formatDurationLocalized(stats.work_time_duration || 0, { compact: true })}
         icon="focus"
@@ -1395,6 +1464,7 @@
         subtitle={workShareSubtitle}
       />
       <StatsCard
+        compact
         title={t('overview.peakFocus')}
         value={peakWindowValue}
         icon="duration"
@@ -1402,6 +1472,7 @@
         subtitle={peakWindowSubtitle}
       />
       <StatsCard
+        compact
         title={t('overview.entertainmentShare')}
         value={entertainmentShareValueText}
         icon="apps"
@@ -1724,30 +1795,34 @@
 
 <!-- 域名摘要 / 单域名详情浮层 -->
 {#if domainOverlayOpen}
-<!-- svelte-ignore a11y_click_events_have_key_events -->
-<!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
-<div
-  class="fixed inset-0 z-[140] flex items-center justify-center bg-slate-950/52 p-4 backdrop-blur-md animate-fadeIn"
-  role="presentation"
-  on:click|self={closeDomainOverlay}
->
-  <div
+<div class="modal-overlay overview-domain-overlay fixed inset-0 z-[140]">
+  <button
+    type="button"
+    class="modal-backdrop-button"
+    aria-label={t('window.close')}
+    on:click={closeDomainOverlay}
+  ></button>
+  <section
     bind:this={domainOverlayDialog}
     use:trapFocus
-    class="card overview-domain-dialog flex max-h-[85vh] w-full max-w-2xl flex-col overflow-hidden p-0"
+    class="modal-panel overview-domain-dialog"
     role="dialog"
     aria-modal="true"
     aria-labelledby="overview-domain-overlay-title"
+    aria-describedby="overview-domain-overlay-description"
+    aria-hidden={(pendingDomainSemanticChange || pendingDeleteSemanticCategory) ? 'true' : undefined}
+    inert={Boolean(pendingDomainSemanticChange || pendingDeleteSemanticCategory)}
     tabindex="-1"
   >
-    <div class="flex items-center justify-between border-b border-slate-200 bg-gradient-to-r from-slate-50 to-white p-5 dark:border-[var(--surface-border-default)] dark:from-[#2c2c2e] dark:to-[#1c1c1e]">
-      <div class="flex min-w-0 items-center gap-3">
+    <header class="modal-header overview-domain-modal-header">
+      <div class="overview-domain-modal-heading">
         {#if domainOverlayView === 'detail' && domainCollection.length > 0}
           <button
             bind:this={domainOverlayBackButton}
             type="button"
-            class="rounded-lg p-2 text-slate-500 transition-colors hover:bg-slate-100 dark:text-[#86868b] dark:hover:bg-[var(--editorial-surface-subtle)]"
+            class="modal-close overview-domain-back-button"
             title={t('overview.viewAll')}
+            aria-label={t('overview.viewAll')}
             on:click={showAllDomainSummaries}
           >
             <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -1755,35 +1830,38 @@
             </svg>
           </button>
         {/if}
-        <div class="min-w-0">
-          {#if domainOverlayView === 'all'}
-            <h3 id="overview-domain-overlay-title" class="truncate text-lg font-bold text-slate-900 dark:text-[#f5f5f7]">{t('overview.domainListTitle')}</h3>
-            <p class="truncate text-sm text-slate-500 dark:text-[#86868b]">{t('overview.sitesCount', { count: domainCollectionTotalCount })}</p>
-          {:else}
-            <h3 id="overview-domain-overlay-title" class="truncate text-lg font-bold text-slate-900 dark:text-[#f5f5f7]">
-              {selectedDomainDetail ? getBrowserDomainDisplayLabel(selectedDomainDetail) : t('overview.domainDetailTitle')}
-            </h3>
-            {#if selectedDomainDetail}
-              <p class="truncate text-sm text-slate-500 dark:text-[#86868b]">
-                {formatDuration(selectedDomainDetail.duration)} · {t('overview.pagesCount', { count: selectedDomainDetail.urls?.length || 0 })}
-              </p>
+        <div class="overview-domain-modal-copy">
+          <p class="overview-domain-modal-kicker">{t('overview.topDomains')}</p>
+          <h3 id="overview-domain-overlay-title" class="modal-title">
+            {domainOverlayView === 'all'
+              ? t('overview.domainListTitle')
+              : (selectedDomainDetail ? getBrowserDomainDisplayLabel(selectedDomainDetail) : t('overview.domainDetailTitle'))}
+          </h3>
+          <p id="overview-domain-overlay-description" class="overview-domain-modal-description">
+            {#if domainOverlayView === 'all'}
+              {t('overview.sitesCount', { count: domainCollectionTotalCount })}
+            {:else if selectedDomainDetail}
+              {formatDuration(selectedDomainDetail.duration)} · {t('overview.pagesCount', { count: selectedDomainDetail.urls?.length || 0 })}
+            {:else}
+              {t('overview.domainDetailTitle')}
             {/if}
-          {/if}
+          </p>
         </div>
       </div>
       <button
         type="button"
-        class="shrink-0 rounded-lg p-2 transition-colors hover:bg-slate-100 dark:hover:bg-[var(--editorial-surface-subtle)]"
-        title={t('overview.cancel')}
+        class="modal-close"
+        title={t('window.close')}
+        aria-label={t('window.close')}
         on:click={closeDomainOverlay}
       >
-        <svg class="h-5 w-5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
         </svg>
       </button>
-    </div>
+    </header>
 
-    <div class="flex-1 space-y-4 overflow-y-auto p-5" on:scroll={handleSemanticPopoverViewportChange}>
+    <div class="modal-body overview-domain-modal-body" on:scroll={handleSemanticPopoverViewportChange}>
       {#if domainOverlayLoading}
         <div class="py-10 text-center text-sm text-slate-400 dark:text-[#636c76]">{t('common.loading')}</div>
       {:else if domainOverlayError}
@@ -1846,9 +1924,9 @@
             {/each}
           </div>
         </div>
-        <div class="overview-domain-detail relative rounded-lg border border-slate-200 dark:border-[var(--surface-border-default)]">
+        <div class="overview-domain-detail relative">
           <!-- 域名头部 -->
-          <div class="flex items-center justify-between rounded-t-lg p-3 bg-slate-50 dark:bg-[#2c2c2e]/50">
+          <div class="overview-domain-detail-header flex items-center justify-between">
             <div class="flex items-center gap-2">
               <span class="w-2 h-2 rounded-full bg-primary-500"></span>
               <span class="font-medium text-slate-700 dark:text-[#98989d]">{getBrowserDomainDisplayLabel(domain)}</span>
@@ -1862,7 +1940,7 @@
                   {t('overview.unresolvedPage')}
                 </span>
               {:else}
-                <span class="flex items-center gap-1.5 rounded-full bg-primary-50 px-2 py-1 text-xs text-primary-700 dark:bg-primary-900/20 dark:text-primary-300">
+                <span class="overview-domain-category-badge flex items-center gap-1.5">
                   <span
                     class="overview-semantic-color-dot h-1.5 w-1.5 shrink-0 rounded-full"
                     style={`background-color: ${getSemanticCategoryColor(domain.semantic_category)};`}
@@ -1870,7 +1948,8 @@
                   {t('overview.currentCategory', { label: getDomainSemanticLabel(domain) })}
                 </span>
                 <button
-                  class="text-xs px-2 py-1 rounded-full border border-slate-200 dark:border-[rgba(255,255,255,0.14)] text-slate-700 dark:text-[#98989d] hover:border-primary-300 hover:text-primary-600 transition-colors"
+                  type="button"
+                  class="overview-domain-category-trigger"
                   aria-haspopup="dialog"
                   aria-expanded={editingDomainKey === domain.domain}
                   aria-controls={`semantic-category-popover-${domain.domain}`}
@@ -1893,23 +1972,25 @@
           {#if !isUnresolvedBrowserDomain(domain) && editingDomainKey === domain.domain}
             <div
               bind:this={semanticCategoryPopover}
+              use:trapFocus
               id={`semantic-category-popover-${domain.domain}`}
-              class="overview-semantic-popover fixed z-[160] overflow-y-auto rounded-2xl border border-slate-200 bg-white p-3 shadow-xl dark:border-[var(--surface-border-default)] dark:bg-[#1c1c1e] dark:shadow-black/30"
+              class="overview-semantic-popover fixed z-[160]"
               role="dialog"
               tabindex="-1"
-              aria-label={t('overview.changeCategory')}
+              aria-labelledby={`semantic-category-title-${domain.domain}`}
               style={semanticPopoverStyle}
             >
-              <div class="flex items-start justify-between gap-3 border-b border-slate-100 pb-2.5 dark:border-[var(--surface-border-default)]">
+              <div class="overview-semantic-popover-header flex items-start justify-between gap-3">
                 <div class="min-w-0">
-                  <p class="text-sm font-semibold text-slate-800 dark:text-[#f5f5f7]">{t('overview.selectCategory')}</p>
+                  <p id={`semantic-category-title-${domain.domain}`} class="overview-semantic-popover-title">{t('overview.selectCategory')}</p>
                   <p class="mt-0.5 truncate text-[11px] text-slate-400 dark:text-[#636c76]">{getBrowserDomainDisplayLabel(domain)}</p>
                 </div>
                 <button
                   type="button"
-                  class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-[#2c2c2e] dark:hover:text-[#98989d]"
+                  class="modal-close overview-semantic-popover-close"
                   on:click={cancelDomainSemanticEdit}
-                  aria-label={t('overview.cancel')}
+                  aria-label={t('window.close')}
+                  title={t('window.close')}
                 >
                   ×
                 </button>
@@ -1956,7 +2037,7 @@
                       >✎</button>
                       <button
                         type="button"
-                        on:click={() => pendingDeleteSemanticCategory = { key: cat.key, name: getSemanticCategoryDisplayName(cat) }}
+                        on:click={() => requestDeleteSemanticCategory(cat, domain)}
                         class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-sm text-slate-400 opacity-0 transition-all hover:bg-red-50 hover:text-red-600 focus-visible:opacity-100 group-hover:opacity-100 dark:hover:bg-red-900/20 dark:hover:text-red-300"
                         disabled={semanticCategorySaving}
                         title={t('overview.deleteSemanticCategory')}
@@ -2050,9 +2131,9 @@
           {/if}
           
           <!-- URL 列表，支持展开/收起超出的部分 -->
-          <div class="overflow-hidden rounded-b-lg divide-y divide-slate-100 dark:divide-[rgba(255,255,255,0.14)]/50">
+          <div class="overview-domain-url-list overflow-hidden">
             {#each (expandedDomains.has(domain.domain) ? domain.urls : domain.urls.slice(0, 10)) as url}
-              <div class="flex items-center justify-between p-3 hover:bg-slate-50 dark:hover:bg-[#2c2c2e]/30 transition-colors">
+              <div class="overview-domain-url-row flex items-center justify-between">
                 <div class="flex-1 min-w-0 mr-3">
                   <p
                     class="text-sm text-slate-700 dark:text-[#98989d] truncate"
@@ -2092,38 +2173,108 @@
 
       {/if}
     </div>
-  </div>
+  </section>
 </div>
 {/if}
 
-<!-- 语义分类删除确认弹窗 -->
-{#if pendingDeleteSemanticCategory}
-  <!-- svelte-ignore a11y_click_events_have_key_events -->
-  <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
-  <div
-    class="fixed inset-0 z-[190] bg-slate-950/40 backdrop-blur-sm flex items-center justify-center animate-fadeIn"
-    role="presentation"
-    on:click|self={cancelDeleteSemanticCategory}
-  >
-    <div use:trapFocus role="dialog" aria-modal="true" class="w-full max-w-sm rounded-2xl border border-slate-200 dark:border-[var(--surface-border-default)] bg-white dark:bg-[#1c1c1e] shadow-2xl p-6 mx-4">
-      <h3 class="text-base font-semibold text-slate-900 dark:text-[#f5f5f7]">{t('overview.deleteSemanticCategoryTitle')}</h3>
-      <p class="mt-2 text-sm text-slate-700 dark:text-[#86868b] leading-relaxed">
-        {t('overview.deleteSemanticCategoryMessage', { category: pendingDeleteSemanticCategory.name })}
-      </p>
-      <div class="mt-5 flex justify-end gap-2">
+<!-- 网站语义分类确认：从选择 Popover 切换到单一确认层 -->
+{#if pendingDomainSemanticChange || pendingDeleteSemanticCategory}
+  {@const isDeleteSemanticCategory = !!pendingDeleteSemanticCategory}
+  {@const semanticActionBusy = isOverviewSemanticActionBusy()}
+  {@const cancelSemanticAction = isDeleteSemanticCategory ? cancelDeleteSemanticCategory : cancelDomainSemanticChange}
+  {@const confirmSemanticAction = isDeleteSemanticCategory ? confirmDeleteSemanticCategory : confirmDomainSemanticRule}
+  <div class="modal-overlay overview-semantic-action-overlay">
+    <button
+      type="button"
+      class="modal-backdrop-button"
+      aria-label={t('window.close')}
+      disabled={semanticActionBusy}
+      on:click={cancelSemanticAction}
+    ></button>
+    <section
+      class="modal-panel overview-semantic-confirm-dialog"
+      use:trapFocus
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="overview-semantic-confirm-title"
+      aria-describedby="overview-semantic-confirm-description"
+      tabindex="-1"
+    >
+      <header class="modal-header">
+        <div class="overview-semantic-confirm-header-copy">
+          <p class:overview-semantic-confirm-kicker-danger={isDeleteSemanticCategory} class="overview-semantic-confirm-kicker">
+            {isDeleteSemanticCategory ? t('overview.deleteSemanticCategory') : t('overview.changeCategory')}
+          </p>
+          <h3 id="overview-semantic-confirm-title" class="modal-title">
+            {isDeleteSemanticCategory ? t('overview.deleteSemanticCategoryTitle') : t('overview.changeDomainCategoryTitle')}
+          </h3>
+        </div>
         <button
-          on:click={cancelDeleteSemanticCategory}
-          class="px-4 py-2 text-sm rounded-lg text-slate-500 hover:text-slate-700 dark:text-[#86868b] dark:hover:text-[#98989d] border border-slate-200 dark:border-[var(--surface-border-default)]"
+          type="button"
+          class="modal-close"
+          aria-label={t('window.close')}
+          title={t('window.close')}
+          disabled={semanticActionBusy}
+          on:click={cancelSemanticAction}
+        >
+          <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </header>
+
+      <div class="modal-body">
+        <div class="overview-semantic-confirm-layout">
+          <span class:overview-semantic-confirm-icon-danger={isDeleteSemanticCategory} class="overview-semantic-confirm-icon">
+            {#if isDeleteSemanticCategory}
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M5 7h14M9 7V4h6v3m-7 3v7m4-7v7m4-7v7M7 7l1 13h8l1-13" />
+              </svg>
+            {:else}
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M4 5h7l9 9-6 6-9-9L4 5Zm4.5 3.5h.01" />
+              </svg>
+            {/if}
+          </span>
+          <div class="overview-semantic-confirm-copy">
+            <p id="overview-semantic-confirm-description">
+              {#if isDeleteSemanticCategory}
+                {t('overview.deleteSemanticCategoryMessage', { category: pendingDeleteSemanticCategory.name })}
+              {:else}
+                {t('overview.changeDomainCategoryMessage', {
+                  domain: pendingDomainSemanticChange.domainKey,
+                  category: pendingDomainSemanticChange.categoryName,
+                })}
+              {/if}
+            </p>
+            <div class="overview-semantic-confirm-detail">
+              {isDeleteSemanticCategory ? pendingDeleteSemanticCategory.name : pendingDomainSemanticChange.domainKey}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <footer class="modal-footer">
+        <span class="overview-semantic-confirm-footer-note">Esc · {t('overview.cancel')}</span>
+        <button
+          type="button"
+          class="overview-semantic-confirm-button"
+          disabled={semanticActionBusy}
+          on:click={cancelSemanticAction}
         >
           {t('overview.cancel')}
         </button>
         <button
-          on:click={confirmDeleteSemanticCategory}
-          class="px-4 py-2 text-sm rounded-lg bg-red-600 text-white hover:bg-red-700"
+          type="button"
+          class:overview-semantic-confirm-button-danger={isDeleteSemanticCategory}
+          class:overview-semantic-confirm-button-primary={!isDeleteSemanticCategory}
+          class="overview-semantic-confirm-button"
+          disabled={semanticActionBusy}
+          on:click={confirmSemanticAction}
         >
-          {t('overview.confirmDeleteSemanticCategory')}
+          {isDeleteSemanticCategory ? t('overview.confirmDeleteSemanticCategory') : t('overview.confirmChange')}
         </button>
-      </div>
-    </div>
+      </footer>
+    </section>
   </div>
 {/if}

@@ -164,8 +164,6 @@
     '/about': wrap({ asyncComponent: () => import('./routes/about/About.svelte') }),
   };
 
-  let theme = 'system';
-  let isDark = false;
   let isRecording = true;
   let isPaused = false;
   let platform = '';
@@ -177,35 +175,6 @@
   let eyeCareRecap = null;
   let unsubscribeLocale = () => {};
   $: currentLocale = $locale;
-
-  function detectSystemTheme() {
-    return window.matchMedia('(prefers-color-scheme: dark)').matches;
-  }
-
-  function applyTheme(newTheme) {
-    theme = newTheme;
-    isDark = theme === 'system' ? detectSystemTheme() : theme === 'dark';
-    
-    if (isDark) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-  }
-
-  async function handleThemeChange(event) {
-    const newTheme = event.detail;
-    applyTheme(newTheme);
-
-    try {
-      const config = await invoke('get_config');
-      config.theme = newTheme;
-      await invoke('save_config', { config });
-      cache.setConfig(config);
-    } catch (e) {
-      console.error('保存主题配置失败:', e);
-    }
-  }
 
   async function loadBackground() {
     try {
@@ -289,6 +258,10 @@
   }
 
   onMount(() => {
+    // 产品固定使用亮色。保留旧配置字段仅用于向后兼容，但不再消费系统/用户深色设置。
+    document.documentElement.classList.remove('dark');
+    document.documentElement.style.colorScheme = 'light';
+
     // 全局阻止文件拖放导致页面导航（如拖入 PDF 会替换整个应用）
     window.addEventListener('dragover', preventFileDrop);
     window.addEventListener('drop', preventFileDrop);
@@ -345,16 +318,14 @@
       }
       if (disposed) return;
 
-      // 加载配置并应用主题
+      // 加载配置；主题字段保留兼容，但产品固定使用亮色，不再应用。
       let config;
       try {
         config = await invoke('get_config');
         runtimeConfig = config;
         cache.setConfig(config);
-        applyTheme(config.theme || 'system');
       } catch (e) {
         console.error('加载配置失败:', e);
-        applyTheme('system');
         config = { work_end_hour: 18 };
         runtimeConfig = config;
       }
@@ -373,21 +344,9 @@
       }
       if (disposed) return;
 
-      const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-      const handleSystemThemeChange = () => {
-        if (theme === 'system') applyTheme('system');
-      };
-      mediaQuery.addEventListener('change', handleSystemThemeChange);
-      pendingCleanup.push(() => mediaQuery.removeEventListener('change', handleSystemThemeChange));
-
       const unsubscribeCache = cache.subscribe((state) => {
         if (!state.config) return;
         runtimeConfig = state.config;
-
-        if (state.config.theme && state.config.theme !== theme) {
-          applyTheme(state.config.theme);
-        }
-
       });
       pendingCleanup.push(unsubscribeCache);
 
@@ -600,6 +559,7 @@
   -->
   <!-- svelte-ignore a11y-no-static-element-interactions -->
   <div class="app-shell-windowbar absolute top-0 left-0 w-full h-7 z-50" style="-webkit-app-region: drag;" on:mousedown={startDrag}>
+    <span class="app-shell-windowbar-title">Work Review</span>
     <!-- 仅 Windows/Linux 平台显示自定义窗口控制按钮，macOS 使用原生控件 -->
     {#if platform && platform !== 'macos'}
     <!-- Windows 风格窗口控制按钮 (右上角) -->
@@ -643,11 +603,11 @@
   <!-- 注意：这里不能加 z-index（如 z-10），否则会形成层叠上下文，
        把内部弹窗/Toast（z-[100..210]）整体压到拖拽条 z-50 之下，
        导致弹窗顶部 28px 被拖拽层拦截成"点击变拖动窗口"。 -->
-  <div class="app-shell-stage relative flex-1 grid grid-cols-[13.5rem_minmax(0,1fr)] gap-3 m-2 {platform !== 'macos' ? 'app-shell-stage--windowbar' : 'app-shell-stage--macos'}">
+  <div class="app-shell-stage relative flex-1 grid grid-cols-[12.75rem_minmax(0,1fr)] gap-0 m-0 {platform !== 'macos' ? 'app-shell-stage--windowbar' : 'app-shell-stage--macos'}">
     <!-- 左侧边栏 -->
     <aside class="app-shell-sidebar-frame min-h-0">
       <div class="app-shell-sidebar h-full flex flex-col overflow-hidden">
-        <Sidebar {isRecording} {isPaused} {theme} on:themeChange={handleThemeChange} />
+        <Sidebar {isRecording} {isPaused} />
       </div>
     </aside>
 

@@ -3,10 +3,11 @@
   import { invoke } from '@tauri-apps/api/core';
   import { listen } from '@tauri-apps/api/event';
   import { open } from '@tauri-apps/plugin-shell';
-  import { ask, save as saveDialog } from '@tauri-apps/plugin-dialog';
+  import { save as saveDialog } from '@tauri-apps/plugin-dialog';
   import { cache } from '../../lib/stores/cache.js';
   import { recordingStore, isActiveRecording } from '../../lib/stores/recording.js';
   import { showToast } from '../../lib/stores/toast.js';
+  import { confirm } from '$lib/stores/confirm.js';
   import { appIconStore, getIconCacheKey, preloadAppIcons } from '../../lib/stores/iconCache.js';
   import { categoryStore, hexToRGBA } from '../../lib/stores/categories.js';
   import {
@@ -29,7 +30,6 @@
   import { prepareTimelineActivities, upsertTimelineActivity } from './timelineData.js';
   import LocalizedDatePicker from '../../lib/components/LocalizedDatePicker.svelte';
   import HourlySummaryDrawer from './HourlySummaryDrawer.svelte';
-  import { confirm } from '../../lib/stores/confirm.js';
 
   // 获取本地日期（避免 UTC 时区问题）
   function getLocalDateString() {
@@ -53,6 +53,7 @@
   let summaryTrigger;
   let detailTrigger;
   let detailCloseButton;
+  let cleanupTrigger;
   let categoryTrigger;
   let categoryPopover;
   let categoryPopoverStyle = '';
@@ -870,7 +871,9 @@
   }
 
   function cancelPendingAction() {
-    if (pendingDeleteCategory) {
+    if (pendingCleanupAction) {
+      closeCleanupConfirmation();
+    } else if (pendingDeleteCategory) {
       cancelDeleteCategory();
     } else if (pendingApplyCategory) {
       cancelApplyCategory();
@@ -882,13 +885,27 @@
   }
 
   function handleTimelineWindowKeydown(event) {
+    if (event.key === 'Escape' && showExportOcrChoice) {
+      event.preventDefault();
+      event.stopPropagation();
+      void closeExportOcrChoice();
+      return;
+    }
+
     if (
       event.key === 'Escape'
-      && (pendingDeleteCategory || pendingApplyCategory || pendingPrivacyRule || pendingChangeCategory)
+      && (pendingCleanupAction || pendingDeleteCategory || pendingApplyCategory || pendingPrivacyRule || pendingChangeCategory)
     ) {
       event.preventDefault();
       event.stopPropagation();
       cancelPendingAction();
+      return;
+    }
+
+    if (event.key === 'Escape' && showCleanupPanel) {
+      event.preventDefault();
+      event.stopPropagation();
+      closeCleanupPanel();
       return;
     }
 
@@ -964,22 +981,50 @@
   }
 
   let exportingTimeline = false;
+  let showExportOcrChoice = false;
+  let includeOcrInExport = false;
+  let exportTrigger;
 
-  // 导出当前日期的时间线为 JSON
-  // OCR 文本可能含屏幕内容，弹一个确认让用户选择是否一并导出
-  async function exportTimelineJson() {
+  // 先通过应用内的中性选择弹窗明确本次导出范围；关闭弹窗会真正取消导出。
+  function openExportOcrChoice(event) {
     if (exportingTimeline) return;
     if (!activities.length) {
       showToast(t('timeline.exportNothing'), 'error');
       return;
     }
 
-    const includeOcr = await ask(t('timeline.exportIncludeOcrMessage'), {
-      title: t('timeline.exportIncludeOcrTitle'),
-      kind: 'info',
-      okLabel: t('timeline.exportIncludeOcrYes'),
-      cancelLabel: t('timeline.exportIncludeOcrNo'),
-    });
+    exportTrigger = event?.currentTarget;
+    includeOcrInExport = false;
+    showExportOcrChoice = true;
+  }
+
+  async function closeExportOcrChoice() {
+    showExportOcrChoice = false;
+    const trigger = exportTrigger;
+    exportTrigger = null;
+    await tick();
+    trigger?.focus();
+  }
+
+  async function confirmExportOcrChoice() {
+    if (!showExportOcrChoice || exportingTimeline) return;
+    const includeOcr = includeOcrInExport;
+    showExportOcrChoice = false;
+    await tick();
+    try {
+      await exportTimelineJson(includeOcr);
+    } finally {
+      exportTrigger = null;
+    }
+  }
+
+  // 用户确认范围后，再选择保存路径并导出当前日期的时间线 JSON。
+  async function exportTimelineJson(includeOcr) {
+    if (exportingTimeline) return;
+    if (!activities.length) {
+      showToast(t('timeline.exportNothing'), 'error');
+      return;
+    }
 
     const targetPath = await saveDialog({
       defaultPath: `timeline-${selectedDate}.json`,
@@ -1059,7 +1104,7 @@
   async function deleteActivity(activity) {
     if (!activity?.id) return;
     const ok = await confirm({
-      tone: 'warning',
+      tone: 'danger',
       title: t('timeline.deleteActivityTitle'),
       message: t('timeline.deleteActivityMessage', {
         appName: getPreferredTimelineAppName(activity) || activity.app_name,
@@ -1089,6 +1134,21 @@
   let cleanupRangeEndTime = '';
   let cleanupApp = '';
   let cleanupBusy = false;
+  let pendingCleanupAction = null; // { mode, title, message, payload }
+
+  $: cleanupRangeStartTs = localDateToTs(cleanupRangeStart, cleanupRangeStartTime);
+  $: cleanupRangeEndBaseTs = localDateToTs(cleanupRangeEnd, cleanupRangeEndTime);
+  $: cleanupRangeEndTs = cleanupRangeEndTime ? cleanupRangeEndBaseTs + 59 : cleanupRangeEndBaseTs + 86399;
+  $: cleanupRangeValid = Boolean(
+    cleanupRangeStart
+      && cleanupRangeEnd
+      && cleanupRangeEndTs > cleanupRangeStartTs
+  );
+  $: cleanupSelectionValid = cleanupMode === 'date'
+    ? Boolean(selectedDate)
+    : cleanupMode === 'range'
+      ? cleanupRangeValid
+      : Boolean(cleanupApp);
 
   // 从已加载活动提取候选应用名（去重排序）
   $: cleanupAppCandidates = Array.from(
@@ -1106,30 +1166,38 @@
     return Math.floor(new Date(y, m - 1, d, hh, mm, 0).getTime() / 1000);
   }
 
+  function openCleanupPanel() {
+    if (!cleanupRangeStart) cleanupRangeStart = selectedDate;
+    if (!cleanupRangeEnd) cleanupRangeEnd = selectedDate;
+    showCleanupPanel = true;
+  }
+
+  function closeCleanupPanel() {
+    if (cleanupBusy) return;
+    showCleanupPanel = false;
+  }
+
+  function queueCleanupAction(action) {
+    if (cleanupBusy) return;
+    cleanupTrigger?.focus();
+    showCleanupPanel = false;
+    pendingCleanupAction = action;
+  }
+
+  function closeCleanupConfirmation() {
+    if (cleanupBusy) return;
+    pendingCleanupAction = null;
+    showCleanupPanel = true;
+  }
+
   async function doCleanupByDate() {
     if (!selectedDate || cleanupBusy) return;
-    const ok = await confirm({
-      tone: 'warning',
+    queueCleanupAction({
+      mode: 'date',
       title: t('timeline.deleteByDateTitle'),
       message: t('timeline.deleteByDateMessage', { date: selectedDate }),
-      confirmText: t('timeline.confirmDelete'),
-      cancelText: t('timeline.cancel'),
+      payload: { date: selectedDate },
     });
-    if (!ok) return;
-    cleanupBusy = true;
-    try {
-      const res = await invoke('delete_activities_by_date', { date: selectedDate });
-      cache.invalidate('overview');
-      await loadTimeline();
-      showToast(
-        t('timeline.deletedByDate', { count: res?.deleted ?? 0, date: selectedDate }),
-        'success',
-      );
-    } catch (e) {
-      showToast(e.toString(), 'error');
-    } finally {
-      cleanupBusy = false;
-    }
   }
 
   async function doCleanupByRange() {
@@ -1138,58 +1206,68 @@
       showToast(t('timeline.noActivitiesToDelete'), 'error');
       return;
     }
-    const startTs = localDateToTs(cleanupRangeStart, cleanupRangeStartTime);
-    const endBase = localDateToTs(cleanupRangeEnd, cleanupRangeEndTime);
-    const endTs = cleanupRangeEndTime ? endBase + 59 : endBase + 86399;
-    if (endTs <= startTs) {
+    if (!cleanupRangeValid) {
       showToast(t('timeline.noActivitiesToDelete'), 'error');
       return;
     }
-    const ok = await confirm({
-      tone: 'warning',
+    queueCleanupAction({
+      mode: 'range',
       title: t('timeline.deleteByRangeTitle'),
       message: t('timeline.deleteByRangeMessage', {
         start: `${cleanupRangeStart}${cleanupRangeStartTime ? ' ' + cleanupRangeStartTime : ''}`,
         end: `${cleanupRangeEnd}${cleanupRangeEndTime ? ' ' + cleanupRangeEndTime : ''}`,
       }),
-      confirmText: t('timeline.confirmDelete'),
-      cancelText: t('timeline.cancel'),
+      payload: { startTs: cleanupRangeStartTs, endTs: cleanupRangeEndTs },
     });
-    if (!ok) return;
-    cleanupBusy = true;
-    try {
-      const res = await invoke('delete_activities_by_range', { startTs, endTs });
-      cache.invalidate('overview');
-      await loadTimeline();
-      showToast(t('timeline.deletedByRange', { count: res?.deleted ?? 0 }), 'success');
-    } catch (e) {
-      showToast(e.toString(), 'error');
-    } finally {
-      cleanupBusy = false;
-    }
   }
 
   async function doCleanupByApp() {
     if (cleanupBusy || !cleanupApp) return;
-    const ok = await confirm({
-      tone: 'warning',
+    queueCleanupAction({
+      mode: 'app',
       title: t('timeline.deleteByAppTitle'),
       message: t('timeline.deleteByAppMessage', { appName: cleanupApp }),
-      confirmText: t('timeline.confirmDelete'),
-      cancelText: t('timeline.cancel'),
+      payload: { appName: cleanupApp },
     });
-    if (!ok) return;
+  }
+
+  async function confirmCleanupAction() {
+    if (!pendingCleanupAction || cleanupBusy) return;
+    const action = pendingCleanupAction;
     cleanupBusy = true;
     try {
-      const res = await invoke('delete_activities_by_app', { appName: cleanupApp });
+      let res;
+      if (action.mode === 'date') {
+        res = await invoke('delete_activities_by_date', { date: action.payload.date });
+      } else if (action.mode === 'range') {
+        res = await invoke('delete_activities_by_range', {
+          startTs: action.payload.startTs,
+          endTs: action.payload.endTs,
+        });
+      } else {
+        res = await invoke('delete_activities_by_app', { appName: action.payload.appName });
+      }
       cache.invalidate('overview');
       await loadTimeline();
-      showToast(
-        t('timeline.deletedByApp', { count: res?.deleted ?? 0, appName: cleanupApp }),
-        'success',
-      );
+
+      if (action.mode === 'date') {
+        showToast(
+          t('timeline.deletedByDate', { count: res?.deleted ?? 0, date: action.payload.date }),
+          'success',
+        );
+      } else if (action.mode === 'range') {
+        showToast(t('timeline.deletedByRange', { count: res?.deleted ?? 0 }), 'success');
+      } else {
+        showToast(
+          t('timeline.deletedByApp', { count: res?.deleted ?? 0, appName: action.payload.appName }),
+          'success',
+        );
+      }
+      pendingCleanupAction = null;
     } catch (e) {
       showToast(e.toString(), 'error');
+      pendingCleanupAction = null;
+      showCleanupPanel = true;
     } finally {
       cleanupBusy = false;
     }
@@ -1293,7 +1371,7 @@
 
 <svelte:window on:resize={handleDetailScroll} on:keydown={handleTimelineWindowKeydown} />
 
-<div class="page-shell" data-locale={currentLocale}>
+<div class="page-shell timeline-page-shell" data-locale={currentLocale}>
   <!-- 页面标题 -->
   <div class="page-header">
     <div class="page-title-group">
@@ -1325,8 +1403,12 @@
         />
       {/key}
       <button
+        bind:this={cleanupTrigger}
+        type="button"
         class="page-control-btn-icon text-rose-500 hover:text-rose-600 dark:text-rose-400"
-        on:click={() => (showCleanupPanel = true)}
+        aria-haspopup="dialog"
+        aria-expanded={showCleanupPanel}
+        on:click={openCleanupPanel}
         title={t('timeline.cleanupRecords')}
       >
         <svg class="timeline-toolbar-icon h-[1.125rem] w-[1.125rem]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1340,7 +1422,10 @@
       </button>
       <button
         class="page-control-btn-icon"
-        on:click={exportTimelineJson}
+        type="button"
+        aria-haspopup="dialog"
+        aria-expanded={showExportOcrChoice}
+        on:click={openExportOcrChoice}
         disabled={exportingTimeline || !activities.length}
         title={t('timeline.exportTitle')}
       >
@@ -1404,6 +1489,16 @@
         </button>
       </div>
 
+      <div class="timeline-column-head" aria-hidden="true">
+        <span>{t('timeline.detail.recordTime')}</span>
+        <div class="timeline-column-head-content">
+          <span>{t('timeline.detail.appCategory')}</span>
+          <span>{t('timeline.subtitle')}</span>
+          <span>{t('timeline.detail.screenshot')}</span>
+          <span>{t('timeline.detail.duration')}</span>
+        </div>
+      </div>
+
       <!-- 时间线列表 -->
       <div class="timeline-editorial-shell">
         <div class="timeline-rail" aria-hidden="true"></div>
@@ -1420,78 +1515,56 @@
               <div class={`timeline-entry-marker ${featured ? 'timeline-entry-marker-featured' : ''}`}></div>
             </div>
 
-            {#if featured}
-              <div class="timeline-entry-card timeline-entry-card-featured">
-                <div class="timeline-featured-media">
-                  {#if getTimelineThumbnail(activity)}
-                    <img
-                      src={getTimelineThumbnail(activity)}
-                      alt={t('timeline.detail.screenshotAlt')}
-                      class="timeline-featured-image"
-                    />
+            <div
+              class={`timeline-entry-card timeline-entry-card-unified timeline-entry-card-compact-grid ${featured ? 'timeline-entry-card-featured timeline-entry-meta-featured' : 'timeline-entry-card-compact'}`}
+            >
+              <div class="timeline-entry-app timeline-entry-app-compact">
+                <div class="timeline-app-icon" style={iconStyle(info)}>
+                  {#if getTimelineIconSrc(activity)}
+                    <img src={getTimelineIconSrc(activity)}
+                         alt={activity.app_name}
+                         class="timeline-app-icon-image app-icon object-cover" />
                   {:else}
-                    <div class="timeline-featured-image timeline-featured-image-placeholder">
-                      <div class="timeline-featured-image-glow"></div>
-                    </div>
+                    <span>{info.icon}</span>
                   {/if}
                 </div>
-                <div class="timeline-featured-copy">
-                  <div class="timeline-entry-meta timeline-entry-meta-featured">
-                    <div class="timeline-entry-app">
-                      <div class="timeline-app-icon"
-                           style={iconStyle(info)}>
-                        {#if getTimelineIconSrc(activity)}
-                          <img src={getTimelineIconSrc(activity)}
-                               alt={activity.app_name}
-                               class="timeline-app-icon-image app-icon object-cover" />
-                        {:else}
-                          <span>{info.icon}</span>
-                        {/if}
-                      </div>
-                      <div class="timeline-entry-heading timeline-entry-heading-featured">
-                        <span class="timeline-entry-app-name">{getTimelineAppName(activity)}</span>
-                        <span class="timeline-entry-category timeline-entry-category-pill">{info.name}</span>
-                      </div>
-                    </div>
-                    <div class="timeline-entry-duration-chip">{formatDuration(activity.duration)}</div>
-                  </div>
-                  <p class="timeline-entry-title timeline-entry-title-featured" title={activity.window_title}>
-                    {timelineTitle}
-                  </p>
-                  {#if activity.browser_url}
-                    <p class="timeline-entry-url">{formatBrowserUrlForDisplay(activity.browser_url)}</p>
-                  {/if}
+                <div class={`timeline-entry-heading ${featured ? 'timeline-entry-heading-featured' : ''}`}>
+                  <span class="timeline-entry-app-name">{getTimelineAppName(activity)}</span>
+                  <span class="timeline-entry-category timeline-entry-category-pill">
+                    <span class="timeline-entry-category-dot" style={`background-color: ${info.color}`}></span>
+                    {info.name}
+                  </span>
                 </div>
               </div>
-            {:else}
-              <div class="timeline-entry-card timeline-entry-card-compact timeline-entry-card-compact-grid">
-                <div class="timeline-entry-app timeline-entry-app-compact">
-                  <div class="timeline-app-icon"
-                       style={iconStyle(info)}>
-                    {#if getTimelineIconSrc(activity)}
-                      <img src={getTimelineIconSrc(activity)}
-                           alt={activity.app_name}
-                           class="timeline-app-icon-image app-icon object-cover" />
-                    {:else}
-                      <span>{info.icon}</span>
-                    {/if}
-                  </div>
-                  <div class="timeline-entry-heading">
-                    <span class="timeline-entry-app-name">{getTimelineAppName(activity)}</span>
-                    <span class="timeline-entry-category timeline-entry-category-pill">{info.name}</span>
-                  </div>
-                </div>
+
+              <div class="timeline-entry-copy">
                 <p class="timeline-entry-title timeline-entry-title-compact" title={activity.window_title}>
                   {timelineTitle}
                 </p>
-                <div class="timeline-entry-tail timeline-entry-tail-compact">
-                  <span class="timeline-entry-duration">{formatDuration(activity.duration)}</span>
-                  <svg class="timeline-entry-arrow" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-                  </svg>
-                </div>
+                {#if activity.browser_url}
+                  <p class="timeline-entry-url">{formatBrowserUrlForDisplay(activity.browser_url)}</p>
+                {/if}
               </div>
-            {/if}
+
+              <div class="timeline-entry-preview">
+                {#if getTimelineThumbnail(activity)}
+                  <img
+                    src={getTimelineThumbnail(activity)}
+                    alt={t('timeline.detail.screenshotAlt')}
+                    class="timeline-entry-preview-image"
+                  />
+                {:else}
+                  <span aria-label={t('timeline.detail.screenshotMissing')}>—</span>
+                {/if}
+              </div>
+
+              <div class="timeline-entry-tail timeline-entry-tail-compact">
+                <span class="timeline-entry-duration">{formatDuration(activity.duration)}</span>
+                <svg class="timeline-entry-arrow" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                </svg>
+              </div>
+            </div>
           </button>
         {/each}
       </div>
@@ -1857,216 +1930,790 @@
   </div>
 {/if}
 
-<!-- 批量清理记录面板（z-index 高于详情弹窗） -->
-{#if showCleanupPanel}
-  <!-- svelte-ignore a11y_click_events_have_key_events -->
-  <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
-  <div
-    class="fixed inset-0 z-[150] bg-slate-950/40 backdrop-blur-sm flex items-center justify-center animate-fadeIn p-4"
-    role="button"
-    tabindex="0"
-    on:click|self={() => !cleanupBusy && (showCleanupPanel = false)}
-    on:keydown={(e) => e.key === 'Escape' && !cleanupBusy && (showCleanupPanel = false)}
-  >
-    <div class="w-full max-w-lg rounded-2xl border border-slate-200 dark:border-[var(--surface-border-default)] bg-white dark:bg-[#1c1c1e] shadow-2xl">
-      <div class="flex items-center justify-between p-5 border-b border-slate-200 dark:border-[var(--surface-border-default)]">
-        <h3 class="text-base font-semibold text-slate-900 dark:text-[#f5f5f7]">{t('timeline.cleanupRecordsTitle')}</h3>
-        <button class="btn btn-ghost" on:click={() => (showCleanupPanel = false)} disabled={cleanupBusy}>
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+<!-- 时间线 JSON 导出范围：中性二选一；取消或 Esc 都不会继续打开保存窗口。 -->
+{#if showExportOcrChoice}
+  <div class="modal-overlay timeline-export-choice-overlay">
+    <button
+      type="button"
+      class="modal-backdrop-button"
+      aria-label={t('window.close')}
+      on:click={closeExportOcrChoice}
+    ></button>
+    <section
+      class="modal-panel timeline-export-choice-dialog"
+      use:trapFocus
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="timeline-export-choice-title"
+      aria-describedby="timeline-export-choice-description"
+      tabindex="-1"
+    >
+      <header class="modal-header">
+        <div class="timeline-modal-header-copy">
+          <p class="timeline-modal-kicker">{t('timeline.exportChoiceKicker')}</p>
+          <h3 id="timeline-export-choice-title" class="modal-title">{t('timeline.exportChoiceTitle')}</h3>
+          <p id="timeline-export-choice-description" class="timeline-modal-description">
+            {t('timeline.exportChoiceDescription')}
+          </p>
+        </div>
+        <button
+          type="button"
+          class="modal-close"
+          aria-label={t('window.close')}
+          title={t('window.close')}
+          on:click={closeExportOcrChoice}
+        >
+          <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
           </svg>
         </button>
-      </div>
-      <div class="p-5 space-y-4">
-        <p class="text-xs text-slate-500 dark:text-[#86868b] leading-relaxed">{t('timeline.cleanupRecordsHint')}</p>
+      </header>
 
-        <div class="flex gap-2">
-          {#each [{ key: 'date', label: t('timeline.deleteByDate') }, { key: 'range', label: t('timeline.deleteByRange') }, { key: 'app', label: t('timeline.deleteByApp') }] as tab}
+      <div class="modal-body timeline-export-choice-body">
+        <div class="timeline-export-choice-intro">
+          <span class="timeline-export-choice-intro-icon">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7" d="M12 3.5 19 6v5.2c0 4.4-2.9 7.5-7 9.3-4.1-1.8-7-4.9-7-9.3V6l7-2.5Z" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7" d="m9.2 12.1 1.8 1.9 3.9-4" />
+            </svg>
+          </span>
+          <p>{t('timeline.exportChoicePrivacy')}</p>
+        </div>
+
+        <div class="timeline-export-choice-group" role="radiogroup" aria-label={t('timeline.exportChoiceTitle')}>
+          <button
+            type="button"
+            role="radio"
+            aria-checked={!includeOcrInExport}
+            class="timeline-export-choice-option"
+            class:timeline-export-choice-option-active={!includeOcrInExport}
+            data-autofocus="true"
+            on:click={() => (includeOcrInExport = false)}
+          >
+            <span class="timeline-export-choice-radio" aria-hidden="true"></span>
+            <span class="timeline-export-choice-copy">
+              <span class="timeline-export-choice-title">
+                {t('timeline.exportChoiceExclude')}
+                <span class="timeline-export-choice-recommended">{t('timeline.exportChoiceRecommended')}</span>
+              </span>
+              <span class="timeline-export-choice-option-description">{t('timeline.exportChoiceExcludeDescription')}</span>
+            </span>
+            {#if !includeOcrInExport}
+              <svg class="timeline-export-choice-check" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m5 12 4 4 10-10" />
+              </svg>
+            {/if}
+          </button>
+
+          <button
+            type="button"
+            role="radio"
+            aria-checked={includeOcrInExport}
+            class="timeline-export-choice-option"
+            class:timeline-export-choice-option-active={includeOcrInExport}
+            on:click={() => (includeOcrInExport = true)}
+          >
+            <span class="timeline-export-choice-radio" aria-hidden="true"></span>
+            <span class="timeline-export-choice-copy">
+              <span class="timeline-export-choice-title">{t('timeline.exportChoiceInclude')}</span>
+              <span class="timeline-export-choice-option-description">{t('timeline.exportChoiceIncludeDescription')}</span>
+            </span>
+            {#if includeOcrInExport}
+              <svg class="timeline-export-choice-check" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m5 12 4 4 10-10" />
+              </svg>
+            {/if}
+          </button>
+        </div>
+
+        <div class="timeline-export-choice-footnote">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <circle cx="12" cy="12" r="8.5" stroke-width="1.7" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7" d="M12 10.5v6M12 7.5h.01" />
+          </svg>
+          <span>{t('timeline.exportChoiceFootnote')}</span>
+        </div>
+      </div>
+
+      <footer class="modal-footer">
+        <span class="timeline-modal-footer-note">{t('timeline.exportChoiceDefaultNote')}</span>
+        <button type="button" class="timeline-modal-button" on:click={closeExportOcrChoice}>
+          {t('timeline.cancel')}
+        </button>
+        <button type="button" class="timeline-modal-button timeline-modal-button-primary" on:click={confirmExportOcrChoice}>
+          {t('timeline.exportChoiceContinue')}
+        </button>
+      </footer>
+    </section>
+  </div>
+{/if}
+
+<!-- 批量清理记录面板（z-index 高于详情弹窗） -->
+{#if showCleanupPanel}
+  <div class="modal-overlay timeline-cleanup-overlay">
+    <button
+      type="button"
+      class="modal-backdrop-button"
+      aria-label={t('window.close')}
+      disabled={cleanupBusy}
+      on:click={closeCleanupPanel}
+    ></button>
+    <section
+      class="modal-panel timeline-cleanup-dialog"
+      use:trapFocus
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="timeline-cleanup-title"
+      aria-describedby="timeline-cleanup-description"
+      tabindex="-1"
+    >
+      <header class="modal-header">
+        <div class="timeline-modal-header-copy">
+          <p class="timeline-modal-kicker timeline-modal-kicker-danger">{t('timeline.cleanupRecords')}</p>
+          <h3 id="timeline-cleanup-title" class="modal-title">{t('timeline.cleanupRecordsTitle')}</h3>
+          <p id="timeline-cleanup-description" class="timeline-modal-description">{t('timeline.cleanupRecordsHint')}</p>
+        </div>
+        <button
+          type="button"
+          class="modal-close"
+          aria-label={t('window.close')}
+          title={t('window.close')}
+          disabled={cleanupBusy}
+          on:click={closeCleanupPanel}
+        >
+          <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </header>
+
+      <div class="modal-body timeline-cleanup-body">
+        <div class="timeline-cleanup-modes" role="radiogroup" aria-label={t('timeline.cleanupRecords')}>
+          {#each [
+            { key: 'date', label: t('timeline.deleteByDate'), detail: selectedDate },
+            { key: 'range', label: t('timeline.deleteByRange'), detail: `${cleanupRangeStart || '—'} — ${cleanupRangeEnd || '—'}` },
+            { key: 'app', label: t('timeline.deleteByApp'), detail: cleanupApp || t('timeline.selectApp') },
+          ] as tab}
             <button
-              class="flex-1 px-3 py-1.5 text-xs font-medium rounded-lg border transition-colors {cleanupMode === tab.key ? 'border-rose-400 bg-rose-50 text-rose-600 dark:bg-rose-900/20 dark:text-rose-300 dark:border-rose-700' : 'border-slate-200 dark:border-[var(--surface-border-default)] text-slate-600 dark:text-[#98989d] hover:bg-slate-50 dark:hover:bg-[#2c2c2e]'}"
+              type="button"
+              role="radio"
+              aria-checked={cleanupMode === tab.key}
+              class="timeline-cleanup-mode"
+              class:timeline-cleanup-mode-active={cleanupMode === tab.key}
               on:click={() => (cleanupMode = tab.key)}
             >
-              {tab.label}
+              <strong>{tab.label}</strong>
+              <span>{tab.detail}</span>
             </button>
           {/each}
         </div>
 
         {#if cleanupMode === 'date'}
-          <div class="space-y-3">
-            <p class="text-sm text-slate-700 dark:text-[#98989d] leading-relaxed">
-              {t('timeline.deleteByDateMessage', { date: selectedDate })}
-            </p>
-            <button
-              class="w-full px-4 py-2 text-sm rounded-lg bg-red-600 text-white hover:bg-red-700 disabled:opacity-50"
-              on:click={doCleanupByDate}
-              disabled={cleanupBusy}
-            >
-              {t('timeline.deleteByDate')}
-            </button>
+          <div class="timeline-cleanup-selection">
+            <span class="timeline-cleanup-selection-label">{t('timeline.deleteByDate')}</span>
+            <strong>{selectedDate}</strong>
           </div>
         {:else if cleanupMode === 'range'}
-          <div class="space-y-3">
+          <div class="timeline-cleanup-form">
             <LocalizedDatePicker
               mode="range"
               bind:startDate={cleanupRangeStart}
               bind:endDate={cleanupRangeEnd}
               localeCode={currentLocale}
-              triggerClass="page-control-input w-auto"
+              triggerClass="page-control-input timeline-cleanup-date-trigger"
             />
-            <div class="grid grid-cols-2 gap-3">
-              <label class="text-xs text-slate-500 dark:text-[#86868b] flex flex-col gap-1">
+            <div class="timeline-cleanup-time-grid">
+              <label class="timeline-cleanup-field">
                 <span>{t('datePicker.startDate')}</span>
-                <input type="time" bind:value={cleanupRangeStartTime} class="page-control-input" />
+                <input type="time" bind:value={cleanupRangeStartTime} class="timeline-cleanup-input" />
               </label>
-              <label class="text-xs text-slate-500 dark:text-[#86868b] flex flex-col gap-1">
+              <label class="timeline-cleanup-field">
                 <span>{t('datePicker.endDate')}</span>
-                <input type="time" bind:value={cleanupRangeEndTime} class="page-control-input" />
+                <input type="time" bind:value={cleanupRangeEndTime} class="timeline-cleanup-input" />
               </label>
             </div>
-            <button
-              class="w-full px-4 py-2 text-sm rounded-lg bg-red-600 text-white hover:bg-red-700 disabled:opacity-50"
-              on:click={doCleanupByRange}
-              disabled={cleanupBusy || !cleanupRangeStart || !cleanupRangeEnd}
-            >
-              {t('timeline.deleteByRange')}
-            </button>
           </div>
         {:else}
-          <div class="space-y-3">
+          <div class="timeline-cleanup-form">
             {#if cleanupAppCandidates.length === 0}
-              <p class="text-sm text-slate-500 dark:text-[#86868b]">{t('timeline.noActivitiesToDelete')}</p>
+              <p class="timeline-cleanup-empty">{t('timeline.noActivitiesToDelete')}</p>
             {:else}
-              <select class="page-control-input w-full" bind:value={cleanupApp}>
+              <label class="timeline-cleanup-field">
+                <span>{t('timeline.selectApp')}</span>
+                <select class="timeline-cleanup-input" bind:value={cleanupApp}>
                 <option value="">{t('timeline.selectApp')}</option>
                 {#each cleanupAppCandidates as app}
                   <option value={app}>{app}</option>
                 {/each}
-              </select>
-              <button
-                class="w-full px-4 py-2 text-sm rounded-lg bg-red-600 text-white hover:bg-red-700 disabled:opacity-50"
-                on:click={doCleanupByApp}
-                disabled={cleanupBusy || !cleanupApp}
-              >
-                {t('timeline.deleteByApp')}
-              </button>
+                </select>
+              </label>
             {/if}
           </div>
         {/if}
+
+        <div class="timeline-cleanup-warning">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 4 3.5 19h17L12 4Zm0 5v4m0 3h.01" />
+          </svg>
+          <span>{t('timeline.cleanupRecordsHint')}</span>
+        </div>
       </div>
-    </div>
+
+      <footer class="modal-footer">
+        <span class="timeline-modal-footer-note">{t('timeline.cleanupRecords')}</span>
+        <button type="button" class="timeline-modal-button" disabled={cleanupBusy} on:click={closeCleanupPanel}>
+          {t('timeline.cancel')}
+        </button>
+        <button
+          type="button"
+          class="timeline-modal-button timeline-modal-button-danger"
+          disabled={cleanupBusy || !cleanupSelectionValid}
+          on:click={cleanupMode === 'date' ? doCleanupByDate : (cleanupMode === 'range' ? doCleanupByRange : doCleanupByApp)}
+        >
+          {cleanupMode === 'date' ? t('timeline.deleteByDate') : (cleanupMode === 'range' ? t('timeline.deleteByRange') : t('timeline.deleteByApp'))}
+        </button>
+      </footer>
+    </section>
   </div>
 {/if}
 
-<!-- 分类修改确认（页面顶层，z-index 高于详情弹窗 z-[140]） -->
-{#if selectedActivity && (pendingChangeCategory || pendingApplyCategory || pendingDeleteCategory || pendingPrivacyRule)}
+<!-- 清理与分类修改确认：共用单层确认规范，高于详情抽屉 z-[140] -->
+{#if pendingCleanupAction || (selectedActivity && (pendingChangeCategory || pendingApplyCategory || pendingDeleteCategory || pendingPrivacyRule))}
+  {@const isCleanup = !!pendingCleanupAction}
   {@const isApply = !!pendingApplyCategory}
   {@const isDelete = !!pendingDeleteCategory}
   {@const isPrivacy = !!pendingPrivacyRule}
-  {@const confirmAction = isDelete ? confirmDeleteCategory : (isApply ? confirmApplyCategory : (isPrivacy ? confirmPrivacyRule : confirmChangeCategory))}
-  {@const cancelAction = isDelete ? cancelDeleteCategory : (isApply ? cancelApplyCategory : (isPrivacy ? cancelPrivacyRule : cancelChangeCategory))}
-  <!-- svelte-ignore a11y_click_events_have_key_events -->
-  <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
-  <div
-    class="fixed inset-0 z-[150] bg-slate-950/40 backdrop-blur-sm flex items-center justify-center animate-fadeIn"
-    role="presentation"
-    on:click|self={cancelAction}
-  >
-    <div
-      class="timeline-action-confirm-dialog"
+  {@const confirmAction = isCleanup ? confirmCleanupAction : (isDelete ? confirmDeleteCategory : (isApply ? confirmApplyCategory : (isPrivacy ? confirmPrivacyRule : confirmChangeCategory)))}
+  {@const cancelAction = isCleanup ? closeCleanupConfirmation : (isDelete ? cancelDeleteCategory : (isApply ? cancelApplyCategory : (isPrivacy ? cancelPrivacyRule : cancelChangeCategory)))}
+  {@const actionBusy = isCleanup && cleanupBusy}
+  <div class="modal-overlay timeline-action-confirm-overlay">
+    <button
+      type="button"
+      class="modal-backdrop-button"
+      aria-label={t('window.close')}
+      disabled={actionBusy}
+      on:click={cancelAction}
+    ></button>
+    <section
+      class="modal-panel timeline-action-confirm-dialog"
       use:trapFocus
       role="dialog"
       aria-modal="true"
       aria-labelledby="timeline-action-confirm-title"
+      aria-describedby="timeline-action-confirm-description"
       tabindex="-1"
     >
-      {#if isDelete}
-        <h3 id="timeline-action-confirm-title" class="text-base font-semibold text-slate-900 dark:text-[#f5f5f7]">
-          {t('timeline.deleteCategoryTitle')}
-        </h3>
-        <p class="mt-2 text-sm text-slate-700 dark:text-[#86868b] leading-relaxed">
-          {t('timeline.deleteCategoryMessage', { category: pendingDeleteCategory.name })}
-        </p>
-        <div class="mt-5 flex justify-end gap-2">
-          <button
-            on:click={cancelAction}
-            class="px-4 py-2 text-sm rounded-lg text-slate-500 hover:text-slate-700 dark:text-[#86868b] dark:hover:text-[#98989d] border border-slate-200 dark:border-[var(--surface-border-default)]"
-          >
-            {t('timeline.cancel')}
-          </button>
-          <button
-            on:click={confirmAction}
-            class="px-4 py-2 text-sm rounded-lg bg-red-600 text-white hover:bg-red-700"
-          >
-            {t('timeline.confirmDelete')}
-          </button>
+      <header class="modal-header">
+        <div class="timeline-modal-header-copy">
+          <p class:timeline-modal-kicker-danger={isCleanup || isDelete} class="timeline-modal-kicker">
+            {isCleanup || isDelete ? t('timeline.cleanupRecords') : t('timeline.confirmChange')}
+          </p>
+          <h3 id="timeline-action-confirm-title" class="modal-title">
+            {#if isCleanup}
+              {pendingCleanupAction.title}
+            {:else if isDelete}
+              {t('timeline.deleteCategoryTitle')}
+            {:else if isPrivacy}
+              {t('timeline.detail.privacyRule')}
+            {:else}
+              {t('timeline.changeCategoryTitle')}
+            {/if}
+          </h3>
         </div>
-      {:else if isPrivacy}
-        <h3 id="timeline-action-confirm-title" class="text-base font-semibold text-slate-900 dark:text-[#f5f5f7]">
-          {t('timeline.detail.privacyRule')}
-        </h3>
-        <p class="mt-2 text-sm text-slate-700 dark:text-[#86868b] leading-relaxed">
-          {t('timeline.detail.privacyConfirmMessage', {
-            appName: selectedActivity.app_name,
-            level: pendingPrivacyRule.levelLabel,
-          })}
-        </p>
-        <div class="mt-5 flex justify-end gap-2">
-          <button
-            on:click={cancelAction}
-            class="px-4 py-2 text-sm rounded-lg text-slate-500 hover:text-slate-700 dark:text-[#86868b] dark:hover:text-[#98989d] border border-slate-200 dark:border-[var(--surface-border-default)]"
-          >
-            {t('timeline.cancel')}
-          </button>
-          <button
-            on:click={confirmAction}
-            class="px-4 py-2 text-sm rounded-lg bg-primary-600 text-white hover:bg-primary-700"
-          >
-            {t('timeline.confirmChange')}
-          </button>
+        <button
+          type="button"
+          class="modal-close"
+          aria-label={t('window.close')}
+          title={t('window.close')}
+          disabled={actionBusy}
+          on:click={cancelAction}
+        >
+          <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </header>
+
+      <div class="modal-body">
+        <div class="timeline-action-confirm-layout">
+          <span class:timeline-action-confirm-icon-danger={isCleanup || isDelete} class="timeline-action-confirm-icon">
+            {#if isCleanup || isDelete}
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M5 7h14M9 7V4h6v3m-7 3v7m4-7v7m4-7v7M7 7l1 13h8l1-13" />
+              </svg>
+            {:else}
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M4 5h7l9 9-6 6-9-9L4 5Zm4.5 3.5h.01" />
+              </svg>
+            {/if}
+          </span>
+          <div class="timeline-action-confirm-copy">
+            <p id="timeline-action-confirm-description">
+              {#if isCleanup}
+                {pendingCleanupAction.message}
+              {:else if isDelete}
+                {t('timeline.deleteCategoryMessage', { category: pendingDeleteCategory.name })}
+              {:else if isPrivacy}
+                {t('timeline.detail.privacyConfirmMessage', {
+                  appName: selectedActivity.app_name,
+                  level: pendingPrivacyRule.levelLabel,
+                })}
+              {:else}
+                {@const categoryName = isApply ? pendingApplyCategory.name : pendingChangeCategory.categoryName}
+                {t('timeline.changeCategoryMessage', { appName: selectedActivity.app_name, category: categoryName })}
+              {/if}
+            </p>
+            <div class="timeline-action-confirm-detail">
+              {#if isCleanup}
+                {cleanupMode === 'date' ? t('timeline.deleteByDate') : (cleanupMode === 'range' ? t('timeline.deleteByRange') : t('timeline.deleteByApp'))}
+              {:else}
+                {selectedActivity.app_name}
+              {/if}
+            </div>
+          </div>
         </div>
-      {:else}
-        {@const categoryName = isApply ? pendingApplyCategory.name : pendingChangeCategory.categoryName}
-        {@const appName = selectedActivity.app_name}
-        <h3 id="timeline-action-confirm-title" class="text-base font-semibold text-slate-900 dark:text-[#f5f5f7]">
-          {t('timeline.changeCategoryTitle')}
-        </h3>
-        <p class="mt-2 text-sm text-slate-700 dark:text-[#86868b] leading-relaxed">
-          {t('timeline.changeCategoryMessage', { appName, category: categoryName })}
-        </p>
-        <div class="mt-5 flex justify-end gap-2">
-          <button
-            on:click={cancelAction}
-            class="px-4 py-2 text-sm rounded-lg text-slate-500 hover:text-slate-700 dark:text-[#86868b] dark:hover:text-[#98989d] border border-slate-200 dark:border-[var(--surface-border-default)]"
-          >
-            {t('timeline.cancel')}
-          </button>
-          <button
-            on:click={confirmAction}
-            class="px-4 py-2 text-sm rounded-lg bg-primary-600 text-white hover:bg-primary-700"
-          >
-            {t('timeline.confirmChange')}
-          </button>
-        </div>
-      {/if}
-    </div>
+      </div>
+
+      <footer class="modal-footer">
+        <span class="timeline-modal-footer-note">Esc · {t('timeline.cancel')}</span>
+        <button type="button" class="timeline-modal-button" disabled={actionBusy} on:click={cancelAction}>
+          {t('timeline.cancel')}
+        </button>
+        <button
+          type="button"
+          class:timeline-modal-button-danger={isCleanup || isDelete}
+          class:timeline-modal-button-primary={!isCleanup && !isDelete}
+          class="timeline-modal-button"
+          disabled={actionBusy}
+          on:click={confirmAction}
+        >
+          {isCleanup || isDelete ? t('timeline.confirmDelete') : t('timeline.confirmChange')}
+        </button>
+      </footer>
+    </section>
   </div>
 {/if}
 
 <style>
-  .timeline-action-confirm-dialog {
-    width: 100%;
-    max-width: 24rem;
-    margin: 1rem;
-    padding: 1.5rem;
-    border: 1px solid rgb(226 232 240);
-    border-radius: 1rem;
-    background: white;
-    box-shadow: 0 24px 60px rgba(15, 23, 42, 0.28);
+  .timeline-cleanup-dialog {
+    width: min(34rem, calc(100vw - 2rem));
   }
 
-  :global(.dark) .timeline-action-confirm-dialog {
-    border-color: rgba(255,255,255,0.14);
-    background: #1c1c1e;
+  .timeline-action-confirm-dialog {
+    width: min(26.25rem, calc(100vw - 2rem));
+  }
+
+  .timeline-export-choice-dialog {
+    width: min(26.25rem, calc(100vw - 2rem));
+  }
+
+  .timeline-export-choice-body {
+    display: grid;
+    gap: 0.75rem;
+  }
+
+  .timeline-export-choice-intro {
+    display: grid;
+    grid-template-columns: 2.125rem minmax(0, 1fr);
+    align-items: start;
+    gap: 0.75rem;
+  }
+
+  .timeline-export-choice-intro-icon {
+    width: 2.125rem;
+    height: 2.125rem;
+    display: grid;
+    place-items: center;
+    border-radius: 0.5625rem;
+    background: #e9f2ff;
+    color: #2f78e8;
+  }
+
+  .timeline-export-choice-intro-icon svg {
+    width: 1rem;
+    height: 1rem;
+  }
+
+  .timeline-export-choice-intro p {
+    margin: 0.0625rem 0 0;
+    color: #4d5c68;
+    font-size: 0.6875rem;
+    line-height: 1.65;
+  }
+
+  .timeline-export-choice-group {
+    display: grid;
+    gap: 0.5rem;
+  }
+
+  .timeline-export-choice-option {
+    width: 100%;
+    min-height: 3.875rem;
+    display: grid;
+    grid-template-columns: 1rem minmax(0, 1fr) 1rem;
+    align-items: start;
+    gap: 0.625rem;
+    padding: 0.625rem 0.6875rem;
+    border: 1px solid #dfe6eb;
+    border-radius: 0.5rem;
+    background: #ffffff;
+    color: #16212b;
+    text-align: start;
+    transition: border-color 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease;
+  }
+
+  .timeline-export-choice-option:hover {
+    border-color: #bfd3ee;
+    background: #fbfdff;
+  }
+
+  .timeline-export-choice-option-active {
+    border-color: #9bbdec;
+    background: #e9f2ff;
+    box-shadow: 0 0 0 2px rgba(47, 120, 232, 0.08);
+  }
+
+  .timeline-export-choice-radio {
+    width: 0.875rem;
+    height: 0.875rem;
+    margin-top: 0.0625rem;
+    border: 1.5px solid #b7c3cc;
+    border-radius: 50%;
+    background: #ffffff;
+    box-shadow: inset 0 0 0 3px #ffffff;
+  }
+
+  .timeline-export-choice-option-active .timeline-export-choice-radio {
+    border-color: #2f78e8;
+    background: #2f78e8;
+  }
+
+  .timeline-export-choice-copy {
+    min-width: 0;
+    display: grid;
+    gap: 0.25rem;
+  }
+
+  .timeline-export-choice-title {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.4375rem;
+    font-size: 0.6875rem;
+    line-height: 1.35;
+    font-weight: 720;
+  }
+
+  .timeline-export-choice-option-description {
+    color: #4d5c68;
+    font-size: 0.625rem;
+    line-height: 1.55;
+  }
+
+  .timeline-export-choice-recommended {
+    padding: 0.125rem 0.3125rem;
+    border-radius: 999px;
+    background: #dfeeff;
+    color: #1d64d6;
+    font-size: 0.53125rem;
+    line-height: 1.2;
+    font-weight: 760;
+  }
+
+  .timeline-export-choice-check {
+    width: 0.875rem;
+    height: 0.875rem;
+    margin-top: 0.0625rem;
+    color: #2f78e8;
+  }
+
+  .timeline-export-choice-footnote {
+    display: flex;
+    align-items: center;
+    gap: 0.4375rem;
+    color: #81909c;
+    font-size: 0.59375rem;
+    line-height: 1.45;
+  }
+
+  .timeline-export-choice-footnote svg {
+    width: 0.8125rem;
+    height: 0.8125rem;
+    flex: none;
+  }
+
+  .timeline-modal-header-copy {
+    min-width: 0;
+    flex: 1;
+  }
+
+  .timeline-modal-kicker {
+    margin: 0 0 0.25rem;
+    color: #81909c;
+    font-size: 0.59375rem;
+    line-height: 1.2;
+    font-weight: 760;
+    letter-spacing: 0.09em;
+  }
+
+  .timeline-modal-kicker-danger {
+    color: #d34b5d;
+  }
+
+  .timeline-modal-description {
+    margin: 0.3125rem 0 0;
+    color: #81909c;
+    font-size: 0.65625rem;
+    line-height: 1.55;
+  }
+
+  .timeline-cleanup-body {
+    display: grid;
+    gap: 0.8125rem;
+  }
+
+  .timeline-cleanup-modes {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.4375rem;
+  }
+
+  .timeline-cleanup-mode {
+    min-height: 4.125rem;
+    display: grid;
+    align-content: start;
+    gap: 0.25rem;
+    padding: 0.625rem;
+    border: 1px solid #dfe6eb;
+    border-radius: 0.5rem;
+    background: #ffffff;
+    color: #4d5c68;
+    text-align: left;
+    transition: border-color 0.15s ease, background-color 0.15s ease, color 0.15s ease;
+  }
+
+  .timeline-cleanup-mode:hover {
+    border-color: #c9d4dc;
+    background: #fbfcfd;
+  }
+
+  .timeline-cleanup-mode-active {
+    border-color: #e1a2ac;
+    background: #fff0f2;
+    color: #8d3140;
+  }
+
+  .timeline-cleanup-mode strong {
+    font-size: 0.6875rem;
+    line-height: 1.35;
+    font-weight: 680;
+  }
+
+  .timeline-cleanup-mode span {
+    overflow: hidden;
+    color: #81909c;
+    font-size: 0.59375rem;
+    line-height: 1.45;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .timeline-cleanup-selection,
+  .timeline-cleanup-form {
+    padding: 0.625rem;
+    border: 1px solid #dfe6eb;
+    border-radius: 0.5rem;
+    background: #f6f8fa;
+  }
+
+  .timeline-cleanup-selection {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    color: #16212b;
+    font-size: 0.6875rem;
+  }
+
+  .timeline-cleanup-selection-label {
+    color: #81909c;
+  }
+
+  .timeline-cleanup-form {
+    display: grid;
+    gap: 0.625rem;
+  }
+
+  :global(.timeline-cleanup-date-trigger) {
+    width: 100%;
+    min-height: 2.25rem;
+    justify-content: space-between;
+    background: #ffffff;
+  }
+
+  .timeline-cleanup-time-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.625rem;
+  }
+
+  .timeline-cleanup-field {
+    min-width: 0;
+    display: grid;
+    gap: 0.375rem;
+    color: #4d5c68;
+    font-size: 0.65625rem;
+    font-weight: 650;
+  }
+
+  .timeline-cleanup-input {
+    width: 100%;
+    height: 2.25rem;
+    padding: 0 0.625rem;
+    border: 1px solid #dfe6eb;
+    border-radius: 0.4375rem;
+    background: #ffffff;
+    color: #16212b;
+    font-size: 0.75rem;
+  }
+
+  .timeline-cleanup-input:hover {
+    border-color: #cbd6de;
+  }
+
+  .timeline-cleanup-input:focus {
+    outline: 0;
+    border-color: #9bbdec;
+    box-shadow: 0 0 0 3px rgba(47, 120, 232, 0.1);
+  }
+
+  .timeline-cleanup-empty {
+    margin: 0;
+    color: #81909c;
+    font-size: 0.6875rem;
+    line-height: 1.55;
+  }
+
+  .timeline-cleanup-warning {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5625rem;
+    padding: 0.625rem;
+    border: 1px solid #f0cbd1;
+    border-radius: 0.5rem;
+    background: #fff9fa;
+    color: #7e3a45;
+    font-size: 0.625rem;
+    line-height: 1.55;
+  }
+
+  .timeline-cleanup-warning svg {
+    width: 0.875rem;
+    height: 0.875rem;
+    flex: none;
+    margin-top: 0.0625rem;
+    color: #d34b5d;
+  }
+
+  .timeline-modal-footer-note {
+    margin-right: auto;
+    color: #81909c;
+    font-size: 0.59375rem;
+  }
+
+  .timeline-modal-button {
+    min-height: 2.125rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4375rem;
+    padding: 0 0.75rem;
+    border: 1px solid #dfe6eb;
+    border-radius: 0.4375rem;
+    background: #ffffff;
+    color: #4d5c68;
+    font-size: 0.6875rem;
+    font-weight: 680;
+    transition: border-color 0.15s ease, background-color 0.15s ease, color 0.15s ease;
+  }
+
+  .timeline-modal-button:hover:not(:disabled) {
+    border-color: #c9d4dc;
+    background: #f6f8fa;
+    color: #16212b;
+  }
+
+  .timeline-modal-button-primary {
+    border-color: #2f78e8;
+    background: #2f78e8;
+    color: #ffffff;
+  }
+
+  .timeline-modal-button-primary:hover:not(:disabled) {
+    border-color: #1d64d6;
+    background: #1d64d6;
+    color: #ffffff;
+  }
+
+  .timeline-modal-button-danger {
+    border-color: #d34b5d;
+    background: #d34b5d;
+    color: #ffffff;
+  }
+
+  .timeline-modal-button-danger:hover:not(:disabled) {
+    border-color: #bd394d;
+    background: #bd394d;
+    color: #ffffff;
+  }
+
+  .timeline-modal-button:disabled {
+    cursor: default;
+    opacity: 0.48;
+  }
+
+  .timeline-action-confirm-layout {
+    display: grid;
+    grid-template-columns: 2.125rem minmax(0, 1fr);
+    gap: 0.75rem;
+    align-items: start;
+  }
+
+  .timeline-action-confirm-icon {
+    width: 2.125rem;
+    height: 2.125rem;
+    display: grid;
+    place-items: center;
+    border-radius: 0.5625rem;
+    background: #e9f2ff;
+    color: #2f78e8;
+  }
+
+  .timeline-action-confirm-icon-danger {
+    background: #fff0f2;
+    color: #d34b5d;
+  }
+
+  .timeline-action-confirm-icon svg {
+    width: 1rem;
+    height: 1rem;
+  }
+
+  .timeline-action-confirm-copy p {
+    margin: 0.0625rem 0 0;
+    color: #4d5c68;
+    font-size: 0.6875rem;
+    line-height: 1.65;
+  }
+
+  .timeline-action-confirm-detail {
+    margin-top: 0.75rem;
+    padding: 0.5625rem 0.625rem;
+    border: 1px solid #dfe6eb;
+    border-radius: 0.5rem;
+    background: #f6f8fa;
+    color: #4d5c68;
+    font-size: 0.65625rem;
   }
 
   .timeline-summary-strip {
@@ -3274,6 +3921,532 @@
 
     .timeline-load-more {
       padding: 0 0.5rem 1rem;
+    }
+  }
+
+  /* 2026-08 紧凑亮色时间线：沿用已确认的方案 A，优先提升扫读密度。 */
+  .timeline-page-shell {
+    width: min(74rem, calc(100% - 2.5rem));
+    padding-top: 1.25rem;
+    padding-bottom: 1.5rem;
+  }
+
+  .timeline-page-shell .page-header {
+    margin-bottom: 0.95rem;
+  }
+
+  .timeline-page-shell .page-title-group {
+    gap: 0.65rem;
+  }
+
+  .timeline-page-shell .page-title-badge {
+    width: 2rem;
+    height: 2rem;
+    border-radius: 0.5rem;
+    background: #e9f2ff;
+    color: #2f78e8;
+    box-shadow: none;
+  }
+
+  .timeline-page-shell .page-title-badge svg {
+    width: 1rem;
+    height: 1rem;
+  }
+
+  .timeline-page-shell .page-title-copy h2 {
+    font-size: 1.25rem;
+    letter-spacing: -0.025em;
+  }
+
+  .timeline-page-shell .page-title-copy p {
+    margin-top: 0.2rem;
+    font-size: 0.68rem;
+  }
+
+  .timeline-page-shell .page-toolbar {
+    gap: 0.45rem;
+  }
+
+  .timeline-page-shell :global(.page-control-input),
+  .timeline-page-shell .page-control-btn-icon {
+    min-height: 2.1rem;
+    height: 2.1rem;
+    border-radius: 0.5rem;
+    border-color: #dfe6eb;
+    background: #fff;
+    box-shadow: none;
+  }
+
+  .timeline-page-shell .page-control-btn-icon {
+    width: 2.1rem;
+  }
+
+  .timeline-page-shell .timeline-editorial-board {
+    overflow: hidden;
+    border: 1px solid #dfe6eb;
+    border-radius: 0.65rem;
+    background: #fff;
+    box-shadow: none;
+  }
+
+  .timeline-page-shell .timeline-editorial-board::before {
+    display: none;
+  }
+
+  .timeline-page-shell .timeline-summary-strip {
+    min-height: 3rem;
+    padding: 0.55rem 0.85rem;
+    border-bottom: 1px solid #dfe6eb;
+    background: #fff;
+  }
+
+  .timeline-page-shell .timeline-summary-copy {
+    gap: 0.55rem;
+    color: #4d5c68;
+    font-size: 0.7rem;
+  }
+
+  .timeline-page-shell .timeline-summary-copy > span:first-child {
+    color: #16212b;
+    font-weight: 700;
+  }
+
+  .timeline-page-shell .timeline-summary-divider {
+    color: #dfe6eb;
+  }
+
+  .timeline-page-shell .timeline-summary-action {
+    min-height: 1.9rem;
+    padding: 0.35rem 0.65rem;
+    border-color: #dfe6eb;
+    border-radius: 0.45rem;
+    color: #4d5c68;
+    background: #fff;
+    box-shadow: none;
+    font-size: 0.68rem;
+  }
+
+  .timeline-page-shell .timeline-summary-action:hover {
+    border-color: #bfd3ee;
+    color: #1d64d6;
+    background: #fbfdff;
+  }
+
+  .timeline-column-head {
+    --timeline-anchor-width: 4.6rem;
+    display: grid;
+    grid-template-columns: var(--timeline-anchor-width) minmax(0, 1fr);
+    gap: 0.75rem;
+    min-height: 2rem;
+    align-items: center;
+    padding: 0 0.8rem;
+    border-bottom: 1px solid #ebf0f3;
+    color: #81909c;
+    background: #f6f8fa;
+    font-size: 0.625rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+  }
+
+  .timeline-column-head-content {
+    min-width: 0;
+    display: grid;
+    grid-template-columns: minmax(9.5rem, 0.86fr) minmax(13rem, 2fr) 6.5rem 5.25rem;
+    gap: 0.7rem;
+    align-items: center;
+  }
+
+  .timeline-column-head-content span:nth-last-child(-n + 2) {
+    text-align: end;
+  }
+
+  .timeline-page-shell .timeline-editorial-shell {
+    --timeline-anchor-width: 4.6rem;
+    position: relative;
+    padding: 0 0.8rem;
+  }
+
+  .timeline-page-shell .timeline-rail {
+    inset-inline-start: var(--timeline-anchor-width);
+    top: 0;
+    bottom: 0;
+    width: 1px;
+    border-radius: 0;
+    background: #dfe6eb;
+    opacity: 1;
+  }
+
+  .timeline-page-shell .timeline-entry {
+    min-height: 3.875rem;
+    grid-template-columns: var(--timeline-anchor-width) minmax(0, 1fr);
+    gap: 0.75rem;
+    padding: 0;
+    border-radius: 0;
+    background: transparent;
+    transition: background-color 120ms ease;
+  }
+
+  .timeline-page-shell .timeline-entry + .timeline-entry {
+    margin-top: 0;
+  }
+
+  .timeline-page-shell .timeline-entry + .timeline-entry::before {
+    content: '';
+    position: absolute;
+    inset-inline: 0;
+    top: 0;
+    height: 1px;
+    background: #ebf0f3;
+  }
+
+  .timeline-page-shell .timeline-entry:hover,
+  .timeline-page-shell .timeline-entry:focus-visible {
+    transform: none;
+    filter: none;
+    background: #f7faff;
+  }
+
+  .timeline-page-shell .timeline-entry:focus-visible {
+    outline: 2px solid rgba(47, 120, 232, 0.55);
+    outline-offset: -2px;
+  }
+
+  .timeline-page-shell .timeline-entry-anchor {
+    min-height: 100%;
+    align-items: center;
+    padding: 0;
+  }
+
+  .timeline-page-shell .timeline-entry-time {
+    padding-inline-start: 0.05rem;
+    color: #4d5c68;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+    font-size: 0.69rem;
+    font-weight: 650;
+    letter-spacing: 0;
+  }
+
+  .timeline-page-shell .timeline-entry-marker {
+    top: 50%;
+    inset-inline-end: -0.28rem;
+    width: 0.58rem;
+    height: 0.58rem;
+    transform: translateY(-50%);
+    border: 2px solid #fff;
+    background: #8b9aa6;
+    box-shadow: 0 0 0 1px #dfe6eb;
+  }
+
+  .timeline-page-shell .timeline-entry:hover .timeline-entry-marker,
+  .timeline-page-shell .timeline-entry:focus-visible .timeline-entry-marker {
+    transform: translateY(-50%);
+    background: #2f78e8;
+    box-shadow: 0 0 0 1px #b9d1f2;
+  }
+
+  .timeline-page-shell .timeline-entry-marker-featured {
+    background: #2f78e8;
+  }
+
+  .timeline-page-shell .timeline-entry-card,
+  .timeline-page-shell .timeline-entry-card-unified,
+  .timeline-page-shell .timeline-entry-card-featured,
+  .timeline-page-shell .timeline-entry-card-compact {
+    min-width: 0;
+    min-height: 3.875rem;
+    display: grid;
+    grid-template-columns: minmax(9.5rem, 0.86fr) minmax(13rem, 2fr) 6.5rem 5.25rem;
+    grid-template-areas: none;
+    gap: 0.7rem;
+    align-items: center;
+    padding: 0.45rem 0;
+    overflow: visible;
+    border: 0;
+    border-radius: 0;
+    color: #16212b;
+    background: transparent;
+    box-shadow: none;
+    backdrop-filter: none;
+  }
+
+  .timeline-page-shell .timeline-entry:hover .timeline-entry-card,
+  .timeline-page-shell .timeline-entry:focus-visible .timeline-entry-card {
+    border-color: transparent;
+    box-shadow: none;
+  }
+
+  .timeline-page-shell .timeline-entry-app,
+  .timeline-page-shell .timeline-entry-app-compact {
+    grid-area: auto;
+    gap: 0.55rem;
+  }
+
+  .timeline-page-shell .timeline-app-icon {
+    width: 1.9rem;
+    height: 1.9rem;
+    border-radius: 0.5rem;
+    font-size: 0.72rem;
+    box-shadow: none;
+  }
+
+  .timeline-page-shell .timeline-app-icon-image {
+    width: 1.45rem;
+    height: 1.45rem;
+    border-radius: 0.4rem;
+  }
+
+  .timeline-page-shell .timeline-entry-heading,
+  .timeline-page-shell .timeline-entry-heading-featured {
+    min-width: 0;
+    align-items: flex-start;
+    gap: 0.16rem;
+  }
+
+  .timeline-page-shell .timeline-entry-app-name {
+    max-width: 100%;
+    color: #16212b;
+    font-size: 0.72rem;
+    font-weight: 700;
+  }
+
+  .timeline-page-shell .timeline-entry-category,
+  .timeline-page-shell .timeline-entry-category-pill {
+    min-height: 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.28rem;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    color: #81909c;
+    background: transparent;
+    font-size: 0.625rem;
+    font-weight: 500;
+    letter-spacing: 0;
+  }
+
+  .timeline-entry-category-dot {
+    width: 0.32rem;
+    height: 0.32rem;
+    flex: none;
+    border-radius: 999px;
+  }
+
+  .timeline-entry-copy {
+    min-width: 0;
+  }
+
+  .timeline-page-shell .timeline-entry-title,
+  .timeline-page-shell .timeline-entry-title-compact,
+  .timeline-page-shell .timeline-entry-title-featured {
+    overflow: hidden;
+    color: #35434f;
+    font-size: 0.72rem;
+    font-weight: 620;
+    line-height: 1.35;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .timeline-page-shell .timeline-entry-url {
+    margin-top: 0.18rem;
+    color: #81909c;
+    font-size: 0.625rem;
+  }
+
+  .timeline-entry-preview {
+    min-width: 0;
+    min-height: 2.85rem;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    color: #aeb9c1;
+    font-size: 0.68rem;
+  }
+
+  .timeline-entry-preview-image {
+    width: 5rem;
+    height: 2.8rem;
+    display: block;
+    object-fit: cover;
+    border: 1px solid #dfe6eb;
+    border-radius: 0.4rem;
+    background: #f6f8fa;
+  }
+
+  .timeline-page-shell .timeline-entry-tail,
+  .timeline-page-shell .timeline-entry-tail-compact {
+    grid-area: auto;
+    justify-self: stretch;
+    justify-content: flex-end;
+    gap: 0.45rem;
+    color: #4d5c68;
+  }
+
+  .timeline-page-shell .timeline-entry-duration {
+    font-size: 0.68rem;
+    font-weight: 700;
+  }
+
+  .timeline-page-shell .timeline-entry-arrow {
+    width: 0.8rem;
+    height: 0.8rem;
+    color: #aab5bd;
+  }
+
+  .timeline-page-shell .timeline-load-more {
+    padding: 0.65rem 0.8rem 0.8rem;
+  }
+
+  .timeline-page-shell .timeline-load-more-btn {
+    min-height: 2.25rem;
+    padding: 0.45rem 0.75rem;
+    border-color: #dfe6eb;
+    border-radius: 0.5rem;
+    color: #4d5c68;
+    background: #f6f8fa;
+    font-size: 0.68rem;
+  }
+
+  .timeline-page-shell .timeline-load-more-end {
+    min-height: 2.4rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 0.8rem;
+    border-top: 1px solid #ebf0f3;
+    color: #81909c;
+    background: #f6f8fa;
+    font-size: 0.625rem;
+  }
+
+  .timeline-detail-overlay {
+    padding: 0;
+    background: rgba(15, 23, 31, 0.34);
+    backdrop-filter: blur(2px);
+  }
+
+  .timeline-detail-drawer {
+    width: min(27.5rem, 100%);
+    height: 100vh;
+    border: 0;
+    border-inline-start: 1px solid #dfe6eb;
+    border-radius: 0;
+    background: #fff;
+    box-shadow: -1.1rem 0 3.25rem rgba(22, 33, 43, 0.2);
+  }
+
+  .timeline-detail-header {
+    padding: 0.85rem 0.95rem;
+    border-bottom-color: #dfe6eb;
+  }
+
+  .timeline-detail-body {
+    gap: 1rem;
+    padding: 0.9rem 0.95rem 1.2rem;
+  }
+
+  .timeline-detail-hero {
+    padding: 0.75rem 0.85rem;
+    border: 1px solid #dfe6eb;
+    border-radius: 0.55rem;
+    background: #f6f8fa;
+  }
+
+  .timeline-detail-preview-frame {
+    min-height: 12.5rem;
+    border-color: #dfe6eb;
+    border-radius: 0.55rem;
+    background: #f6f8fa;
+  }
+
+  .timeline-detail-settings {
+    border-color: #dfe6eb;
+  }
+
+  @media (max-width: 860px) {
+    .timeline-column-head-content,
+    .timeline-page-shell .timeline-entry-card,
+    .timeline-page-shell .timeline-entry-card-unified,
+    .timeline-page-shell .timeline-entry-card-featured,
+    .timeline-page-shell .timeline-entry-card-compact {
+      grid-template-columns: minmax(8rem, 0.85fr) minmax(11rem, 2fr) 5rem;
+    }
+
+    .timeline-column-head-content span:nth-child(3),
+    .timeline-entry-preview {
+      display: none;
+    }
+  }
+
+  @media (max-width: 640px) {
+    .timeline-page-shell {
+      width: calc(100% - 1rem);
+      padding-inline: 0;
+    }
+
+    .timeline-column-head,
+    .timeline-page-shell .timeline-rail {
+      display: none;
+    }
+
+    .timeline-page-shell .timeline-summary-strip {
+      align-items: flex-start;
+      flex-direction: column;
+      padding: 0.75rem;
+    }
+
+    .timeline-page-shell .timeline-editorial-shell {
+      --timeline-anchor-width: 0;
+      padding: 0;
+    }
+
+    .timeline-page-shell .timeline-entry {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 0;
+      padding: 0.55rem 0.7rem;
+    }
+
+    .timeline-page-shell .timeline-entry-anchor {
+      display: block;
+      min-height: 0;
+      padding: 0 0 0.35rem;
+    }
+
+    .timeline-page-shell .timeline-entry-marker {
+      display: none;
+    }
+
+    .timeline-page-shell .timeline-entry-card,
+    .timeline-page-shell .timeline-entry-card-unified,
+    .timeline-page-shell .timeline-entry-card-featured,
+    .timeline-page-shell .timeline-entry-card-compact {
+      min-height: 0;
+      grid-template-columns: minmax(0, 1fr) auto;
+      grid-template-areas:
+        'app meta'
+        'copy copy';
+      gap: 0.45rem 0.75rem;
+      padding: 0;
+    }
+
+    .timeline-page-shell .timeline-entry-app {
+      grid-area: app;
+    }
+
+    .timeline-entry-copy {
+      grid-area: copy;
+    }
+
+    .timeline-page-shell .timeline-entry-tail-compact {
+      grid-area: meta;
+      align-self: center;
+    }
+
+    .timeline-detail-drawer {
+      width: 100%;
+      height: 100vh;
+      border-radius: 0;
     }
   }
 </style>

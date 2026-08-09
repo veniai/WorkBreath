@@ -7,7 +7,8 @@ test('关于页应提供赞助支持按钮并展示微信与支付宝收款码',
 
   assert.match(source, /let isSponsorshipOpen = false;/);
   assert.match(source, /about\.sponsorship/);
-  assert.match(source, /text-rose-500/);
+  assert.match(source, /about-support-link/);
+  assert.match(source, /about-support-methods/);
   assert.match(source, /about\.wechat/);
   assert.match(source, /about\.alipay/);
   assert.match(source, /docs\/sponsorship\/vx\.png/);
@@ -21,7 +22,8 @@ test('关于页赞助弹层应保留完整交互，检查更新应位于三个�
   assert.match(source, /about\.supportCopy2/);
   assert.doesNotMatch(source, /推荐微信扫码支持/);
   assert.doesNotMatch(source, /也可以使用支付宝扫码/);
-  assert.match(source, /if \(event\.key === 'Escape' && isSponsorshipOpen\)/);
+  assert.match(source, /if \(event\.key !== 'Escape' \|\| !isSponsorshipOpen\) return;/);
+  assert.match(source, /if \(zoomedQr\) zoomedQr = null;/);
   assert.match(source, /on:click=\{\(\) => zoomedQr = wechatSponsorshipQr\}/);
   assert.match(source, /on:click=\{\(\) => zoomedQr = alipaySponsorshipQr\}/);
   assert.match(source, /role="switch"/);

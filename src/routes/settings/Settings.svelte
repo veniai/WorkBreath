@@ -33,13 +33,15 @@
   let activeTab = 'general';
 
   const tabs = [
-    { id: 'general', labelKey: 'settings.tabs.general', icon: 'general' },
-    { id: 'appearance', labelKey: 'settings.tabs.appearance', icon: 'appearance' },
-    { id: 'ai', labelKey: 'settings.tabs.ai', icon: 'ai' },
-    { id: 'privacy', labelKey: 'settings.tabs.privacy', icon: 'privacy' },
-    { id: 'storage', labelKey: 'settings.tabs.storage', icon: 'storage' },
-    { id: 'node', labelKey: 'settings.tabs.node', icon: 'node', beta: true },
+    { id: 'general', labelKey: 'settings.tabs.general', descriptionKey: 'settings.tabDescriptions.general', icon: 'general' },
+    { id: 'appearance', labelKey: 'settings.tabs.appearance', descriptionKey: 'settings.tabDescriptions.appearance', icon: 'appearance' },
+    { id: 'ai', labelKey: 'settings.tabs.ai', descriptionKey: 'settings.tabDescriptions.ai', icon: 'ai' },
+    { id: 'privacy', labelKey: 'settings.tabs.privacy', descriptionKey: 'settings.tabDescriptions.privacy', icon: 'privacy' },
+    { id: 'storage', labelKey: 'settings.tabs.storage', descriptionKey: 'settings.tabDescriptions.storage', icon: 'storage' },
+    { id: 'node', labelKey: 'settings.tabs.node', descriptionKey: 'settings.tabDescriptions.node', icon: 'node', beta: true },
   ];
+
+  $: activeTabConfig = tabs.find((tab) => tab.id === activeTab) ?? tabs[0];
 
   // 加载配置
   async function loadConfig() {
@@ -313,10 +315,13 @@
 
     <!-- 保存按钮 -->
     <div class="settings-save-dock">
+      <span class:settings-save-status-dirty={dirty} class="settings-save-status" aria-live="polite">
+        {dirty ? t('settings.unsaved') : t('settings.saved')}
+      </span>
       <button
         on:click={saveConfig}
-        disabled={loading || saving}
-        class="settings-action-primary px-4 rounded-xl"
+        disabled={loading || saving || !dirty}
+        class="settings-action-primary settings-save-button px-4"
       >
         {#if saving}
           <div class="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
@@ -384,9 +389,26 @@
               </span>
             </button>
           {/each}
+
+          <div class="settings-tab-rail-spacer"></div>
+          <div class="settings-tab-rail-note">
+            <strong>{t('settings.localFirstTitle')}</strong>
+            <span>{t('settings.localFirstDescription')}</span>
+          </div>
         </nav>
 
         <div class="settings-stage-shell">
+        <header class="settings-stage-intro">
+          <div>
+            <h3>{t(activeTabConfig.labelKey)}</h3>
+            <p>{t(activeTabConfig.descriptionKey)}</p>
+          </div>
+          {#if activeTabConfig.beta}
+            <span class="settings-stage-beta">Beta</span>
+          {:else}
+            <span class="settings-stage-context">{t('settings.localFirstTitle')}</span>
+          {/if}
+        </header>
         {#if activeTab === 'general'}
           <SettingsGeneral bind:config on:change={() => dirty = true} />
         {:else if activeTab === 'appearance'}

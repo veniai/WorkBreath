@@ -17,9 +17,9 @@
   }
 </script>
 
-<div class="settings-card">
-  <div class="flex items-start justify-between gap-5">
-    <div>
+<div class="settings-card eye-care-config-card">
+  <div class="eye-care-config-master">
+    <div class="eye-care-config-master-copy">
       <h3 class="settings-card-title">{t('eyeCare.title')}</h3>
       <p class="settings-muted mt-1">{t('eyeCare.description')}</p>
     </div>
@@ -33,39 +33,40 @@
     ><span class="switch-thumb {config.eye_care_enabled ? 'translate-x-5' : 'translate-x-0'}"></span></button>
   </div>
 
-  <div class="mt-5 grid gap-4 md:grid-cols-2">
-    <label class="settings-block">
+  <div class="eye-care-config-grid">
+    <label class="settings-block eye-care-config-field">
       <span class="settings-text">{t('eyeCare.workMinutes')}</span>
       <span class="settings-muted mt-1">{t('eyeCare.workMinutesHint')}</span>
-      <input class="control-input mt-3" type="number" min="1" max="240" bind:value={config.eye_care_work_minutes} on:change={() => clampNumber('eye_care_work_minutes', 1, 240, 40)} />
+      <input class="control-input" type="number" min="1" max="240" bind:value={config.eye_care_work_minutes} on:change={() => clampNumber('eye_care_work_minutes', 1, 240, 40)} />
     </label>
-    <label class="settings-block">
+    <label class="settings-block eye-care-config-field">
       <span class="settings-text">{t('eyeCare.restMinutes')}</span>
       <span class="settings-muted mt-1">{t('eyeCare.restMinutesHint')}</span>
-      <input class="control-input mt-3" type="number" min="1" max="30" bind:value={config.eye_care_rest_minutes} on:change={() => clampNumber('eye_care_rest_minutes', 1, 30, 3)} />
+      <input class="control-input" type="number" min="1" max="30" bind:value={config.eye_care_rest_minutes} on:change={() => clampNumber('eye_care_rest_minutes', 1, 30, 3)} />
     </label>
-    <label class="settings-block">
+    <label class="settings-block eye-care-config-field">
       <span class="settings-text">{t('eyeCare.inputGraceSeconds')}</span>
       <span class="settings-muted mt-1">{t('eyeCare.inputGraceSecondsHint')}</span>
-      <input class="control-input mt-3" type="number" min="5" max="300" bind:value={config.eye_care_input_grace_seconds} on:change={() => clampNumber('eye_care_input_grace_seconds', 5, 300, 60)} />
+      <input class="control-input" type="number" min="5" max="300" bind:value={config.eye_care_input_grace_seconds} on:change={() => clampNumber('eye_care_input_grace_seconds', 5, 300, 60)} />
     </label>
-    <label class="settings-block">
+    <label class="settings-block eye-care-config-field">
       <span class="settings-text">{t('eyeCare.naturalRestMinutes')}</span>
       <span class="settings-muted mt-1">{t('eyeCare.naturalRestMinutesHint')}</span>
-      <input class="control-input mt-3" type="number" min="1" max="60" bind:value={config.eye_care_natural_rest_minutes} on:change={() => clampNumber('eye_care_natural_rest_minutes', 1, 60, 5)} />
+      <input class="control-input" type="number" min="1" max="60" bind:value={config.eye_care_natural_rest_minutes} on:change={() => clampNumber('eye_care_natural_rest_minutes', 1, 60, 5)} />
     </label>
-    <label class="settings-block">
+    <label class="settings-block eye-care-config-field">
       <span class="settings-text">{t('eyeCare.preBreakSeconds')}</span>
       <span class="settings-muted mt-1">{t('eyeCare.preBreakSecondsHint')}</span>
-      <input class="control-input mt-3" type="number" min="5" max="300" bind:value={config.eye_care_pre_break_seconds} on:change={() => clampNumber('eye_care_pre_break_seconds', 5, 300, 30)} />
+      <input class="control-input" type="number" min="5" max="300" bind:value={config.eye_care_pre_break_seconds} on:change={() => clampNumber('eye_care_pre_break_seconds', 5, 300, 30)} />
     </label>
   </div>
 
-  <div class="mt-5 flex items-center justify-between gap-5 rounded-xl border border-slate-200 p-4 dark:border-[var(--surface-border-default)]">
-    <div>
+  <div class="eye-care-config-pause-row">
+    <div class="eye-care-config-pause-copy">
       <div class="settings-text">{t('eyeCare.pause')}</div>
       <div class="settings-muted mt-1">{t('eyeCare.pauseHint')}</div>
     </div>
+    <p class="settings-muted eye-care-config-estimate">{t('eyeCare.estimateNotice')}</p>
     <button
       type="button"
       class="switch-track {config.eye_care_paused ? 'bg-amber-500' : 'bg-slate-300 dark:bg-[rgba(255,255,255,0.14)]'}"
@@ -76,6 +77,4 @@
       on:click={() => toggle('eye_care_paused')}
     ><span class="switch-thumb {config.eye_care_paused ? 'translate-x-5' : 'translate-x-0'}"></span></button>
   </div>
-
-  <p class="settings-muted mt-4 text-xs leading-5">{t('eyeCare.estimateNotice')}</p>
 </div>

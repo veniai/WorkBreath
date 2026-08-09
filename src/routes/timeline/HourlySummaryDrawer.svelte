@@ -501,6 +501,137 @@
     font-size: 0.72rem;
   }
 
+  /* 与紧凑亮色时间线共用同一套右侧工作抽屉。 */
+  .hourly-summary-overlay {
+    padding: 0;
+    background: rgba(15, 23, 31, 0.34);
+    backdrop-filter: blur(2px);
+  }
+
+  .hourly-summary-drawer {
+    width: min(27.5rem, 100%);
+    height: 100vh;
+    border: 0;
+    border-inline-start: 1px solid #dfe6eb;
+    border-radius: 0;
+    box-shadow: -1.1rem 0 3.25rem rgba(22, 33, 43, 0.2);
+  }
+
+  .hourly-summary-header {
+    gap: 0.75rem;
+    padding: 0.85rem 0.95rem;
+    border-bottom-color: #dfe6eb;
+  }
+
+  .hourly-summary-kicker {
+    margin-bottom: 0.2rem;
+    color: #81909c;
+    font-size: 0.625rem;
+  }
+
+  .hourly-summary-heading h2 {
+    color: #16212b;
+    font-size: 1rem;
+  }
+
+  .hourly-summary-heading p {
+    margin-top: 0.22rem;
+    color: #81909c;
+    font-size: 0.68rem;
+  }
+
+  .hourly-summary-close {
+    width: 1.9rem;
+    height: 1.9rem;
+    border-color: #dfe6eb;
+    border-radius: 0.45rem;
+    color: #81909c;
+    background: #fff;
+  }
+
+  .hourly-summary-close:hover {
+    color: #16212b;
+    background: #f6f8fa;
+  }
+
+  .hourly-summary-close svg {
+    width: 0.85rem;
+    height: 0.85rem;
+  }
+
+  .hourly-summary-body {
+    padding: 0.9rem 0.95rem 1.2rem;
+    background: #fff;
+  }
+
+  .hourly-summary-list {
+    gap: 0;
+    overflow: hidden;
+    border: 1px solid #dfe6eb;
+    border-radius: 0.55rem;
+  }
+
+  .hourly-summary-item {
+    padding: 0.75rem 0.8rem;
+    border: 0;
+    border-top: 1px solid #ebf0f3;
+    border-radius: 0;
+    background: #fff;
+    box-shadow: none;
+  }
+
+  .hourly-summary-item:first-child {
+    border-top: 0;
+  }
+
+  .hourly-summary-item-peak {
+    background: #f7faff;
+  }
+
+  .hourly-summary-item h3 {
+    color: #16212b;
+    font-size: 0.78rem;
+  }
+
+  .hourly-summary-item-header p {
+    margin-top: 0.18rem;
+    color: #81909c;
+    font-size: 0.625rem;
+  }
+
+  .hourly-summary-peak,
+  .hourly-summary-rhythm {
+    min-height: 1.3rem;
+    padding: 0.14rem 0.42rem;
+    border-radius: 0.38rem;
+    font-size: 0.625rem;
+  }
+
+  .hourly-summary-primary {
+    margin-top: 0.58rem !important;
+    color: #16212b;
+    font-size: 0.72rem;
+  }
+
+  .hourly-summary-secondary {
+    margin-top: 0.32rem !important;
+    color: #4d5c68;
+    font-size: 0.68rem;
+  }
+
+  .hourly-summary-apps {
+    margin-top: 0.55rem;
+  }
+
+  .hourly-summary-apps span {
+    padding: 0.22rem 0.45rem;
+    border-color: #dfe6eb;
+    border-radius: 0.38rem;
+    color: #4d5c68;
+    background: #f6f8fa;
+    font-size: 0.625rem;
+  }
+
   :global(.dark) .hourly-summary-drawer {
     border-color: var(--surface-border-default);
     background: #1c1c1e;

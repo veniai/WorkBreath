@@ -52,6 +52,29 @@ test('护眼从设置迁到概览下方的独立主页并保留全部可配置�
   assert.match(dashboard, /recentEvents/);
 });
 
+test('护眼主页应落地紧凑浅色状态工作台并让设置进入首屏', async () => {
+  const [dashboard, settings] = await Promise.all([
+    read('./routes/eye-care/EyeCare.svelte'),
+    read('./routes/settings/components/SettingsEyeCare.svelte'),
+  ]);
+
+  assert.match(dashboard, /eye-care-save-status/);
+  assert.match(dashboard, /eye-care-cycle-row/);
+  assert.match(dashboard, /eye-care-middle-grid/);
+  assert.match(dashboard, /eyeCare\.dashboard\.cycleRuleValue/);
+  assert.match(dashboard, /\.eye-care-dashboard\s*\{[\s\S]*?color-scheme:\s*light/);
+  assert.match(dashboard, /\.eye-care-hero\s*\{[\s\S]*?min-height:\s*12\.625rem/);
+  assert.match(dashboard, /\.eye-care-middle-grid\s*\{[\s\S]*?grid-template-columns:/);
+  assert.match(dashboard, /repeat\(5, minmax\(0, 1fr\)\)/);
+  assert.doesNotMatch(dashboard, /data-state="(?:counting|away|rest)"/);
+
+  assert.match(settings, /eye-care-config-card/);
+  assert.match(settings, /eye-care-config-master/);
+  assert.match(settings, /eye-care-config-grid/);
+  assert.match(settings, /eye-care-config-field/);
+  assert.match(settings, /eye-care-config-pause-row/);
+});
+
 test('护眼主页用可审计状态解释计时，并区分全部未计入原因', async () => {
   const [engine, dashboard] = await Promise.all([
     read('../src-tauri/src/eye_care.rs'),

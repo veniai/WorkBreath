@@ -1,19 +1,24 @@
 <script>
   import { confirmDialog, resolveConfirm } from '$lib/stores/confirm.js';
+  import { t } from '$lib/i18n/index.js';
   import { trapFocus } from '$lib/utils/focusTrap.js';
 
   const toneMap = {
     info: {
-      iconBg: 'bg-blue-50 text-blue-600 dark:bg-blue-950/50 dark:text-blue-300',
-      button: 'bg-primary-500 hover:bg-primary-600 text-white',
+      className: 'confirm-dialog-tone-info',
+      buttonClass: 'confirm-dialog-button-primary',
     },
     warning: {
-      iconBg: 'bg-amber-50 text-amber-600 dark:bg-amber-950/50 dark:text-amber-300',
-      button: 'bg-amber-500 hover:bg-amber-600 text-white',
+      className: 'confirm-dialog-tone-warning',
+      buttonClass: 'confirm-dialog-button-warning',
     },
     error: {
-      iconBg: 'bg-red-50 text-red-600 dark:bg-red-950/50 dark:text-red-300',
-      button: 'bg-red-500 hover:bg-red-600 text-white',
+      className: 'confirm-dialog-tone-danger',
+      buttonClass: 'confirm-dialog-button-danger',
+    },
+    danger: {
+      className: 'confirm-dialog-tone-danger',
+      buttonClass: 'confirm-dialog-button-danger',
     },
   };
 
@@ -21,55 +26,87 @@
   $: tone = toneMap[dialogState?.tone] || toneMap.info;
 
   function handleKeydown(event) {
+    if (!dialogState) return;
     if (event.key === 'Escape') {
+      event.preventDefault();
+      event.stopImmediatePropagation();
       resolveConfirm(false);
     }
   }
 </script>
 
-<svelte:window on:keydown={handleKeydown} />
+<svelte:window on:keydown|capture={handleKeydown} />
 
 {#if dialogState}
-  <div class="fixed inset-0 z-[200] flex items-center justify-center px-4 py-6 bg-slate-950/48 backdrop-blur-md animate-fadeIn">
-    <div
+  <div class="modal-overlay confirm-dialog-overlay fixed inset-0 z-[200]">
+    <button
+      type="button"
+      class="modal-backdrop-button"
+      aria-label={t('window.close')}
+      on:click={() => resolveConfirm(false)}
+    ></button>
+
+    <section
       use:trapFocus
-      class="w-full max-w-md rounded-3xl border border-slate-200 dark:border-[var(--surface-border-default)] bg-white dark:bg-[#1c1c1e] shadow-2xl shadow-slate-950/24 dark:shadow-black/50 p-6"
+      class={`modal-panel confirm-dialog-panel ${tone.className}`}
       role="dialog"
       aria-modal="true"
       aria-labelledby="confirm-dialog-title"
+      aria-describedby="confirm-dialog-description"
+      tabindex="-1"
     >
-      <div class="flex items-start gap-4">
-        <div class={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl ${tone.iconBg}`}>
-          <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3.75m0 3.75h.008v.008H12v-.008ZM10.29 3.86 1.82 18a2 2 0 0 0 1.72 3h16.92a2 2 0 0 0 1.72-3L13.71 3.86a2 2 0 0 0-3.42 0Z" />
-          </svg>
-        </div>
-        <div class="min-w-0 flex-1">
-          <h3 id="confirm-dialog-title" class="text-lg font-semibold text-slate-900 dark:text-[#f5f5f7]">
-            {dialogState.title}
-          </h3>
-          <p class="mt-2 text-sm leading-6 text-slate-500 dark:text-[#86868b] whitespace-pre-line">
-            {dialogState.message}
-          </p>
-        </div>
-      </div>
-
-      <div class="mt-6 flex items-center justify-end gap-3">
+      <header class="modal-header confirm-dialog-header">
+        <h3 id="confirm-dialog-title" class="modal-title">
+          {dialogState.title}
+        </h3>
         <button
           type="button"
+          class="modal-close"
+          aria-label={t('window.close')}
           on:click={() => resolveConfirm(false)}
-          class="inline-flex min-h-11 items-center justify-center rounded-2xl border border-slate-200 dark:border-[var(--surface-border-default)] bg-white dark:bg-[#2c2c2e] px-5 text-sm font-medium text-slate-700 dark:text-[#98989d] transition-colors hover:bg-slate-50 dark:hover:bg-[var(--editorial-surface-subtle)]"
+        >
+          <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+            <path stroke-linecap="round" d="M6 6l12 12M18 6 6 18" />
+          </svg>
+        </button>
+      </header>
+
+      <div class="modal-body confirm-dialog-body">
+        <span class="confirm-dialog-icon" aria-hidden="true">
+          {#if dialogState.tone === 'info'}
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+              <circle cx="12" cy="12" r="8.5" />
+              <path stroke-linecap="round" d="M12 10.5v5M12 7.8h.01" />
+            </svg>
+          {:else}
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+              <path stroke-linejoin="round" d="M10.3 4.5 3.1 17a2 2 0 0 0 1.73 3h14.34a2 2 0 0 0 1.73-3L13.7 4.5a1.96 1.96 0 0 0-3.4 0Z" />
+              <path stroke-linecap="round" d="M12 9v4.25M12 16.4h.01" />
+            </svg>
+          {/if}
+        </span>
+        <p id="confirm-dialog-description" class="confirm-dialog-message">
+          {dialogState.message}
+        </p>
+      </div>
+
+      <footer class="modal-footer confirm-dialog-footer">
+        <button
+          type="button"
+          class="confirm-dialog-button"
+          data-autofocus="true"
+          on:click={() => resolveConfirm(false)}
         >
           {dialogState.cancelText}
         </button>
         <button
           type="button"
+          class={`confirm-dialog-button confirm-dialog-button-confirm ${tone.buttonClass}`}
           on:click={() => resolveConfirm(true)}
-          class={`inline-flex min-h-11 items-center justify-center rounded-2xl px-5 text-sm font-medium transition-colors ${tone.button}`}
         >
           {dialogState.confirmText}
         </button>
-      </div>
-    </div>
+      </footer>
+    </section>
   </div>
 {/if}

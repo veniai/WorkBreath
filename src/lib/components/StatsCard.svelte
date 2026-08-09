@@ -5,6 +5,7 @@
   export let color = 'indigo';
   export let href = null;
   export let embedded = false;
+  export let compact = false;
   export let subtitle = null;
 
   const iconColors = {
@@ -26,14 +27,18 @@
   };
 
   $: cardClass = embedded
-    ? 'block min-h-[108px] rounded-[22px] bg-slate-50/88 px-4 py-4 dark:bg-[#1c1c1e]/30'
-    : 'block min-h-[116px] rounded-2xl bg-[var(--editorial-surface-featured)] p-5';
+    ? 'stats-card block min-h-[108px] rounded-[22px] bg-slate-50/88 px-4 py-4 dark:bg-[#1c1c1e]/30'
+    : compact
+      ? 'stats-card stats-card-compact block min-w-0 px-4 py-3.5'
+      : 'stats-card block min-h-[116px] rounded-2xl bg-[var(--editorial-surface-featured)] p-5';
   $: iconClass = embedded
-    ? `flex h-10 w-10 items-center justify-center rounded-2xl ${iconBgs[color]} ${iconColors[color]} shrink-0`
-    : `flex h-11 w-11 items-center justify-center rounded-2xl ${iconBgs[color]} ${iconColors[color]} shrink-0`;
+    ? `stats-card-icon flex h-10 w-10 items-center justify-center rounded-2xl ${iconBgs[color]} ${iconColors[color]} shrink-0`
+    : `stats-card-icon flex h-11 w-11 items-center justify-center rounded-2xl ${iconBgs[color]} ${iconColors[color]} shrink-0`;
   $: valueClass = embedded
-    ? 'mt-4 whitespace-nowrap text-[1.9rem] font-semibold leading-none text-slate-900 dark:text-[#f5f5f7]'
-    : 'mt-6 whitespace-nowrap text-[2.15rem] font-semibold leading-none text-slate-900 dark:text-[#f5f5f7]';
+    ? 'stats-card-value mt-4 whitespace-nowrap text-[1.9rem] font-semibold leading-none text-slate-900 dark:text-[#f5f5f7]'
+    : compact
+      ? 'stats-card-value mt-1.5 whitespace-nowrap text-[1.55rem] font-semibold leading-none text-slate-900'
+      : 'stats-card-value mt-6 whitespace-nowrap text-[2.15rem] font-semibold leading-none text-slate-900 dark:text-[#f5f5f7]';
   $: interactiveClass = embedded
     ? 'transition-colors duration-150 hover:bg-slate-100/90 dark:hover:bg-[rgba(255,255,255,0.06)]'
     : 'transition-colors duration-150 hover:bg-slate-50 dark:hover:bg-[rgba(255,255,255,0.04)] cursor-pointer group';
@@ -46,13 +51,13 @@
   >
     <div class="flex h-full items-center justify-between gap-4">
       <div class="min-w-0 flex-1">
-        <span class="text-[13px] font-medium text-slate-500 dark:text-[#86868b] leading-none">{title}</span>
+        <span class="stats-card-title text-[13px] font-medium text-slate-500 dark:text-[#86868b] leading-none">{title}</span>
         <p class={valueClass}>{value}</p>
         {#if subtitle}
-          <p class="mt-1.5 text-xs font-medium leading-none text-slate-500 dark:text-[#86868b]">{subtitle}</p>
+          <p class="stats-card-subtitle mt-1.5 text-xs font-medium leading-none text-slate-500 dark:text-[#86868b]">{subtitle}</p>
         {/if}
       </div>
-      <div class={iconClass}>
+      {#if !compact}<div class={iconClass}>
         {#if icon === 'duration'}
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 7v5l3 2m6-2a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -75,20 +80,20 @@
             <rect x="13" y="13" width="7" height="7" rx="2" stroke-width="1.8" />
           </svg>
         {/if}
-      </div>
+      </div>{/if}
     </div>
   </a>
 {:else}
   <div class={cardClass}>
     <div class="flex h-full items-center justify-between gap-4">
       <div class="min-w-0 flex-1">
-        <span class="text-[13px] font-medium text-slate-500 dark:text-[#86868b] leading-none">{title}</span>
+        <span class="stats-card-title text-[13px] font-medium text-slate-500 dark:text-[#86868b] leading-none">{title}</span>
         <p class={valueClass}>{value}</p>
         {#if subtitle}
-          <p class="mt-1.5 text-xs font-medium leading-none text-slate-500 dark:text-[#86868b]">{subtitle}</p>
+          <p class="stats-card-subtitle mt-1.5 text-xs font-medium leading-none text-slate-500 dark:text-[#86868b]">{subtitle}</p>
         {/if}
       </div>
-      <div class={iconClass}>
+      {#if !compact}<div class={iconClass}>
         {#if icon === 'duration'}
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 7v5l3 2m6-2a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -111,7 +116,7 @@
             <rect x="13" y="13" width="7" height="7" rx="2" stroke-width="1.8" />
           </svg>
         {/if}
-      </div>
+      </div>{/if}
     </div>
   </div>
 {/if}

@@ -12,10 +12,27 @@ test('概览页应渲染总编台式分区布局', async () => {
   assert.match(source, /overview-section-grid/);
   assert.match(source, /overview-section-card/);
   assert.match(source, /overview-browser-gallery/);
+  assert.match(source, /overview-page-shell/);
+  assert.match(source, /overview-insight-strip/);
+  assert.match(source, /<StatsCard\s+compact/);
   assert.doesNotMatch(source, /overview-single-card/);
   assert.doesNotMatch(source, /<StatsCard[^>]*embedded/);
   assert.match(source, /<AppUsageChart[\s\S]*embedded/);
   assert.match(source, /<ActivityHourlyChart[\s\S]*embedded/);
+});
+
+test('概览页应落地方案 A 的统一摘要带与紧凑面板', async () => {
+  const [source, css] = await Promise.all([
+    readFile(new URL('./Overview.svelte', import.meta.url), 'utf8'),
+    readFile(new URL('../app.css', import.meta.url), 'utf8'),
+  ]);
+
+  assert.match(source, /class="overview-summary-grid mb-4"/);
+  assert.match(css, /\.overview-summary-grid\s*\{[^}]*grid-template-columns:\s*repeat\(4, minmax\(0, 1fr\)\);[^}]*gap:\s*0;[^}]*border:\s*1px solid #dfe6eb;[^}]*border-radius:\s*0\.75rem;[^}]*background:\s*#ffffff/);
+  assert.match(css, /\.overview-summary-grid > \.stats-card-compact \+ \.stats-card-compact::before\s*\{[^}]*width:\s*1px;[^}]*background:\s*#ebf0f3/);
+  assert.match(css, /\.overview-page-shell \.overview-insight-strip\s*\{[^}]*border-radius:\s*0\.75rem;[^}]*background:\s*#f5f9ff\s*!important/);
+  assert.match(css, /\.overview-page-shell \.page-card\s*\{[^}]*padding:\s*1rem 1\.125rem;[^}]*border:\s*1px solid #dfe6eb;[^}]*border-radius:\s*0\.75rem/);
+  assert.match(css, /\.overview-page-shell \.activity-hourly-summary-grid,[\s\S]*?\.overview-page-shell \.activity-hourly-category-legend\s*\{[^}]*display:\s*none/);
 });
 
 test('概览页常驻网站与分类选择应采用统一的轻量视觉结构', async () => {
@@ -117,7 +134,7 @@ test('概览共享样式应使用轻量边界并提供克制的分类选中反�
   assert.match(css, /\.overview-composition-summary\s*\{[^}]*border:\s*1px solid var\(--surface-border-subtle\)/);
   assert.match(css, /\.overview-composition-kpi\s*\{[^}]*border:\s*1px solid var\(--surface-border-subtle\)/);
   assert.match(css, /\.overview-domain-summary-row\s*\{[^}]*border-color:\s*var\(--surface-border-subtle\)/);
-  assert.match(css, /\.overview-domain-dialog\s*\{[^}]*border-color:\s*var\(--surface-border-subtle\)/);
+  assert.match(css, /\.overview-domain-dialog\s*\{[^}]*width:\s*min\(42rem[^}]*border-color:\s*rgba\(255, 255, 255, 0\.72\)[^}]*background:\s*#ffffff/);
   assert.match(css, /\.overview-domain-detail(?:-source)?\s*\{[^}]*border:\s*1px solid var\(--surface-border-subtle\)/);
   assert.match(css, /\.activity-hourly-selected-apps\s*\{[^}]*border:\s*1px solid var\(--surface-border-subtle\)/);
 
@@ -133,6 +150,17 @@ test('概览共享样式应使用轻量边界并提供克制的分类选中反�
   assert.match(darkRule[1], /border-color:\s*var\(--surface-border-subtle\)/);
   assert.match(darkRule[1], /box-shadow:\s*none/);
   assert.doesNotMatch(darkRule[1], /inset|255\s+255\s+255|255\s*,\s*255\s*,\s*255/);
+});
+
+test('网站详情与语义分类确认应复用 12px 亮色二级交互规范', async () => {
+  const css = await readFile(new URL('../app.css', import.meta.url), 'utf8');
+
+  assert.match(css, /\.modal-panel\s*\{[\s\S]*border-radius:\s*0\.75rem/);
+  assert.match(css, /\.overview-semantic-popover\s*\{[^}]*border-radius:\s*0\.75rem[^}]*background:\s*#ffffff/);
+  assert.match(css, /\.overview-semantic-action-overlay\s*\{[^}]*z-index:\s*190/);
+  assert.match(css, /\.overview-semantic-confirm-dialog\s*\{[^}]*width:\s*min\(26\.25rem/);
+  assert.match(css, /\.overview-semantic-confirm-button-primary\s*\{[^}]*background:\s*#2f78e8/);
+  assert.match(css, /\.overview-semantic-confirm-button-danger\s*\{[^}]*background:\s*#d34b5d/);
 });
 
 test('概览网站行在窄屏应让来源轨道跨越整行', async () => {

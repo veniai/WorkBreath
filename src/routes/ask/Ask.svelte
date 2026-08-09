@@ -875,8 +875,14 @@
     <div bind:this={chatBody} class="ask-chat-scroll flex-1 min-h-0 overflow-y-auto" on:scroll={syncStickToBottom}>
       {#if !hasConversation}
         <section class="ask-welcome-panel page-axis-reading" aria-labelledby="ask-welcome-title">
-          <div class="ask-welcome-product-mark" aria-hidden="true">
-            <img src="/icons/128x128.png" alt="" />
+          <div class="ask-welcome-kicker">
+            <span class="ask-assistant-mark" aria-hidden="true">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7" d="M6.8 5.5h7.7a4 4 0 0 1 4 4v2.8a4 4 0 0 1-4 4h-3.6l-3.6 2.5.7-2.5H6.8a4 4 0 0 1-4-4V9.5a4 4 0 0 1 4-4Z" />
+                <path stroke-linecap="round" stroke-width="1.6" d="M18.2 3v3.2M16.6 4.6h3.2" />
+              </svg>
+            </span>
+            <span>{t('ask.subtitle')}</span>
           </div>
           <div class="ask-welcome-copy">
             <h2 id="ask-welcome-title">{t('ask.welcomeTitle')}</h2>
@@ -889,7 +895,11 @@
                 on:click={() => submitQuestion(prompt)}
                 disabled={sending}
               >
-                <span>{prompt}</span>
+                <span class="ask-starter-index" aria-hidden="true">{String(promptIndex + 1).padStart(2, '0')}</span>
+                <span class="ask-starter-copy">{prompt}</span>
+                <svg class="ask-starter-arrow" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M5 12h13m-4-4 4 4-4 4" />
+                </svg>
               </button>
             {/each}
           </div>

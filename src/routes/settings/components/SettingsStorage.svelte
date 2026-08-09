@@ -1,8 +1,9 @@
 <script>
   import { createEventDispatcher } from 'svelte';
   import { invoke } from '@tauri-apps/api/core';
-  import { ask, open as openDialog } from '@tauri-apps/plugin-dialog';
+  import { open as openDialog } from '@tauri-apps/plugin-dialog';
   import { cache } from '../../../lib/stores/cache.js';
+  import { confirm } from '$lib/stores/confirm.js';
   import { locale, t } from '$lib/i18n/index.js';
   import { showToast } from '$lib/stores/toast.js';
   import CollapsibleSection from '../../../lib/components/CollapsibleSection.svelte';
@@ -55,9 +56,12 @@
   }
 
   async function clearOldData() {
-    const confirmed = await ask(t('settingsStorage.clearHistoryConfirmMessage'), {
+    const confirmed = await confirm({
+      tone: 'danger',
       title: t('settingsStorage.clearHistoryConfirmTitle'),
-      kind: 'warning',
+      message: t('settingsStorage.clearHistoryConfirmMessage'),
+      confirmText: t('settingsStorage.clearHistoryAction'),
+      cancelText: t('common.cancel'),
     });
 
     if (!confirmed) {
@@ -88,13 +92,13 @@
       return;
     }
 
-    const confirmed = await ask(
-      t('settingsStorage.migrateConfirmMessage', { dir: nextDir }),
-      {
-        title: t('settingsStorage.migrateConfirmTitle'),
-        kind: 'warning',
-      },
-    );
+    const confirmed = await confirm({
+      tone: 'danger',
+      title: t('settingsStorage.migrateConfirmTitle'),
+      message: t('settingsStorage.migrateConfirmMessage', { dir: nextDir }),
+      confirmText: t('settingsStorage.changeLocation'),
+      cancelText: t('common.cancel'),
+    });
 
     if (!confirmed) {
       return;
@@ -103,7 +107,13 @@
     isMigrating = true;
     try {
       const result = await invoke('change_data_dir', { targetDir: nextDir });
-      cleanupCandidateDir = result?.oldDataDir || dataDir;
+      const previousDataDir = (result?.oldDataDir || dataDir || '').trim();
+      const migratedDataDir = (result?.dataDir || nextDir || '').trim();
+      // 父组件需要异步重新读取目录；先在本组件同步新目录，避免响应式保护逻辑
+      // 把刚返回的旧目录误判为“当前目录”并立即清空。
+      dataDir = migratedDataDir;
+      cleanupCandidateDir =
+        previousDataDir && previousDataDir !== migratedDataDir ? previousDataDir : '';
       showToast(t('settingsStorage.migrated'), 'success');
       dispatch('dataDirChanged', result);
     } catch (e) {
@@ -145,13 +155,13 @@
       return;
     }
 
-    const confirmed = await ask(
-      t('settingsStorage.cleanupOldConfirmMessage', { dir: targetDir }),
-      {
-        title: t('settingsStorage.cleanupOldConfirmTitle'),
-        kind: 'warning',
-      },
-    );
+    const confirmed = await confirm({
+      tone: 'danger',
+      title: t('settingsStorage.cleanupOldConfirmTitle'),
+      message: t('settingsStorage.cleanupOldConfirmMessage', { dir: targetDir }),
+      confirmText: t('settingsStorage.cleanOldDir'),
+      cancelText: t('common.cancel'),
+    });
 
     if (!confirmed) {
       return;

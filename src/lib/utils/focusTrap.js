@@ -51,7 +51,12 @@ export function trapFocus(node) {
   // 初始聚焦：微任务延迟，等 Svelte 完成挂载动画类
   queueMicrotask(() => {
     const items = focusables();
-    (items[0] ?? node).focus?.();
+    const preferred = node.querySelector('[data-autofocus="true"]');
+    const preferredIsAvailable =
+      preferred &&
+      !preferred.disabled &&
+      (preferred.offsetParent !== null || preferred === document.activeElement);
+    (preferredIsAvailable ? preferred : (items[0] ?? node)).focus?.();
   });
 
   node.addEventListener('keydown', handleKeydown);
