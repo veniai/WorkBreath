@@ -69,10 +69,10 @@ fn main() {
     // 这样开关才是"真开关"，而不是仅供查看的状态标签。
     if !config.mcp_server_enabled {
         log::error!(
-            "MCP Server 已在 Work Review 设置中关闭。如需启用，请打开 Work Review → 设置 → 接入管理 → MCP Server 开关。"
+            "MCP Server 已在 WorkBreath 设置中关闭。如需启用，请打开 WorkBreath → 设置 → 接入管理 → MCP Server 开关。"
         );
         eprintln!(
-            "MCP Server is disabled in Work Review settings. Enable it via Settings → Integrations → MCP Server."
+            "MCP Server is disabled in WorkBreath settings. Enable it via Settings → Integrations → MCP Server."
         );
         std::process::exit(2);
     }

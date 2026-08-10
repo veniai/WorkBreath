@@ -1250,10 +1250,16 @@ fn should_skip_transient_window(active_window: &monitor::ActiveWindow) -> bool {
 pub(crate) fn is_own_app_window(app_name: &str, window_title: &str) -> bool {
     let app = app_name.trim().to_ascii_lowercase();
     let title = window_title.trim().to_ascii_lowercase();
-    app == "work review"
+    app == "workbreath"
+        || app == "work breath"
+        || app == "work review"
         || app == "work_review"
         || app == "work-review"
+        || title == "workbreath"
+        || title == "work breath"
         || title == "work review"
+        || title == "workbreath rest"
+        || title == "workbreath break notice"
         || title == "eye review rest"
         || title == "eye review break notice"
 }
@@ -1283,6 +1289,7 @@ async fn background_eye_care_task(state: Arc<Mutex<AppState>>, app: AppHandle) {
     let mut last_tick = std::time::Instant::now();
     let mut last_suspend_clock_ms = eye_care::suspend_aware_clock_ms();
     let mut ticks_since_save = 0u8;
+    let mut post_rest_lock_grace_until: Option<std::time::Instant> = None;
 
     loop {
         tokio::time::sleep(Duration::from_secs(1)).await;
@@ -1300,12 +1307,20 @@ async fn background_eye_care_task(state: Arc<Mutex<AppState>>, app: AppHandle) {
             eye_care::resolve_tick_timing(monotonic_delta_ms, suspend_clock_delta_ms);
         let input_idle_ms = idle_detector::try_get_idle_seconds()
             .map(|seconds| seconds.saturating_mul(1_000));
-        let locked = lock_monitor.is_locked();
+        let lock_grace_active = post_rest_lock_grace_until
+            .is_some_and(|deadline| now_instant < deadline);
+        if !lock_grace_active {
+            post_rest_lock_grace_until = None;
+        }
+        // LockWorkStation 等系统调用是异步请求；短暂宽限可避免在锁屏真正生效前，
+        // 旧的键鼠信号让 WaitingReturn 误判为用户已经返回。
+        let locked = lock_monitor.is_locked() || lock_grace_active;
         let now_unix = chrono::Utc::now().timestamp();
 
-        let (transition, status, state_path, recap) = {
+        let (transition, status, state_path, recap, lock_on_rest_end) = {
             let mut state_guard = state.lock().unwrap_or_else(|e| e.into_inner());
             let config = eye_care::EyeCareConfig::from(&state_guard.config);
+            let lock_on_rest_end = state_guard.config.eye_care_lock_on_rest_end;
             let transition = state_guard.eye_care.tick(
                 delta_ms,
                 input_idle_ms,
@@ -1335,7 +1350,7 @@ async fn background_eye_care_task(state: Arc<Mutex<AppState>>, app: AppHandle) {
             };
             let status = state_guard.eye_care.status(config);
             let state_path = state_guard.data_dir.join("eye-care-state.json");
-            (transition, status, state_path, recap)
+            (transition, status, state_path, recap, lock_on_rest_end)
         };
 
         match status.phase {
@@ -1357,6 +1372,26 @@ async fn background_eye_care_task(state: Arc<Mutex<AppState>>, app: AppHandle) {
             }
         }
         let _ = app.emit(eye_care::STATUS_EVENT, &status);
+
+        if transition.completed_rest && lock_on_rest_end {
+            post_rest_lock_grace_until = Some(std::time::Instant::now() + Duration::from_secs(5));
+            let request = tokio::task::spawn_blocking(screen_lock::lock_screen_now);
+            match tokio::time::timeout(Duration::from_secs(3), request).await {
+                Ok(Ok(Ok(()))) => log::info!("护眼休息结束，已请求系统锁屏"),
+                Ok(Ok(Err(error))) => {
+                    post_rest_lock_grace_until = None;
+                    log::warn!("护眼休息结束后的系统锁屏请求失败，已继续释放遮罩: {error}");
+                }
+                Ok(Err(error)) => {
+                    post_rest_lock_grace_until = None;
+                    log::warn!("护眼休息结束后的锁屏任务异常，已继续释放遮罩: {error}");
+                }
+                Err(_) => {
+                    post_rest_lock_grace_until = None;
+                    log::warn!("护眼休息结束后的系统锁屏请求超时，已继续释放遮罩");
+                }
+            }
+        }
 
         if transition.returned {
             if let Err(error) = reveal_main_window(&app, None) {
@@ -2739,7 +2774,7 @@ fn install_crash_handler() {
             .unwrap_or_else(|| "<未知位置>".to_string());
         let now = chrono::Local::now();
         let report = format!(
-            "Work Review crash report\n版本: {}\n时间: {}\nPanic: {}\n位置: {}\n\n调用栈:\n{}\n",
+            "WorkBreath crash report\n版本: {}\n时间: {}\nPanic: {}\n位置: {}\n\n调用栈:\n{}\n",
             env!("CARGO_PKG_VERSION"),
             now.format("%Y-%m-%d %H:%M:%S"),
             message,
@@ -3327,7 +3362,7 @@ async fn main() {
             ) {
                 log::warn!("⚠️  屏幕录制权限未授权，正在请求...");
                 log::warn!(
-                    "   请在「系统设置 → 隐私与安全性 → 屏幕录制」中授权 Work Review，然后重启应用"
+                    "   请在「系统设置 → 隐私与安全性 → 屏幕录制」中授权 WorkBreath，然后重启应用"
                 );
                 screenshot::request_screen_capture_permission();
             } else if !has_screen_capture_permission {
@@ -3347,7 +3382,7 @@ async fn main() {
             // 2. 辅助功能权限（读取窗口标题、浏览器 URL 必需）
             if !screenshot::has_accessibility_permission(false) {
                 log::warn!("⚠️  辅助功能权限未授权，正在请求...");
-                log::warn!("   请在「系统设置 → 隐私与安全性 → 辅助功能」中授权 Work Review");
+                log::warn!("   请在「系统设置 → 隐私与安全性 → 辅助功能」中授权 WorkBreath");
                 // prompt=true 会弹出系统引导对话框
                 screenshot::has_accessibility_permission(true);
             } else {
@@ -3357,7 +3392,7 @@ async fn main() {
             // 3. 输入监控权限（护眼空闲检测必需）
             if config.eye_care_enabled && !screenshot::has_input_monitoring_permission() {
                 log::warn!("⚠️  输入监控权限未授权，正在请求...");
-                log::warn!("   请在「系统设置 → 隐私与安全性 → 输入监控」中授权 Work Review");
+                log::warn!("   请在「系统设置 → 隐私与安全性 → 输入监控」中授权 WorkBreath");
                 screenshot::request_input_monitoring_permission();
             } else if config.eye_care_enabled {
                 log::info!("✅ 输入监控权限已授权");
@@ -4382,19 +4417,22 @@ mod tests {
     }
 
     #[test]
-    fn work_review自身窗口必须从活动和截图采集中排除() {
+    fn workbreath及旧品牌自身窗口必须从活动和截图采集中排除() {
         let active_window = ActiveWindow {
-            app_name: "Work Review".to_string(),
+            app_name: "WorkBreath".to_string(),
             window_title: "时间线".to_string(),
             browser_url: None,
             executable_path: Some(
-                "/Applications/Work Review.app/Contents/MacOS/work-review".to_string(),
+                "/Applications/WorkBreath.app/Contents/MacOS/work-review".to_string(),
             ),
             window_bounds: None,
             is_minimized: false,
         };
 
         assert!(should_skip_system_window(&active_window));
+        assert!(is_own_app_window("WebView2", "WorkBreath Rest"));
+        assert!(is_own_app_window("WebView2", "WorkBreath Break Notice"));
+        assert!(is_own_app_window("Work Review", "时间线"));
         assert!(is_own_app_window("WebView2", "Eye Review Rest"));
         assert!(is_own_app_window("WebView2", "Eye Review Break Notice"));
     }

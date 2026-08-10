@@ -152,8 +152,53 @@
           "section": "第九轮全局验收"
         }
       ]
+    },
+    "WorkBreath 品牌符号探索": {
+      "versions": [
+        {
+          "path": "brand-exploration.html",
+          "createdAt": "2026-08-10T02:00:06.163Z",
+          "status": "needs-review",
+          "subtitle": "三版纯色 SVG；在桌面图标、侧边栏与 16px 小尺寸中比较；静隙为推荐方向",
+          "viewport": {
+            "width": 1440,
+            "height": 1120
+          },
+          "section": "第十轮品牌更新"
+        }
+      ]
+    },
+    "WorkBreath 品牌符号精修": {
+      "versions": [
+        {
+          "path": "brand-refinement.html",
+          "createdAt": "2026-08-10T02:38:36.522Z",
+          "status": "needs-review",
+          "subtitle": "基于已选中间方案收敛；连续呼吸缝、彩色与单色、小尺寸、侧边栏和启动页验证",
+          "viewport": {
+            "width": 1440,
+            "height": 1200
+          },
+          "section": "第十轮品牌更新"
+        }
+      ]
+    },
+    "WorkBreath 横向品牌符号": {
+      "versions": [
+        {
+          "path": "brand-refinement-horizontal.html",
+          "createdAt": "2026-08-10T02:46:28.115Z",
+          "status": "needs-review",
+          "subtitle": "横向节拍与原竖版并排比较；避开双柱相似感，并验证彩色、单色、小尺寸、侧边栏和启动页",
+          "viewport": {
+            "width": 1440,
+            "height": 1200
+          },
+          "section": "第十轮品牌更新"
+        }
+      ]
     }
   },
   "createdAt": "2026-08-09T07:59:54.698Z",
-  "updatedAt": "2026-08-10T00:51:23.136Z"
+  "updatedAt": "2026-08-10T02:46:28.115Z"
 }

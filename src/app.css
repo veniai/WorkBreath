@@ -7274,6 +7274,14 @@
   letter-spacing: -0.015em;
 }
 
+.about-product-identity .about-brand-cn {
+  margin-left: 0.35rem;
+  color: #52616d;
+  font-size: 0.8125rem;
+  font-weight: 650;
+  letter-spacing: 0;
+}
+
 .about-product-identity .about-version-badge {
   min-height: 1.5rem;
   padding-inline: 0.5rem;
@@ -7285,10 +7293,18 @@
 
 .about-product-identity .about-brand-description {
   max-width: 27rem;
-  margin: 0.625rem 0 0;
+  margin: 0.3rem 0 0;
   color: #4d5c68;
   font-size: 0.75rem;
   line-height: 1.7;
+}
+
+.about-product-identity .about-brand-tagline {
+  margin: 0.5rem 0 0;
+  color: #3853c9;
+  font-size: 0.6875rem;
+  font-weight: 720;
+  letter-spacing: 0.035em;
 }
 
 .about-local-note {

@@ -331,16 +331,19 @@ pub fn normalize_display_app_name(app_name: &str) -> String {
         .filter(|ch| ch.is_ascii_alphanumeric())
         .collect::<String>();
 
-    if (normalized.contains("work_review")
+    if (normalized.contains("workbreath")
+        || normalized.contains("work breath")
+        || normalized.contains("work_review")
         || normalized.contains("work-review")
         || normalized.contains("work review")
+        || compact.contains("workbreath")
         || compact.contains("workreview"))
         && (normalized.contains("setup")
             || normalized.contains("installer")
             || compact.contains("setup")
             || compact.contains("installer"))
     {
-        return "Work Review Setup".to_string();
+        return "WorkBreath Setup".to_string();
     }
 
     // Safari / WebKit 内部 XPC service / helper（如 com.apple.SafariPlatformSupport.Helper、
@@ -356,7 +359,8 @@ pub fn normalize_display_app_name(app_name: &str) -> String {
 
     match normalized.as_str() {
         // ── 本应用 ──
-        "work-review" | "work_review" | "workreview" | "work review" => "Work Review".to_string(),
+        "workbreath" | "work breath" | "work-review" | "work_review" | "workreview"
+        | "work review" => "WorkBreath".to_string(),
         // ── 浏览器 ──
         "chrome" | "google chrome" => "Google Chrome".to_string(),
         "msedge" | "edge" | "microsoft edge" => "Microsoft Edge".to_string(),
@@ -2670,9 +2674,10 @@ fn normalize_electron_app_name(process_name: &str, window_title: &str) -> String
     let title_lower = window_title.to_lowercase();
 
     let process_aliases = [
-        ("work-review", "Work Review"),
-        ("work_review", "Work Review"),
-        ("workreview", "Work Review"),
+        ("workbreath", "WorkBreath"),
+        ("work-review", "WorkBreath"),
+        ("work_review", "WorkBreath"),
+        ("workreview", "WorkBreath"),
     ];
 
     for (pattern, real_name) in process_aliases.iter() {
@@ -2726,7 +2731,8 @@ fn normalize_electron_app_name(process_name: &str, window_title: &str) -> String
         ("code - ", "VS Code"), // VS Code 窗口标题常见格式
         // AI 工具
         ("antigravity", "Antigravity"),
-        ("work review", "Work Review"),
+        ("workbreath", "WorkBreath"),
+        ("work review", "WorkBreath"),
         ("copilot", "GitHub Copilot"),
         ("claude", "Claude Desktop"),
         // 通讯工具

@@ -10,7 +10,7 @@ const readSources = () => Promise.all([
 test('应用壳层应使用方案 A 的紧凑双栏结构', async () => {
   const [appSource, css] = await readSources();
 
-  assert.match(appSource, /app-shell-windowbar-title[^>]*>Work Review</);
+  assert.match(appSource, /app-shell-windowbar-title[^>]*>WorkBreath</);
   assert.match(appSource, /grid-cols-\[12\.75rem_minmax\(0,1fr\)\]\s+gap-0\s+m-0/);
   assert.match(appSource, /app-shell-sidebar-frame/);
   assert.match(appSource, /app-shell-main-frame/);

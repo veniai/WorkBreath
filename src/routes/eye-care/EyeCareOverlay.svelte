@@ -80,7 +80,7 @@
 <div class="rest-screen" role="dialog" aria-modal="true" aria-label={t('eyeCare.overlayDialogLabel')}>
   <div class="glow" aria-hidden="true"></div>
   <main class="stage">
-    <div class="eyebrow">Eye Review</div>
+    <div class="eyebrow">WORKBREATH · 息刻</div>
     <h1>{t('eyeCare.overlayTitle')}</h1>
     <p class="sub">{t('eyeCare.overlayDescription')}</p>
     <div class="countdown" aria-live="polite">{countdown}</div>

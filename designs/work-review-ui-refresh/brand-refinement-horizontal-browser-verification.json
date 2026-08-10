@@ -1,0 +1,23 @@
+{
+  "url": "http://127.0.0.1:4173/designs/work-review-ui-refresh/brand-refinement-horizontal.html",
+  "viewport": { "width": 3840, "height": 2160 },
+  "page": {
+    "httpStatus": 200,
+    "readyState": "complete",
+    "title": "WorkBreath · 息刻横向标志探索",
+    "colorScheme": "light",
+    "imageCount": 10,
+    "failedImages": 0,
+    "horizontalOverflow": false,
+    "bodyHeight": 966
+  },
+  "coverage": {
+    "verticalComparison": true,
+    "desktopIcon": true,
+    "sizes": [32, 24, 16],
+    "monochrome": true,
+    "sidebar": true,
+    "launchScreen": true
+  },
+  "consoleErrors": []
+}

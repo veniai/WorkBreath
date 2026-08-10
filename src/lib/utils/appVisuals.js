@@ -38,6 +38,8 @@ const authSvg = encodeSvg(
 );
 
 const fallbackIconMap = new Map([
+  ['workbreath', '/icons/256x256.png'],
+  ['work breath', '/icons/256x256.png'],
   ['work review', '/icons/256x256.png'],
   ['work-review', '/icons/256x256.png'],
   ['work_review', '/icons/256x256.png'],
@@ -100,7 +102,13 @@ export function getFallbackAppIcon(appName) {
     return fallbackIconMap.get(normalized);
   }
 
-  if (normalized.includes('work review') || normalized.includes('work-review') || normalized.includes('work_review')) {
+  if (
+    normalized.includes('workbreath')
+    || normalized.includes('work breath')
+    || normalized.includes('work review')
+    || normalized.includes('work-review')
+    || normalized.includes('work_review')
+  ) {
     return '/icons/256x256.png';
   }
 

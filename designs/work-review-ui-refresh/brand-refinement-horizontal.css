@@ -1,0 +1,16 @@
+@import url("./brand-refinement.css");
+
+.hero-symbol img { width: 90px; height: 60px; }
+.compare-stage { height: 146px; padding-top: 13px; padding-bottom: 13px; }
+.compare-mark { position: relative; display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.compare-mark > span { color: var(--ink-3); font-size: 8px; }
+.compare-mark.preferred > span { color: var(--blue); font-weight: 700; }
+.compare-stage .app-tile.large { width: 90px; height: 90px; }
+.compare-stage .app-tile.large img { width: 65px; height: 44px; }
+.compare-stage .app-tile.large.old img { width: 57px; height: 57px; }
+.compare-stage .bare-size { margin-top: 2px; }
+.compare-stage .size-32 { margin-left: auto; }
+.bare-size img { object-fit: contain; }
+.mono-light img, .mono-dark img { width: 48px; height: 34px; }
+.sidebar-brand img { width: 31px; height: 21px; margin: 4px 0; object-fit: contain; }
+.launch-center > img { width: 94px; height: 63px; }

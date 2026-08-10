@@ -135,10 +135,10 @@ fn read_etc_hostname() -> Option<String> {
 
 fn default_device_name() -> String {
     match platform_label() {
-        "macOS" => "Work Review Mac".to_string(),
-        "Windows" => "Work Review Windows".to_string(),
-        "Linux" => "Work Review Linux".to_string(),
-        _ => "Work Review Device".to_string(),
+        "macOS" => "WorkBreath Mac".to_string(),
+        "Windows" => "WorkBreath Windows".to_string(),
+        "Linux" => "WorkBreath Linux".to_string(),
+        _ => "WorkBreath Device".to_string(),
     }
 }
 
