@@ -25,12 +25,12 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/veniai/Work-Review/releases/latest">
-    <img src="https://img.shields.io/github/v/release/veniai/Work-Review?style=flat-square&color=blue" alt="Release">
+  <a href="https://github.com/veniai/WorkBreath/releases/latest">
+    <img src="https://img.shields.io/github/v/release/veniai/WorkBreath?style=flat-square&color=blue" alt="Release">
   </a>
   <img src="https://img.shields.io/badge/platform-macOS%20%7C%20Windows%20%7C%20Linux-blue?style=flat-square" alt="Platform">
   <img src="https://img.shields.io/badge/%F0%9F%94%92%20all%20data%20local-green?style=flat-square" alt="All Data Local">
-  <img src="https://img.shields.io/github/license/veniai/Work-Review?style=flat-square" alt="License">
+  <img src="https://img.shields.io/github/license/veniai/WorkBreath?style=flat-square" alt="License">
 </p>
 
 ---
@@ -202,7 +202,7 @@ WorkBreath 的核心始终是**本地记录**。AI 的作用是让记录更容�
 
 ## 快速开始
 
-1. 从 [Releases](https://github.com/veniai/Work-Review/releases/latest) 下载对应平台安装包
+1. 从 [Releases](https://github.com/veniai/WorkBreath/releases/latest) 下载对应平台安装包
 2. macOS 需授予屏幕录制、辅助功能权限
 3. 保持后台运行一段时间
 4. 回到概览 / 时间线 / 日报查看当天记录
