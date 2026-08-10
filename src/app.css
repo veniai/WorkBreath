@@ -4633,16 +4633,8 @@
   box-shadow: 0 14px 30px rgba(0, 0, 0, 0.22);
 }
 
-.dark .about-update-feedback {
-  border-color: rgba(255, 255, 255, 0.14);
-}
-
 .dark .about-principles-title {
   color: #98989d;
-}
-
-.dark .about-update-feedback {
-  color: #86868b;
 }
 
 .dark .about-principles-card {
@@ -7437,15 +7429,6 @@
 .about-check-button svg {
   width: 0.8125rem;
   height: 0.8125rem;
-}
-
-.about-update-feedback {
-  margin-top: 0.5rem;
-  padding-top: 0.5rem;
-  border-top: 1px solid var(--surface-border-subtle);
-  color: #159b76;
-  font-size: 0.625rem;
-  text-align: end;
 }
 
 .about-principles-card {

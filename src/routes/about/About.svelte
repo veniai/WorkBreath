@@ -202,10 +202,6 @@
             </button>
           </div>
         </div>
-
-        {#if updateStatus}
-          <div class="about-update-feedback" role="status" aria-live="polite">{updateStatus}</div>
-        {/if}
       </div>
     </section>
 
