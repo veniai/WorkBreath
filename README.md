@@ -25,12 +25,12 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/veniai/002-eye-review/releases/latest">
-    <img src="https://img.shields.io/github/v/release/veniai/002-eye-review?style=flat-square&color=blue" alt="Release">
+  <a href="https://github.com/veniai/Work-Review/releases/latest">
+    <img src="https://img.shields.io/github/v/release/veniai/Work-Review?style=flat-square&color=blue" alt="Release">
   </a>
   <img src="https://img.shields.io/badge/platform-macOS%20%7C%20Windows%20%7C%20Linux-blue?style=flat-square" alt="Platform">
   <img src="https://img.shields.io/badge/%F0%9F%94%92%20all%20data%20local-green?style=flat-square" alt="All Data Local">
-  <img src="https://img.shields.io/github/license/veniai/002-eye-review?style=flat-square" alt="License">
+  <img src="https://img.shields.io/github/license/veniai/Work-Review?style=flat-square" alt="License">
 </p>
 
 ---
@@ -202,7 +202,7 @@ Supported providers: Ollama (local) / LM Studio (local) / OpenAI compatible / De
 
 ## Quick Start
 
-1. Download the installer for your platform from [Releases](https://github.com/veniai/002-eye-review/releases/latest)
+1. Download the installer for your platform from [Releases](https://github.com/veniai/Work-Review/releases/latest)
 2. On macOS, grant Screen Recording and Accessibility permissions
 3. Let it run in the background for a while
 4. Check the Overview / Timeline / Daily Report to see your recorded activity
