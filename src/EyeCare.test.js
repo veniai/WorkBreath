@@ -59,6 +59,7 @@ test('护眼主页应落地紧凑浅色状态工作台并让设置进入首屏',
   ]);
 
   assert.match(dashboard, /eye-care-save-status/);
+  assert.match(dashboard, /page-header page-axis-operation persistent-save-header/);
   assert.match(dashboard, /eye-care-cycle-row/);
   assert.match(dashboard, /eye-care-middle-grid/);
   assert.match(dashboard, /eyeCare\.dashboard\.cycleRuleValue/);

@@ -299,7 +299,7 @@
 </script>
 
 <div class="page-shell settings-editorial-shell" data-locale={currentLocale}>
-  <div class="page-header page-axis-operation">
+  <div class="page-header page-axis-operation persistent-save-header">
     <div class="page-title-group">
       <div class="page-title-badge">
         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">

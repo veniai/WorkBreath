@@ -83,7 +83,7 @@
 
       .main { min-width: 0; min-height: 0; background: var(--shell); }
       .settings-shell { width: min(1180px, calc(100% - 40px)); height: 100%; margin: 0 auto; padding: 20px 0 14px; display: flex; flex-direction: column; }
-      .page-head { min-height: 40px; flex: 0 0 auto; display: flex; align-items: center; gap: 16px; }
+      .page-head { position: sticky; top: 0; z-index: 20; min-height: 40px; flex: 0 0 auto; display: flex; align-items: center; gap: 16px; padding-bottom: 12px; border-bottom: 1px solid var(--line-soft); background: var(--shell); }
       .heading-row { min-width: 0; flex: 1; display: flex; align-items: center; gap: 10px; }
       .heading-icon { width: 31px; height: 31px; display: grid; place-items: center; flex: none; border-radius: 8px; background: var(--brand-soft); color: var(--brand); }
       .heading-icon svg { width: 16px; height: 16px; }

@@ -139,7 +139,7 @@
 </script>
 
 <div class="page-shell eye-care-dashboard" data-locale={currentLocale}>
-  <div class="page-header page-axis-operation">
+  <div class="page-header page-axis-operation persistent-save-header">
     <div class="page-title-group">
       <div class="page-title-badge eye-care-title-badge" aria-hidden="true">
         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
