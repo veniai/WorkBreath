@@ -356,6 +356,7 @@ export default {
       supportBadge: 'دعم',
       closeSupportDialog: 'إغلاق نافذة الدعم',
       pageTitle: 'حول',
+      basedOn: 'مبني على wm94i/Work-Review',
       updateIdle: 'لم يتم التحقق من التحديثات بعد',
       copyEnvInfo: 'نسخ معلومات البيئة',
       envCopied: 'تم نسخ معلومات البيئة',

@@ -359,6 +359,7 @@ export default {
       supportBadge: 'SUPPORT',
       closeSupportDialog: 'Close support dialog',
       pageTitle: 'About',
+      basedOn: 'Based on wm94i/Work-Review',
       updateIdle: 'Updates not checked yet',
       copyEnvInfo: 'Copy environment info',
       envCopied: 'Environment info copied',

@@ -49,7 +49,7 @@
   }
 
   async function openGitHub() {
-    await open('https://github.com/wm94i/Work-Review');
+    await open('https://github.com/veniai/002-eye-review');
   }
 
   async function openDataDir() {
@@ -229,6 +229,8 @@
       <span class="about-tech-label">{t('about.technology')}</span>
       <div class="about-tech-list"><span class="about-tech-item">Tauri 2</span><span class="about-tech-item">Svelte</span><span class="about-tech-item">Rust</span><span class="about-tech-item">SQLite</span></div>
     </section>
+
+    <p class="about-fork-credit"><a href="https://github.com/wm94i/Work-Review" target="_blank" rel="noopener noreferrer">{t('about.basedOn')}</a></p>
   </div>
 </div>
 

@@ -7514,6 +7514,32 @@
   background: transparent;
 }
 
+
+.about-fork-credit {
+  margin: 0;
+  padding: 0.5rem 0.875rem;
+  text-align: center;
+}
+
+.about-fork-credit a {
+  color: #81909c;
+  font-size: 0.625rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.about-fork-credit a:hover {
+  color: #159b76;
+}
+
+.dark .about-fork-credit a {
+  color: #98989d;
+}
+
+.dark .about-fork-credit a:hover {
+  color: #30d1a0;
+}
+
 .about-tech-label {
   color: #4d5c68;
   font-size: 0.625rem;
