@@ -49,7 +49,7 @@
   }
 
   async function openGitHub() {
-    await open('https://github.com/veniai/Work-Review');
+    await open('https://github.com/veniai/WorkBreath');
   }
 
   async function openDataDir() {

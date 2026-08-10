@@ -86,9 +86,9 @@
     "updater": {
       "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDhFMUQyQzU3OUMyMkQ1NzgKUldSNDFTS2NWeXdkamxnVG1MaTBTamFCSkVWQ0cxOEdtMVlXWSttKzhYcWN1VUtjUS9OQ2lHT3oK",
       "endpoints": [
-        "https://github.com/veniai/Work-Review/releases/latest/download/updater.json",
-        "https://gh-proxy.cn/https://github.com/veniai/Work-Review/releases/latest/download/updater-ghproxy.json",
-        "https://gh-proxy.com/https://github.com/veniai/Work-Review/releases/latest/download/updater-ghp.json"
+        "https://github.com/veniai/WorkBreath/releases/latest/download/updater.json",
+        "https://gh-proxy.cn/https://github.com/veniai/WorkBreath/releases/latest/download/updater-ghproxy.json",
+        "https://gh-proxy.com/https://github.com/veniai/WorkBreath/releases/latest/download/updater-ghp.json"
       ],
       "windows": {
         "installMode": "passive"

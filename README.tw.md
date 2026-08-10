@@ -25,12 +25,12 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/veniai/Work-Review/releases/latest">
-    <img src="https://img.shields.io/github/v/release/veniai/Work-Review?style=flat-square&color=blue" alt="Release">
+  <a href="https://github.com/veniai/WorkBreath/releases/latest">
+    <img src="https://img.shields.io/github/v/release/veniai/WorkBreath?style=flat-square&color=blue" alt="Release">
   </a>
   <img src="https://img.shields.io/badge/platform-macOS%20%7C%20Windows%20%7C%20Linux-blue?style=flat-square" alt="Platform">
   <img src="https://img.shields.io/badge/%F0%9F%94%92%20all%20data%20local-green?style=flat-square" alt="All Data Local">
-  <img src="https://img.shields.io/github/license/veniai/Work-Review?style=flat-square" alt="License">
+  <img src="https://img.shields.io/github/license/veniai/WorkBreath?style=flat-square" alt="License">
 </p>
 
 ---
@@ -202,7 +202,7 @@ Work Review 的核心始終是**本地記錄**。AI 的作用是讓記錄更容�
 
 ## 快速開始
 
-1. 從 [Releases](https://github.com/veniai/Work-Review/releases/latest) 下載對應平台安裝包
+1. 從 [Releases](https://github.com/veniai/WorkBreath/releases/latest) 下載對應平台安裝包
 2. macOS 需授予螢幕錄製、輔助功能權限
 3. 保持後台運行一段時間
 4. 回到概覽 / 時間線 / 日報查看當天記錄

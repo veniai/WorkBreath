@@ -12,16 +12,16 @@ use tauri::{AppHandle, Emitter, State};
 use tauri_plugin_updater::UpdaterExt;
 
 const GITHUB_LATEST_RELEASE_API: &str =
-    "https://api.github.com/repos/veniai/Work-Review/releases/latest";
+    "https://api.github.com/repos/veniai/WorkBreath/releases/latest";
 
-const GITHUB_LATEST_RELEASE_PAGE: &str = "https://github.com/veniai/Work-Review/releases/latest";
+const GITHUB_LATEST_RELEASE_PAGE: &str = "https://github.com/veniai/WorkBreath/releases/latest";
 
 const UPDATE_STATUS_EVENT: &str = "update-status";
 
 const UPDATER_JSON_ENDPOINTS: &[&str] = &[
-    "https://github.com/veniai/Work-Review/releases/latest/download/updater.json",
-    "https://gh-proxy.cn/https://github.com/veniai/Work-Review/releases/latest/download/updater-ghproxy.json",
-    "https://gh-proxy.com/https://github.com/veniai/Work-Review/releases/latest/download/updater-ghp.json",
+    "https://github.com/veniai/WorkBreath/releases/latest/download/updater.json",
+    "https://gh-proxy.cn/https://github.com/veniai/WorkBreath/releases/latest/download/updater-ghproxy.json",
+    "https://gh-proxy.com/https://github.com/veniai/WorkBreath/releases/latest/download/updater-ghp.json",
 ];
 
 const DEFAULT_UPDATE_CHECK_INTERVAL_HOURS: u64 = 24;
@@ -661,16 +661,16 @@ mod tests {
     #[test]
     fn 更新清单候选应优先显式版本地址再回退latest地址() {
         let candidates = build_updater_manifest_candidates(
-            "https://github.com/veniai/Work-Review/releases/latest/download/updater.json",
+            "https://github.com/veniai/WorkBreath/releases/latest/download/updater.json",
             Some("1.0.24"),
         );
 
         assert_eq!(
             candidates,
             vec![
-                "https://github.com/veniai/Work-Review/releases/download/v1.0.24/updater.json"
+                "https://github.com/veniai/WorkBreath/releases/download/v1.0.24/updater.json"
                     .to_string(),
-                "https://github.com/veniai/Work-Review/releases/latest/download/updater.json"
+                "https://github.com/veniai/WorkBreath/releases/latest/download/updater.json"
                     .to_string(),
             ]
         );
@@ -679,16 +679,16 @@ mod tests {
     #[test]
     fn 更新清单候选应保留代理前缀并规范化版本号() {
         let candidates = build_updater_manifest_candidates(
-            "https://gh-proxy.cn/https://github.com/veniai/Work-Review/releases/latest/download/updater-ghproxy.json",
+            "https://gh-proxy.cn/https://github.com/veniai/WorkBreath/releases/latest/download/updater-ghproxy.json",
             Some("v1.0.24"),
         );
 
         assert_eq!(
             candidates,
             vec![
-                "https://gh-proxy.cn/https://github.com/veniai/Work-Review/releases/download/v1.0.24/updater-ghproxy.json"
+                "https://gh-proxy.cn/https://github.com/veniai/WorkBreath/releases/download/v1.0.24/updater-ghproxy.json"
                     .to_string(),
-                "https://gh-proxy.cn/https://github.com/veniai/Work-Review/releases/latest/download/updater-ghproxy.json"
+                "https://gh-proxy.cn/https://github.com/veniai/WorkBreath/releases/latest/download/updater-ghproxy.json"
                     .to_string(),
             ]
         );
@@ -698,7 +698,7 @@ mod tests {
     fn 更新源应优先官方_github() {
         assert_eq!(
             UPDATER_JSON_ENDPOINTS.first().copied(),
-            Some("https://github.com/veniai/Work-Review/releases/latest/download/updater.json")
+            Some("https://github.com/veniai/WorkBreath/releases/latest/download/updater.json")
         );
     }
 }
