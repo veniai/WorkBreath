@@ -1891,7 +1891,11 @@ mod tests {
         );
         assert_eq!(
             normalize_display_app_name("Work_Review.v1.0.35_x64-setup"),
-            "Work Review Setup"
+            "WorkBreath Setup"
+        );
+        assert_eq!(
+            normalize_display_app_name("WorkBreath_1.4.1_x64-setup"),
+            "WorkBreath Setup"
         );
         assert_eq!(normalize_display_app_name("xfltd"), "XFLTD");
     }
