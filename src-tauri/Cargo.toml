@@ -1,8 +1,8 @@
 [package]
 name = "work-review"
-version = "1.4.0"
-description = "个人工作回顾与AI日报助手"
-authors = ["WorkReview Team"]
+version = "1.4.1"
+description = "本地工作回顾与护眼节奏助手"
+authors = ["WorkBreath Team"]
 edition = "2021"
 workspace = "../"
 

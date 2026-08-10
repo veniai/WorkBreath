@@ -186,9 +186,9 @@ jobs:
             exit 0
           fi
           DIR="$(dirname "$EXE")"
-          printf 'Work Review 便携版\n\n- 双击 Work_Review.exe 直接运行，无需安装\n- 需要 WebView2 运行时（Windows 10/11 已自带；旧系统请自行安装）\n- 数据保存在 %%APPDATA%%\\work-review\n' > "$DIR/PORTABLE_README.txt"
+          printf 'WorkBreath 息刻便携版\n\n- 双击 Work_Review.exe 直接运行，无需安装\n- 需要 WebView2 运行时（Windows 10/11 已自带；旧系统请自行安装）\n- 数据继续保存在兼容目录 %%APPDATA%%\\work-review\n' > "$DIR/PORTABLE_README.txt"
           # Windows runner 不带 zip 命令，用 PowerShell 的 Compress-Archive 打包（行为等同 zip -j，文件平铺到 zip 根）
-          (cd "$DIR" && rm -f Work_Review_portable_x64.zip && powershell.exe -NoProfile -Command "Compress-Archive -Path Work_Review.exe,PORTABLE_README.txt -DestinationPath Work_Review_portable_x64.zip -Force")
+          (cd "$DIR" && rm -f WorkBreath_portable_x64.zip && powershell.exe -NoProfile -Command "Compress-Archive -Path Work_Review.exe,PORTABLE_README.txt -DestinationPath WorkBreath_portable_x64.zip -Force")
 
       - name: Rename Linux bundle assets
         if: startsWith(matrix.platform, 'ubuntu')
@@ -295,7 +295,7 @@ jobs:
             target/**/release/bundle/macos/*.app.tar.gz.sig
             target/**/release/bundle/nsis/*.exe
             target/**/release/bundle/nsis/*.sig
-            target/**/Work_Review_portable_*.zip
+            target/**/WorkBreath_portable_*.zip
             target/**/release/bundle/appimage/*.AppImage
             target/**/release/bundle/deb/*.deb
             target/**/release/bundle/rpm/*.rpm
@@ -359,7 +359,7 @@ jobs:
           ### macOS 安装说明
           首次打开可能提示「已损坏，无法打开」，请执行：
           \`\`\`bash
-          sudo xattr -rd com.apple.quarantine '/Applications/Work Review.app'
+          sudo xattr -rd com.apple.quarantine '/Applications/WorkBreath.app'
           \`\`\`"
 
           printf '%s\n' "$BODY" > release_notes.md
@@ -481,7 +481,7 @@ jobs:
         uses: ncipollo/release-action@v1
         with:
           allowUpdates: true
-          name: "Work_Review ${{ github.ref_name }}"
+          name: "WorkBreath ${{ github.ref_name }}"
           bodyFile: release_notes.md
           token: ${{ secrets.GITHUB_TOKEN }}
           artifacts: "all-artifacts/**/*,updater.json,updater-ghproxy.json,updater-ghp.json"

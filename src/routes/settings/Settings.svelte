@@ -161,6 +161,7 @@
       if (!Number.isInteger(config.eye_care_input_grace_seconds)) config.eye_care_input_grace_seconds = 60;
       if (!Number.isInteger(config.eye_care_natural_rest_minutes)) config.eye_care_natural_rest_minutes = 5;
       if (!Number.isInteger(config.eye_care_pre_break_seconds)) config.eye_care_pre_break_seconds = 30;
+      if (typeof config.eye_care_lock_on_rest_end !== 'boolean') config.eye_care_lock_on_rest_end = true;
       if (typeof config.eye_care_paused !== 'boolean') config.eye_care_paused = false;
       if (typeof config.auto_start_silent !== 'boolean') {
         config.auto_start_silent = false;
@@ -299,7 +300,7 @@
 </script>
 
 <div class="page-shell settings-editorial-shell" data-locale={currentLocale}>
-  <div class="page-header page-axis-operation">
+  <div class="page-header page-axis-operation persistent-save-header">
     <div class="page-title-group">
       <div class="page-title-badge">
         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">

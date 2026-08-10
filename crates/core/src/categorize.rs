@@ -101,21 +101,25 @@ pub fn normalize_display_app_name(app_name: &str) -> String {
         .filter(|ch| ch.is_ascii_alphanumeric())
         .collect::<String>();
 
-    if (normalized.contains("work_review")
+    if (normalized.contains("workbreath")
+        || normalized.contains("work breath")
+        || normalized.contains("work_review")
         || normalized.contains("work-review")
         || normalized.contains("work review")
+        || compact.contains("workbreath")
         || compact.contains("workreview"))
         && (normalized.contains("setup")
             || normalized.contains("installer")
             || compact.contains("setup")
             || compact.contains("installer"))
     {
-        return "Work Review Setup".to_string();
+        return "WorkBreath Setup".to_string();
     }
 
     match normalized.as_str() {
         // ── 本应用 ──
-        "work-review" | "work_review" | "workreview" | "work review" => "Work Review".to_string(),
+        "workbreath" | "work breath" | "work-review" | "work_review" | "workreview"
+        | "work review" => "WorkBreath".to_string(),
         // ── 浏览器 ──
         "chrome" | "google chrome" => "Google Chrome".to_string(),
         "msedge" | "edge" | "microsoft edge" => "Microsoft Edge".to_string(),

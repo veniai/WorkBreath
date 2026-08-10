@@ -1,11 +1,11 @@
 <p align="center">
-  <img src="src-tauri/icons/icon.png" width="100" alt="Work Review">
+  <img src="src-tauri/icons/icon.png" width="100" alt="WorkBreath">
 </p>
 
-<h1 align="center">Work Review</h1>
+<h1 align="center">WorkBreath</h1>
 
 <p align="center">
-  <strong>本地優先的個人工作回顧工具：自動記錄上下文，幫你復盤和產生日報。</strong>
+  <strong>工作有跡，雙眼有息。自動記錄工作脈絡，也認真照顧每一次休息。</strong>
 </p>
 
 <p align="center">
@@ -37,7 +37,7 @@
 
 ## 它解決什麼問題
 
-Work Review 面向個人工作復盤，適合用來回答這些問題：
+WorkBreath 面向個人工作復盤，適合用來回答這些問題：
 
 - 我今天到底做了什麼？
 - 這幾天主要在推進什麼？
@@ -56,7 +56,7 @@ Work Review 面向個人工作復盤，適合用來回答這些問題：
 - **本地記錄問答** — 用基礎模板或你配置的模型回答「今天做了什麼」「某個任務花了多久」「最近在推進什麼」等問題
 - **日報生成與匯出** — 生成結構化日報，支援 Markdown 匯出、自動匯出、段落編輯、釘選/隱藏和 AI 編排順序
 - **隱私優先，本地可控** — 數據默認保存在本地 SQLite；AI 可不啟用，模型調用使用你自己的 API Key，不經第三方中轉
-- **護眼休息** — 預設估算有效使用 40 分鐘後強制休息 3 分鐘，可配置自然離開門檻，並覆蓋每個顯示器
+- **護眼休息** — 預設估算有效使用 40 分鐘後強制休息 3 分鐘，覆蓋每個顯示器；休息結束後預設鎖定螢幕，可在護眼設定中關閉
 - **多語言界面** — 支援简体中文、English、繁體中文、العربية（阿拉伯文，RTL 佈局）
 
 ---
@@ -137,7 +137,7 @@ Work Review 面向個人工作復盤，適合用來回答這些問題：
 
 <p align="center"><strong>關於</strong></p>
 <p align="center">
-  <img src="docs/Introduction_tw/关于.png" alt="關於 Work Review" width="720" />
+  <img src="docs/Introduction_tw/关于.png" alt="關於 WorkBreath" width="720" />
 </p>
 
 </details>
@@ -146,7 +146,7 @@ Work Review 面向個人工作復盤，適合用來回答這些問題：
 
 ## 隱私與邊界
 
-Work Review 從設計上面向個人使用，不適用於：員工監控 · 團隊考勤 · 績效考核 · 隱形追蹤
+WorkBreath 從設計上面向個人使用，不適用於：員工監控 · 團隊考勤 · 績效考核 · 隱形追蹤
 
 你可以按需控制記錄範圍：
 
@@ -189,7 +189,7 @@ Work Review 從設計上面向個人使用，不適用於：員工監控 · 團�
 
 ## AI 模式
 
-Work Review 的核心始終是**本地記錄**。AI 的作用是讓記錄更容易閱讀和復盤，而不是使用前提。
+WorkBreath 的核心始終是**本地記錄**。AI 的作用是讓記錄更容易閱讀和復盤，而不是使用前提。
 
 | 模式 | 說明 |
 |------|------|
@@ -214,7 +214,7 @@ Work Review 的核心始終是**本地記錄**。AI 的作用是讓記錄更容�
 | Linux x86_64 (X11 / Wayland) | `.deb` / `.rpm` / `.AppImage` |
 | Linux ARM64 (aarch64) | `.deb` |
 
-**macOS：** 截圖需「螢幕錄製」，活動識別需「輔助使用」，護眼空閒偵測可能需「輸入監控」。首次提示"已損壞"時：`sudo xattr -rd com.apple.quarantine "/Applications/Work Review.app"`
+**macOS：** 截圖需「螢幕錄製」，活動識別需「輔助使用」，護眼空閒偵測可能需「輸入監控」。首次提示"已損壞"時：`sudo xattr -rd com.apple.quarantine "/Applications/WorkBreath.app"`
 
 **Windows：** 依賴 Microsoft Edge WebView2 Runtime。
 

@@ -1,11 +1,11 @@
 <p align="center">
-  <img src="src-tauri/icons/icon.png" width="100" alt="Work Review">
+  <img src="src-tauri/icons/icon.png" width="100" alt="WorkBreath">
 </p>
 
-<h1 align="center">Work Review</h1>
+<h1 align="center">WorkBreath</h1>
 
 <p align="center">
-  <strong>A local-first personal work review tool that records context, helps you review your day, and generates daily reports.</strong>
+  <strong>Work leaves a trace. Your eyes get a break. Local-first personal work review with built-in eye care.</strong>
 </p>
 
 <p align="center">
@@ -37,7 +37,7 @@
 
 ## What It Solves
 
-Work Review is designed for personal work review and helps answer questions like these:
+WorkBreath is designed for personal work review and helps answer questions like these:
 
 - What did I actually do today?
 - What have I been focusing on over the past few days?
@@ -56,7 +56,7 @@ The focus is not "monitoring". It is helping you **recall, organize, and review*
 - **Questions over local records** — Use the basic template or your configured model to answer "What did I do today?", "How long did this task take?", and "What have I been focused on?"
 - **Daily report generation and export** — Generate structured daily reports with Markdown export, auto-export, paragraph editing, pin/hide controls, and cached AI section ordering
 - **Privacy-first and locally controllable** — Data is stored in local SQLite by default; AI is optional, and model calls use your own API key without third-party relay
-- **Eye care breaks** — Defaults to 40 minutes of estimated active screen use followed by a 3-minute forced break, configurable with natural-away detection and every-display overlays
+- **Eye care breaks** — Defaults to 40 minutes of estimated active screen use followed by a 3-minute enforced break on every display; the screen locks when the break ends unless you turn that option off
 - **Multilingual UI** — Available in Simplified Chinese, English, Traditional Chinese, and Arabic (with RTL layout)
 
 ---
@@ -137,7 +137,7 @@ The screenshots below are captured from the running desktop app with localized U
 
 <p align="center"><strong>About</strong></p>
 <p align="center">
-  <img src="docs/Introduction_en/关于.png" alt="About Work Review" width="720" />
+  <img src="docs/Introduction_en/关于.png" alt="About WorkBreath" width="720" />
 </p>
 
 </details>
@@ -146,7 +146,7 @@ The screenshots below are captured from the running desktop app with localized U
 
 ## Privacy and Boundaries
 
-Work Review is designed for personal use from the ground up. It is not intended for: employee monitoring · team attendance · performance evaluation · covert tracking
+WorkBreath is designed for personal use from the ground up. It is not intended for: employee monitoring · team attendance · performance evaluation · covert tracking
 
 You can control the recording scope as needed:
 
@@ -189,7 +189,7 @@ You can control the recording scope as needed:
 
 ## AI Modes
 
-The core of Work Review is always **local recording**. AI's role is to make records easier to read and review, not a prerequisite for usage.
+The core of WorkBreath is always **local recording**. AI's role is to make records easier to read and review, not a prerequisite for usage.
 
 | Mode | Description |
 |------|------|
@@ -214,11 +214,11 @@ Supported providers: Ollama (local) / LM Studio (local) / OpenAI compatible / De
 | Linux x86_64 (X11 / Wayland) | `.deb` / `.rpm` / `.AppImage` |
 | Linux ARM64 (aarch64) | `.deb` |
 
-**macOS:** Screenshots require "Screen Recording"; activity recognition uses "Accessibility", and eye-care idle detection may require "Input Monitoring". If you see a "damaged" warning on first launch: `sudo xattr -rd com.apple.quarantine "/Applications/Work Review.app"`
+**macOS:** Screenshots require "Screen Recording"; activity recognition uses "Accessibility", and eye-care idle detection may require "Input Monitoring". If you see a "damaged" warning on first launch: `sudo xattr -rd com.apple.quarantine "/Applications/WorkBreath.app"`
 
 **Windows:** Depends on Microsoft Edge WebView2 Runtime.
 
-> **Windows 11 Smart App Control**: If Windows shows "Smart App Control blocked this app from running", it's because Work Review is signed with a self-signed certificate (not a commercial EV certificate). You can turn off Smart App Control in "Windows Security → App & browser control → Smart App Control". See upstream issue [#139](https://github.com/wm94i/Work-Review/issues/139).
+> **Windows 11 Smart App Control**: If Windows shows "Smart App Control blocked this app from running", it's because WorkBreath is signed with a self-signed certificate (not a commercial EV certificate). You can turn off Smart App Control in "Windows Security → App & browser control → Smart App Control". See upstream issue [#139](https://github.com/wm94i/Work-Review/issues/139).
 
 **Linux:** Screenshots and window tracking depend on the current session type and toolchain. <details><summary>Dependency details</summary>
 

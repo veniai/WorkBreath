@@ -6,7 +6,7 @@ use std::path::Path;
 use std::time::Duration;
 
 pub const HELP: &str = "\
-📊 Work Review Bot（多设备）
+📊 WorkBreath Bot（多设备）
 
 常用命令
 /help                      查看帮助
@@ -534,7 +534,7 @@ mod tests {
         let client = dummy_client();
         let devices: Vec<DeviceEndpoint> = Vec::new();
         let reply = handle_cmd(&client, &devices, "/help").await.unwrap();
-        assert!(reply.contains("Work Review Bot"));
+        assert!(reply.contains("WorkBreath Bot"));
         assert!(reply.contains("/devices"));
     }
 
@@ -543,7 +543,7 @@ mod tests {
         let client = dummy_client();
         let devices: Vec<DeviceEndpoint> = Vec::new();
         let reply = handle_cmd(&client, &devices, "帮助").await.unwrap();
-        assert!(reply.contains("Work Review Bot"));
+        assert!(reply.contains("WorkBreath Bot"));
     }
 
     #[tokio::test]
@@ -611,6 +611,6 @@ mod tests {
         let reply = handle_cmd(&client, &devices, "  /HELP@work_review_bot  ")
             .await
             .unwrap();
-        assert!(reply.contains("Work Review Bot"));
+        assert!(reply.contains("WorkBreath Bot"));
     }
 }

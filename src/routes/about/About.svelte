@@ -126,15 +126,16 @@
       <div class="about-product-identity">
         <div class="about-brand-identity">
           <div class="about-brand-mark">
-            <img src="/icons/256x256.png" alt="Work Review" />
+            <img src="/icons/256x256.png" alt="WorkBreath 息刻" />
           </div>
 
           <div class="about-brand-copy">
             <p class="about-product-kicker">{t('about.productInfo')}</p>
             <div class="about-brand-title-row">
-              <h1 class="about-brand-title">Work Review</h1>
+              <h1 class="about-brand-title">WorkBreath <span class="about-brand-cn">息刻</span></h1>
               <span class="about-version-badge">v{appVersion}</span>
             </div>
+            <p class="about-brand-tagline">{t('about.brandTagline')}</p>
             <p class="about-brand-description">{t('about.description')}</p>
             <div class="about-local-note">
               <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">

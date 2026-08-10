@@ -116,7 +116,7 @@ fn ensure_target_dir_ready(target_dir: &Path) -> Result<bool, AppError> {
 
         if !is_managed_dir_entry(&name) {
             return Err(AppError::Config(format!(
-                "目标目录包含非 Work Review 数据（{name}），为避免误覆盖，请选择空目录或旧的数据目录"
+                "目标目录包含非 WorkBreath 数据（{name}），为避免误覆盖，请选择空目录或旧的数据目录"
             )));
         }
 
@@ -301,7 +301,7 @@ pub async fn change_data_dir(
         "message": format!(
             "数据目录已更新，已迁移 {} 个文件{}",
             copied_files,
-            if replaced_existing_data { "，并覆盖旧目录中的 Work Review 数据" } else { "" }
+            if replaced_existing_data { "，并覆盖旧目录中的 WorkBreath（含旧 Work Review）数据" } else { "" }
         ),
     }))
 }
@@ -352,13 +352,13 @@ pub async fn cleanup_old_data_dir(
     let (removed_entries, preserved_entries) = remove_app_managed_entries(&cleanup_dir)?;
     let message = if preserved_entries.is_empty() {
         if cleanup_dir.exists() {
-            format!("已清理旧目录中的 {removed_entries} 项 Work Review 数据")
+            format!("已清理旧目录中的 {removed_entries} 项 WorkBreath 数据")
         } else {
-            format!("已清理旧目录中的 {removed_entries} 项 Work Review 数据，并移除空目录")
+            format!("已清理旧目录中的 {removed_entries} 项 WorkBreath 数据，并移除空目录")
         }
     } else {
         format!(
-            "已清理旧目录中的 {} 项 Work Review 数据，保留其他文件：{}",
+            "已清理旧目录中的 {} 项 WorkBreath 数据，保留其他文件：{}",
             removed_entries,
             preserved_entries.join("、")
         )

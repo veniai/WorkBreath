@@ -428,9 +428,9 @@ pub fn direct_answer(question: &str) -> String {
     .any(|p| q.contains(p));
     if is_identity {
         return (if is_chinese {
-            "我是 Work Review 的内置工作助手，可以帮你回顾和分析每天的工作记录——包括时间分布、应用使用、工作会话等。\n\n当前是「基础模板」模式，会基于本地记录给出统计。如果你在设置里配置了 AI 模型，可以在下方切换到对应模型，获得更智能的问答能力。"
+            "我是 WorkBreath（息刻）的内置工作助手，可以帮你回顾和分析每天的工作记录——包括时间分布、应用使用、工作会话等。\n\n当前是「基础模板」模式，会基于本地记录给出统计。如果你在设置里配置了 AI 模型，可以在下方切换到对应模型，获得更智能的问答能力。"
         } else {
-            "I'm the built-in work assistant for Work Review. I help you review and analyze your daily work records — time distribution, app usage, work sessions, and more.\n\nCurrently in Basic Template mode, which gives you local stats. If you've configured an AI model in Settings, switch to it below for smarter Q&A."
+            "I'm the built-in work assistant for WorkBreath. I help you review and analyze your daily work records — time distribution, app usage, work sessions, and more.\n\nCurrently in Basic Template mode, which gives you local stats. If you've configured an AI model in Settings, switch to it below for smarter Q&A."
         })
         .to_string();
     }
@@ -828,7 +828,7 @@ mod tests {
     fn direct回答身份类问题应提及工作助手身份而非报错() {
         let answer = direct_answer("你是谁");
         assert!(
-            answer.contains("工作助手") || answer.contains("Work Review"),
+            answer.contains("工作助手") || answer.contains("WorkBreath"),
             "身份回答应说明自己是工作助手，got: {answer}"
         );
         assert!(
