@@ -169,8 +169,10 @@ jobs:
               mv "$file" "$renamed"
             fi
 
-            if [[ -f "${file}.sig" ]]; then
-              mv "${file}.sig" "${renamed}.sig"
+            signature="${file}.sig"
+            renamed_signature="${renamed}.sig"
+            if [[ -f "$signature" && "$signature" != "$renamed_signature" ]]; then
+              mv "$signature" "$renamed_signature"
             fi
           done
 
