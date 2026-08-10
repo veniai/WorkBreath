@@ -124,7 +124,7 @@ test('多语言 README 底部都应展示 Star History，并在 License 后加�
   assert.match(zhSource, /## License\s+\[MIT\]\(\.\/LICENSE\)[\s\S]*---\s+## 历史星标/);
   assert.match(enSource, /## License\s+\[MIT\]\(\.\/LICENSE\)[\s\S]*---\s+## Star History/);
   assert.match(twSource, /## License\s+\[MIT\]\(\.\/LICENSE\)[\s\S]*---\s+## 歷史星標/);
-  assert.match(enSource, /star-history\.com\/#wm94i\/Work-Review&Date/);
+  assert.match(enSource, /star-history\.com\/#veniai\/WorkBreath&Date/);
   assert.match(enSource, /<img alt="Star History" src="docs\/star-history\.svg" width="720" \/>/);
   assert.match(zhSource, /<img alt="Star History" src="docs\/star-history\.svg" width="720" \/>/);
   assert.match(twSource, /<img alt="Star History" src="docs\/star-history\.svg" width="720" \/>/);

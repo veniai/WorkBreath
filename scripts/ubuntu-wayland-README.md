@@ -64,7 +64,7 @@ bash scripts/appimage/uninstall.sh --purge  # 卸（连数据也删）
 | 变量 | 作用 | 默认 |
 |---|---|---|
 | `WR_DEB` | 本地 .deb 文件路径（避免下载） | 自动扫**当前工作目录**的 `Work_Review_*.deb`（任意版本） |
-| `WR_DEB_URL` | .deb 下载 URL | 通过 GitHub API 解析 `wm94i/Work-Review` 的最新 release |
+| `WR_DEB_URL` | .deb 下载 URL | 通过 GitHub API 解析 `veniai/WorkBreath` 的最新 release |
 | `WR_APPIMAGE` | (appimage 方案) 本地 AppImage 路径 | 自动扫 `~/Applications/` 和项目根目录 |
 
 ## 为啥要装 GNOME 扩展 focused-window-dbus？

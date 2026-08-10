@@ -218,7 +218,7 @@ Supported providers: Ollama (local) / LM Studio (local) / OpenAI compatible / De
 
 **Windows:** Depends on Microsoft Edge WebView2 Runtime.
 
-> **Windows 11 Smart App Control**: If Windows shows "Smart App Control blocked this app from running", it's because Work Review is signed with a self-signed certificate (not a commercial EV certificate). You can turn off Smart App Control in "Windows Security → App & browser control → Smart App Control". See [#139](https://github.com/wm94i/Work-Review/issues/139).
+> **Windows 11 Smart App Control**: If Windows shows "Smart App Control blocked this app from running", it's because Work Review is signed with a self-signed certificate (not a commercial EV certificate). You can turn off Smart App Control in "Windows Security → App & browser control → Smart App Control". See upstream issue [#139](https://github.com/wm94i/Work-Review/issues/139).
 
 **Linux:** Screenshots and window tracking depend on the current session type and toolchain. <details><summary>Dependency details</summary>
 
@@ -398,13 +398,13 @@ Requires: Node.js 18+ / Rust stable / Tauri 2 CLI · Tech stack: Tauri 2 + Rust 
 
 ## License
 
-[MIT](./LICENSE) © 2026 wm94i
+[MIT](./LICENSE) © 2026 wm94i, veniai
 
 ---
 
 ## Star History
 
-<a href="https://www.star-history.com/#wm94i/Work-Review&Date">
+<a href="https://www.star-history.com/#veniai/WorkBreath&Date">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="docs/star-history-dark.svg" />
     <source media="(prefers-color-scheme: light)" srcset="docs/star-history.svg" />
