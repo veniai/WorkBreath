@@ -42,7 +42,7 @@ test('产品面板应按当前版本、自动检查更新和手动检查组织�
   assert.match(brandCard, /v\{appVersion\}/);
   assert.match(brandCard, /role="switch"/);
   assert.match(brandCard, /t\('about\.checkUpdates'\)/);
-  assert.match(brandCard, /\{#if updateStatus\}[\s\S]*about-update-feedback/);
+  assert.match(brandCard, /about-update-state[\s\S]*\{updateStatus \|\|/);
   assert.ok(
     brandCard.indexOf('about-action-row') < brandCard.indexOf('about-update-grid'),
     '三个轻量操作应位于更新状态区之前'
