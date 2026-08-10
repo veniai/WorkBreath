@@ -56,3 +56,18 @@ test('Release workflow 应构建并上传 Linux RPM 产物', () => {
   assert.match(source, /require_file "\*\/release\/bundle\/rpm\/\*\.rpm" "Linux x64 RPM"/);
   assert.match(source, /target\/\*\*\/release\/bundle\/rpm\/\*\.rpm/);
 });
+
+test('Windows 安装包名称无需规范化时不应把签名文件移动到自身', () => {
+  const source = readFileSync(new URL('./.github/workflows/release.yml', import.meta.url), 'utf8');
+  const windowsRename = source.match(
+    /- name: Rename Windows installer assets([\s\S]*?)- name: Package Windows portable/
+  )?.[1] ?? '';
+
+  assert.match(windowsRename, /signature="\$\{file\}\.sig"/);
+  assert.match(windowsRename, /renamed_signature="\$\{renamed\}\.sig"/);
+  assert.match(
+    windowsRename,
+    /\[\[ -f "\$signature" && "\$signature" != "\$renamed_signature" \]\]/
+  );
+  assert.doesNotMatch(windowsRename, /mv "\$\{file\}\.sig" "\$\{renamed\}\.sig"/);
+});
