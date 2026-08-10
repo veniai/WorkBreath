@@ -59,7 +59,8 @@
   .notice-shell {
     width: 100%;
     height: 100%;
-    filter: drop-shadow(0 12px 32px rgba(0, 0, 0, 0.35));
+    /* 透明 WebView 的全窗口 filter 会把矩形合成层也画出来。 */
+    filter: none;
   }
 
   .notice {

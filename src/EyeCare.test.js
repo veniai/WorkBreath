@@ -26,6 +26,7 @@ test('护眼配置默认 40/3/60/5/30 且旧提醒字段有确定性迁移', asy
     'eye_care_input_grace_seconds',
     'eye_care_natural_rest_minutes',
     'eye_care_pre_break_seconds',
+    'eye_care_lock_on_rest_end',
     'eye_care_paused',
   ]) {
     assert.match(settings, new RegExp(`config\\.${field}`));
@@ -59,6 +60,7 @@ test('护眼主页应落地紧凑浅色状态工作台并让设置进入首屏',
   ]);
 
   assert.match(dashboard, /eye-care-save-status/);
+  assert.match(dashboard, /page-header page-axis-operation persistent-save-header/);
   assert.match(dashboard, /eye-care-cycle-row/);
   assert.match(dashboard, /eye-care-middle-grid/);
   assert.match(dashboard, /eyeCare\.dashboard\.cycleRuleValue/);
@@ -72,6 +74,7 @@ test('护眼主页应落地紧凑浅色状态工作台并让设置进入首屏',
   assert.match(settings, /eye-care-config-master/);
   assert.match(settings, /eye-care-config-grid/);
   assert.match(settings, /eye-care-config-field/);
+  assert.match(settings, /eye-care-config-lock-row/);
   assert.match(settings, /eye-care-config-pause-row/);
 });
 
@@ -161,7 +164,8 @@ test('预告非阻挡，休息层覆盖每块显示器且 watchdog 会恢复窗�
   assert.doesNotMatch(overlay, /skip|postpone|延后|跳过/i);
   assert.match(preBreak, /preBreakDescription/);
   assert.match(preBreak, /class="notice-shell"/);
-  assert.match(preBreak, /filter:\s*drop-shadow\(0 12px 32px rgba\(0, 0, 0, 0\.35\)\)/);
+  assert.match(preBreak, /filter:\s*none/);
+  assert.doesNotMatch(preBreak, /filter:\s*drop-shadow/);
   assert.match(preBreak, /clip-path:\s*inset\(0 round 20px\)/);
   assert.match(preBreak, /overflow:\s*hidden/);
   assert.match(capabilities, /eye-care-pre-break/);
@@ -183,9 +187,30 @@ test('周期回顾只读现有活动并复用隐私过滤，自有窗口不进�
   assert.match(engine, /overlap_end/);
   assert.match(main, /if transition\.returned[\s\S]*build_recap/);
   assert.match(main, /is_own_app_window/);
+  assert.match(main, /title == "workbreath rest"/);
   assert.match(main, /title == "eye review rest"/);
   assert.match(recap, /recap\.empty/);
   assert.doesNotMatch(engine, /capture\(|upload_screenshot|generate_text_with_model/);
+});
+
+test('固定休息正常结束后按配置请求系统锁屏，失败时仍释放遮罩', async () => {
+  const [config, main, screenLock, settings] = await Promise.all([
+    read('../crates/core/src/config.rs'),
+    read('../src-tauri/src/main.rs'),
+    read('../src-tauri/src/screen_lock.rs'),
+    read('./routes/settings/components/SettingsEyeCare.svelte'),
+  ]);
+
+  assert.match(config, /eye_care_lock_on_rest_end:\s*bool/);
+  assert.match(config, /eye_care_lock_on_rest_end:\s*true/);
+  assert.match(settings, /toggle\('eye_care_lock_on_rest_end'\)/);
+  assert.match(main, /transition\.completed_rest && lock_on_rest_end/);
+  assert.match(main, /spawn_blocking\(screen_lock::lock_screen_now\)/);
+  assert.match(main, /close_overlay_windows/);
+  assert.match(main, /已继续释放遮罩/);
+  assert.match(screenLock, /LockWorkStation/);
+  assert.match(screenLock, /loginctl[\s\S]*lock-session/);
+  assert.match(screenLock, /CGSession[\s\S]*-suspend/);
 });
 
 test('桌宠运行时、窗口、设置和素材已删除', async () => {

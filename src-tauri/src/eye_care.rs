@@ -693,7 +693,7 @@ pub fn sync_pre_break_window(app: &AppHandle, status: &EyeCareStatus) -> tauri::
         window
     } else {
         WebviewWindowBuilder::new(app, PRE_BREAK_LABEL, WebviewUrl::default())
-            .title("Eye Review Break Notice")
+            .title("WorkBreath Break Notice")
             .inner_size(420.0, 124.0)
             .resizable(false)
             .maximizable(false)
@@ -746,7 +746,7 @@ pub fn sync_overlay_windows(app: &AppHandle, status: &EyeCareStatus) -> tauri::R
             window
         } else {
             WebviewWindowBuilder::new(app, &label, WebviewUrl::default())
-                .title("Eye Review Rest")
+                .title("WorkBreath Rest")
                 .inner_size(size.width as f64, size.height as f64)
                 .position(position.x as f64, position.y as f64)
                 .resizable(true)

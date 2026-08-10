@@ -77,11 +77,12 @@ test('设置页应使用居中的操作工作台并避免外壳套外壳', async
     readFile(new URL('../../app.css', import.meta.url), 'utf8'),
   ]);
 
-  assert.match(source, /page-header page-axis-operation/);
+  assert.match(source, /page-header page-axis-operation persistent-save-header/);
   assert.match(source, /settings-editorial-board page-axis-operation/);
   assert.match(css, /\.settings-stage-shell\s*\{[^}]*min-width:\s*0/);
   assert.doesNotMatch(css, /\.settings-stage-shell\s*\{[^}]*(?:background|border|box-shadow):/);
   assert.match(css, /\.settings-editorial-shell \.page-header\s*\{[\s\S]*?border-bottom:\s*1px solid var\(--surface-border-subtle\)/);
+  assert.match(css, /\.persistent-save-header\s*\{[^}]*position:\s*sticky[^}]*top:\s*0[^}]*z-index:\s*20[^}]*background:\s*#f8fafb/);
   assert.match(css, /\.settings-tab-rail\s*\{[\s\S]*?border-right:\s*1px solid var\(--surface-border-subtle\)/);
   assert.match(css, /\.settings-tab-rail-item\s*\{[^}]*border:\s*1px solid transparent/);
   assert.match(css, /\.settings-tab-rail-item\s*\{[^}]*text-align:\s*start/);

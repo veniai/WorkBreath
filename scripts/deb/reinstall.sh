@@ -1,5 +1,5 @@
 #!/bin/bash
-# Full-reset installer: remove every trace of a previous Work Review install
+# Full-reset installer: remove every trace of a previous WorkBreath install
 # (AppImage-based, deb-based, or both), then cleanly reinstall via the official
 # .deb. User data (~/.local/share/work-review/) is preserved by default.
 #
@@ -10,7 +10,7 @@
 #   WR_DEB=/path/to/foo.deb bash .../reinstall.sh     # use a specific local .deb
 #   WR_DEB_URL=https://.../foo.deb bash .../reinstall.sh   # use a specific URL
 #
-# Local-deb lookup: only scans $PWD for Work_Review_*.deb (any version).
+# Local-deb lookup scans $PWD for WorkBreath_*.deb and legacy Work_Review_*.deb.
 # If nothing is found and no env override is given, the latest release is
 # resolved from the GitHub API.
 #
@@ -57,11 +57,17 @@ do_rm() {
 log "phase 1/5: detect existing install state"
 
 HAS_DEB=0
-dpkg -s work-review >/dev/null 2>&1 && HAS_DEB=1
+DEB_PACKAGES=()
+for package in workbreath work-review; do
+    if dpkg -s "$package" >/dev/null 2>&1; then
+        HAS_DEB=1
+        DEB_PACKAGES+=("$package")
+    fi
+done
 
 APPIMAGE_HITS=()
 shopt -s nullglob
-for ai in "$HOME/Applications"/Work_Review_*.AppImage; do
+for ai in "$HOME/Applications"/WorkBreath_*.AppImage "$HOME/Applications"/Work_Review_*.AppImage; do
     APPIMAGE_HITS+=("$ai")
 done
 shopt -u nullglob
@@ -71,7 +77,7 @@ HAS_USER_DESKTOP=0
 
 HAS_SHIMS=0
 for s in gdbus gnome-screenshot grim spectacle tesseract work-review; do
-    if [ -f "$HOME/bin/$s" ] && grep -q "AppImage.*LD_LIBRARY_PATH\|Launcher for Work Review" "$HOME/bin/$s" 2>/dev/null; then
+    if [ -f "$HOME/bin/$s" ] && grep -qE "AppImage.*LD_LIBRARY_PATH|Launcher for (WorkBreath|Work Review)" "$HOME/bin/$s" 2>/dev/null; then
         HAS_SHIMS=1; break
     fi
 done
@@ -105,8 +111,8 @@ fi
 
 # 2a. apt .deb
 if [ "$HAS_DEB" -eq 1 ]; then
-    log "  sudo apt remove work-review"
-    run "sudo apt-get remove -y work-review"
+    log "  sudo apt remove ${DEB_PACKAGES[*]}"
+    run "sudo apt-get remove -y ${DEB_PACKAGES[*]}"
 fi
 
 # 2b. AppImage files
@@ -119,9 +125,10 @@ done
 log "  removing user-scope AppImage-scheme artefacts"
 do_rm "$HOME/.local/share/applications/work-review.desktop"
 do_rm "$HOME/.local/share/icons/hicolor/256x256/apps/Work_Review.png"
+do_rm "$HOME/.local/share/icons/hicolor/256x256/apps/WorkBreath.png"
 for f in work-review gdbus gnome-screenshot grim spectacle tesseract; do
     # Only nuke our shims, not random user scripts that happen to share names
-    if [ -f "$HOME/bin/$f" ] && grep -qE "AppImage|Launcher for Work Review|bundled LD_LIBRARY_PATH" "$HOME/bin/$f" 2>/dev/null; then
+    if [ -f "$HOME/bin/$f" ] && grep -qE "AppImage|Launcher for (WorkBreath|Work Review)|bundled LD_LIBRARY_PATH" "$HOME/bin/$f" 2>/dev/null; then
         do_rm "$HOME/bin/$f"
     fi
 done
@@ -146,7 +153,7 @@ fi
 # =========================================================================
 # PHASE 3 — install the .deb (apt pulls all deps)
 # =========================================================================
-log "phase 3/5: install work-review .deb"
+log "phase 3/5: install WorkBreath .deb"
 
 DEB=""
 if [ -n "${WR_DEB:-}" ] && [ -f "$WR_DEB" ]; then
@@ -154,7 +161,7 @@ if [ -n "${WR_DEB:-}" ] && [ -f "$WR_DEB" ]; then
 else
     # Only scan the current working directory; pick any version match.
     shopt -s nullglob
-    for candidate in "$PWD"/Work_Review_*.deb; do
+    for candidate in "$PWD"/WorkBreath_*.deb "$PWD"/Work_Review_*.deb; do
         DEB="$candidate"; break
     done
     shopt -u nullglob
@@ -211,7 +218,7 @@ fi
 # side effects:
 #   (a) a fullscreen flash animation
 #   (b) a "camera shutter" event sound (libcanberra → screen-capture event)
-# Work Review screenshots every 10s, so the desktop blinks AND clicks every
+# WorkBreath can capture screenshots periodically, so the desktop blinks AND clicks every
 # 10s. We fix both:
 #   (a) drop a Python shim at ~/.local/bin/gnome-screenshot that acquires
 #       the org.gnome.Screenshot bus name and calls the same DBus method
@@ -372,8 +379,8 @@ cat <<NOTES
 =========================================================================
 Done.
 
-  .deb        : /usr/bin/Work_Review  (apt package 'work-review')
-  .desktop    : /usr/share/applications/Work Review.desktop
+  executable  : /usr/bin/Work_Review  (legacy-compatible binary name)
+  .desktop    : /usr/share/applications/WorkBreath.desktop
   Extension   : $EXT_DIR
   User data   : $([ -d "$DATA_DIR" ] && echo "$DATA_DIR (kept)" || echo "(none)")
 
@@ -391,17 +398,17 @@ if [ "$SHELL_SEES" -eq 0 ]; then
 Next steps (REQUIRED):
   1. Log out of GNOME and log back in (Wayland has no live Shell reload).
   2. gnome-extensions enable focused-window-dbus@flexagoon.com
-  3. Press Super, search "Work Review", click to launch.
+  3. Press Super, search "WorkBreath", click to launch.
 NOTES
 elif [ "$STATE" != "ACTIVE" ]; then
     log "enabling extension now"
     gnome-extensions enable focused-window-dbus@flexagoon.com 2>&1 || true
     cat <<NOTES
-Next step: press Super, search "Work Review", click to launch.
+Next step: press Super, search "WorkBreath", click to launch.
 NOTES
 else
     cat <<NOTES
-Everything already active. Press Super, search "Work Review", click to launch.
+Everything already active. Press Super, search "WorkBreath", click to launch.
 NOTES
 fi
 

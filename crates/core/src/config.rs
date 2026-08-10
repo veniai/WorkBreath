@@ -1099,6 +1099,9 @@ pub struct AppConfig {
     /// 强制休息前的非阻塞预告时长（秒）。
     #[serde(default = "default_eye_care_pre_break_seconds")]
     pub eye_care_pre_break_seconds: u64,
+    /// 固定休息正常结束后是否请求系统锁屏。
+    #[serde(default = "default_true")]
+    pub eye_care_lock_on_rest_end: bool,
     /// 用户在非休息阶段显式暂停护眼计时。
     #[serde(default)]
     pub eye_care_paused: bool,
@@ -1301,6 +1304,7 @@ impl Default for AppConfig {
             eye_care_input_grace_seconds: default_eye_care_input_grace_seconds(),
             eye_care_natural_rest_minutes: default_eye_care_natural_rest_minutes(),
             eye_care_pre_break_seconds: default_eye_care_pre_break_seconds(),
+            eye_care_lock_on_rest_end: true,
             eye_care_paused: false,
             daily_work_goal_minutes: None,
             memory_enabled: false,
@@ -2438,7 +2442,20 @@ mod tests {
         assert_eq!(config.eye_care_input_grace_seconds, 60);
         assert_eq!(config.eye_care_natural_rest_minutes, 5);
         assert_eq!(config.eye_care_pre_break_seconds, 30);
+        assert!(config.eye_care_lock_on_rest_end);
         assert!(!config.eye_care_paused);
+    }
+
+    #[test]
+    fn 旧配置缺失休息结束锁屏字段时应默认开启() {
+        let mut value = serde_json::to_value(AppConfig::default()).expect("默认配置应可序列化");
+        value
+            .as_object_mut()
+            .expect("配置应为对象")
+            .remove("eye_care_lock_on_rest_end");
+
+        let config: AppConfig = serde_json::from_value(value).expect("旧配置应可读取");
+        assert!(config.eye_care_lock_on_rest_end);
     }
 
     #[test]

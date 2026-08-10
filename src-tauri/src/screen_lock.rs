@@ -6,6 +6,99 @@
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 
+/// 立即请求操作系统锁定当前用户会话。
+///
+/// 调用失败时由上层记录日志并继续释放护眼遮罩，避免把用户困在应用内。
+#[cfg(target_os = "windows")]
+pub fn lock_screen_now() -> Result<(), String> {
+    use winapi::um::winuser::LockWorkStation;
+
+    let result = unsafe { LockWorkStation() };
+    if result != 0 {
+        Ok(())
+    } else {
+        Err(format!(
+            "LockWorkStation 失败: {}",
+            std::io::Error::last_os_error()
+        ))
+    }
+}
+
+#[cfg(target_os = "macos")]
+pub fn lock_screen_now() -> Result<(), String> {
+    run_lock_command(
+        "/System/Library/CoreServices/Menu Extras/User.menu/Contents/Resources/CGSession",
+        &["-suspend"],
+    )
+}
+
+#[cfg(target_os = "linux")]
+pub fn lock_screen_now() -> Result<(), String> {
+    let mut failures = Vec::new();
+    for (program, args) in linux_lock_candidates() {
+        match run_lock_command(program, args) {
+            Ok(()) => return Ok(()),
+            Err(error) => failures.push(error),
+        }
+    }
+    Err(failures.join("; "))
+}
+
+#[cfg(target_os = "linux")]
+fn linux_lock_candidates() -> &'static [(&'static str, &'static [&'static str])] {
+    &[
+        ("loginctl", &["lock-session"]),
+        (
+            "gdbus",
+            &[
+                "call",
+                "--session",
+                "--dest",
+                "org.gnome.ScreenSaver",
+                "--object-path",
+                "/org/gnome/ScreenSaver",
+                "--method",
+                "org.gnome.ScreenSaver.Lock",
+            ],
+        ),
+        ("xdg-screensaver", &["lock"]),
+    ]
+}
+
+#[cfg(any(target_os = "linux", target_os = "macos"))]
+fn run_lock_command(program: &str, args: &[&str]) -> Result<(), String> {
+    let mut child = std::process::Command::new(program)
+        .args(args)
+        .spawn()
+        .map_err(|error| format!("无法执行 {program}: {error}"))?;
+    let deadline = std::time::Instant::now() + std::time::Duration::from_millis(750);
+
+    loop {
+        match child.try_wait() {
+            Ok(Some(status)) if status.success() => return Ok(()),
+            Ok(Some(status)) => return Err(format!("{program} 退出状态 {status}")),
+            Ok(None) if std::time::Instant::now() < deadline => {
+                std::thread::sleep(std::time::Duration::from_millis(25));
+            }
+            Ok(None) => {
+                let _ = child.kill();
+                let _ = child.wait();
+                return Err(format!("{program} 请求超时"));
+            }
+            Err(error) => {
+                let _ = child.kill();
+                let _ = child.wait();
+                return Err(format!("等待 {program} 结束失败: {error}"));
+            }
+        }
+    }
+}
+
+#[cfg(not(any(target_os = "windows", target_os = "macos", target_os = "linux")))]
+pub fn lock_screen_now() -> Result<(), String> {
+    Err("当前平台暂不支持主动锁屏".to_string())
+}
+
 /// 屏幕锁定状态
 pub struct ScreenLockMonitor {
     /// 是否锁定
@@ -184,5 +277,18 @@ impl ScreenLockMonitor {
 impl Default for ScreenLockMonitor {
     fn default() -> Self {
         Self::new()
+    }
+}
+
+#[cfg(all(test, target_os = "linux"))]
+mod tests {
+    use super::linux_lock_candidates;
+
+    #[test]
+    fn linux优先使用logind锁定当前会话() {
+        assert_eq!(
+            linux_lock_candidates().first(),
+            Some(&("loginctl", &["lock-session"][..]))
+        );
     }
 }

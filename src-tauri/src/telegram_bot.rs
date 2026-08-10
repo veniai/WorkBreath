@@ -429,31 +429,31 @@ async fn consume_pending_updates(client: &Client, bot_token: &str) -> Result<i64
 
 fn binding_reply(chat_id: i64) -> String {
     format!(
-        "🔐 Work Review Bot 绑定\n{OUTPUT_DIVIDER}\n当前 Chat ID：{chat_id}\n请在 Work Review 设置页生成一次性绑定码，然后发送 /bind 绑定码完成授权。"
+        "🔐 WorkBreath Bot 绑定\n{OUTPUT_DIVIDER}\n当前 Chat ID：{chat_id}\n请在 WorkBreath 设置页生成一次性绑定码，然后发送 /bind 绑定码完成授权。"
     )
 }
 
 fn unauthorized_reply(chat_id: i64) -> String {
     format!(
-        "⛔ 该会话未被授权\n{OUTPUT_DIVIDER}\n当前 Chat ID：{chat_id}\n请发送 /start 查看绑定说明，或在 Work Review 设置页生成绑定码后发送 /bind 绑定码。"
+        "⛔ 该会话未被授权\n{OUTPUT_DIVIDER}\n当前 Chat ID：{chat_id}\n请发送 /start 查看绑定说明，或在 WorkBreath 设置页生成绑定码后发送 /bind 绑定码。"
     )
 }
 
 fn bind_usage_reply(chat_id: i64) -> String {
     format!(
-        "🔐 请输入绑定码\n{OUTPUT_DIVIDER}\n当前 Chat ID：{chat_id}\n请在 Work Review 设置页生成一次性绑定码，然后发送 /bind 绑定码。"
+        "🔐 请输入绑定码\n{OUTPUT_DIVIDER}\n当前 Chat ID：{chat_id}\n请在 WorkBreath 设置页生成一次性绑定码，然后发送 /bind 绑定码。"
     )
 }
 
 fn bind_not_configured_reply(chat_id: i64) -> String {
     format!(
-        "⛔ 绑定码未启用\n{OUTPUT_DIVIDER}\n当前 Chat ID：{chat_id}\n请先在 Work Review 设置页生成一次性绑定码。"
+        "⛔ 绑定码未启用\n{OUTPUT_DIVIDER}\n当前 Chat ID：{chat_id}\n请先在 WorkBreath 设置页生成一次性绑定码。"
     )
 }
 
 fn bind_expired_reply(chat_id: i64) -> String {
     format!(
-        "⛔ 绑定码已过期\n{OUTPUT_DIVIDER}\n当前 Chat ID：{chat_id}\n请回到 Work Review 设置页重新生成绑定码。"
+        "⛔ 绑定码已过期\n{OUTPUT_DIVIDER}\n当前 Chat ID：{chat_id}\n请回到 WorkBreath 设置页重新生成绑定码。"
     )
 }
 

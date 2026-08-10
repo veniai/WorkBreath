@@ -61,6 +61,22 @@
     </label>
   </div>
 
+  <div class="eye-care-config-lock-row">
+    <div class="eye-care-config-lock-copy">
+      <div class="settings-text">{t('eyeCare.lockOnRestEnd')}</div>
+      <div class="settings-muted mt-1">{t('eyeCare.lockOnRestEndHint')}</div>
+    </div>
+    <button
+      type="button"
+      class="switch-track {config.eye_care_lock_on_rest_end ? 'bg-primary-500' : 'bg-slate-300 dark:bg-[rgba(255,255,255,0.14)]'}"
+      role="switch"
+      aria-checked={config.eye_care_lock_on_rest_end}
+      aria-label={t('eyeCare.lockOnRestEnd')}
+      disabled={!config.eye_care_enabled}
+      on:click={() => toggle('eye_care_lock_on_rest_end')}
+    ><span class="switch-thumb {config.eye_care_lock_on_rest_end ? 'translate-x-5' : 'translate-x-0'}"></span></button>
+  </div>
+
   <div class="eye-care-config-pause-row">
     <div class="eye-care-config-pause-copy">
       <div class="settings-text">{t('eyeCare.pause')}</div>

@@ -1,5 +1,5 @@
 #!/bin/bash
-# One-shot installer for Work Review 1.0.46 on Ubuntu 24.04 / GNOME 46 / Wayland.
+# One-shot installer for WorkBreath on Ubuntu 24.04 / GNOME 46 / Wayland.
 # Idempotent: safe to re-run — all steps either verify existing state or overwrite.
 # See ../../work-review-debugging.md for why each piece is needed.
 #
@@ -61,12 +61,14 @@ if [ -n "${WR_APPIMAGE:-}" ] && [ -f "$WR_APPIMAGE" ]; then
     SRC="$WR_APPIMAGE"
 else
     for candidate in \
+        "$APPS_DIR"/WorkBreath_*.AppImage \
         "$APPS_DIR"/Work_Review_*.AppImage \
+        "$SCRIPT_DIR/../.."/WorkBreath_*.AppImage \
         "$SCRIPT_DIR/../.."/Work_Review_*.AppImage; do
         [ -f "$candidate" ] && { SRC="$candidate"; break; }
     done
 fi
-[ -n "$SRC" ] || die "no Work_Review_*.AppImage found. Place one in $APPS_DIR or set WR_APPIMAGE=/path/to/it."
+[ -n "$SRC" ] || die "no WorkBreath_*.AppImage (or legacy Work_Review_*.AppImage) found. Place one in $APPS_DIR or set WR_APPIMAGE=/path/to/it."
 
 TARGET="$APPS_DIR/$(basename "$SRC")"
 if [ "$(readlink -f "$SRC")" != "$(readlink -f "$TARGET")" ]; then
@@ -80,16 +82,18 @@ APPIMAGE="$TARGET"
 
 # ---- 4. extract icon ------------------------------------------------------
 log "4/6 extract icon"
-if [ -f "$ICON_DIR/Work_Review.png" ]; then
-    log "  already present at $ICON_DIR/Work_Review.png"
+if [ -f "$ICON_DIR/WorkBreath.png" ]; then
+    log "  already present at $ICON_DIR/WorkBreath.png"
 else
     TMP_EXTRACT=$(mktemp -d)
     (cd "$TMP_EXTRACT" && "$APPIMAGE" --appimage-extract >/dev/null)
     mkdir -p "$ICON_DIR"
-    cp "$TMP_EXTRACT/squashfs-root/Work_Review.png" "$ICON_DIR/Work_Review.png"
+    SOURCE_ICON=$(find "$TMP_EXTRACT/squashfs-root" -maxdepth 2 -type f \( -name 'WorkBreath.png' -o -name 'Work_Review.png' \) | head -1)
+    [ -n "$SOURCE_ICON" ] || die "could not find the application icon inside the AppImage"
+    cp "$SOURCE_ICON" "$ICON_DIR/WorkBreath.png"
     rm -rf "$TMP_EXTRACT"
     gtk-update-icon-cache "$HOME/.local/share/icons/hicolor" 2>/dev/null || true
-    log "  installed to $ICON_DIR/Work_Review.png"
+    log "  installed to $ICON_DIR/WorkBreath.png"
 fi
 
 # ---- 5. shims, launcher, .desktop ----------------------------------------
@@ -108,7 +112,7 @@ done
 
 cat > "$BIN_DIR/work-review" <<EOF
 #!/bin/bash
-# Launcher for Work Review AppImage on Ubuntu 24.04 / GNOME 46 / Wayland.
+# Launcher for WorkBreath AppImage on Ubuntu 24.04 / GNOME 46 / Wayland.
 set -u
 APPIMAGE="\${WR_APPIMAGE:-$APPIMAGE}"
 LOGDIR="\$HOME/.local/share/work-review"
@@ -123,10 +127,10 @@ chmod +x "$BIN_DIR/work-review"
 cat > "$DESKTOP_DIR/work-review.desktop" <<EOF
 [Desktop Entry]
 Type=Application
-Name=Work Review
-Comment=工作回顾与AI日报助手
+Name=WorkBreath
+Comment=工作有迹，双眼有息
 Exec=$BIN_DIR/work-review %U
-Icon=Work_Review
+Icon=WorkBreath
 Terminal=false
 Categories=Office;
 StartupWMClass=Work_Review
@@ -141,14 +145,14 @@ Installed:
   AppImage   : $APPIMAGE
   Launcher   : $BIN_DIR/work-review
   Desktop    : $DESKTOP_DIR/work-review.desktop
-  Icon       : $ICON_DIR/Work_Review.png
+  Icon       : $ICON_DIR/WorkBreath.png
   Shims      : $BIN_DIR/{gdbus,gnome-screenshot,grim,spectacle,tesseract}
   Extension  : $EXT_DIR
 
 Next (one-time manual):
   1. Log out of GNOME and log back in (Wayland can't reload Shell in-place).
   2. gnome-extensions enable focused-window-dbus@flexagoon.com
-  3. Press Super, search "Work Review", click to launch.
+  3. Press Super, search "WorkBreath", click to launch.
 
 To remove, run: $SCRIPT_DIR/uninstall.sh
 NOTES

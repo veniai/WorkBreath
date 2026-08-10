@@ -82,6 +82,8 @@ test('护眼休息遮罩为深色静谧全屏，提醒条为深色玻璃拟态�
 
   // 提醒条：深色玻璃 + 眼睛 SVG（不用字符图标）
   assert.match(preBreak, /backdrop-filter:\s*blur\(20px\)/);
+  assert.match(preBreak, /filter:\s*none/);
+  assert.doesNotMatch(preBreak, /filter:\s*drop-shadow/);
   assert.match(preBreak, /<svg viewBox="0 0 24 24"/);
   assert.doesNotMatch(preBreak, /◌|#72cbb5/);
 

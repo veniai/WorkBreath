@@ -559,7 +559,7 @@
   -->
   <!-- svelte-ignore a11y-no-static-element-interactions -->
   <div class="app-shell-windowbar absolute top-0 left-0 w-full h-7 z-50" style="-webkit-app-region: drag;" on:mousedown={startDrag}>
-    <span class="app-shell-windowbar-title">Work Review</span>
+    <span class="app-shell-windowbar-title">WorkBreath</span>
     <!-- 仅 Windows/Linux 平台显示自定义窗口控制按钮，macOS 使用原生控件 -->
     {#if platform && platform !== 'macos'}
     <!-- Windows 风格窗口控制按钮 (右上角) -->

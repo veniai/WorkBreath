@@ -38,6 +38,7 @@
     if (!Number.isInteger(loaded.eye_care_input_grace_seconds)) loaded.eye_care_input_grace_seconds = 60;
     if (!Number.isInteger(loaded.eye_care_natural_rest_minutes)) loaded.eye_care_natural_rest_minutes = 5;
     if (!Number.isInteger(loaded.eye_care_pre_break_seconds)) loaded.eye_care_pre_break_seconds = 30;
+    if (typeof loaded.eye_care_lock_on_rest_end !== 'boolean') loaded.eye_care_lock_on_rest_end = true;
     if (typeof loaded.eye_care_paused !== 'boolean') loaded.eye_care_paused = false;
     return loaded;
   }
@@ -139,7 +140,7 @@
 </script>
 
 <div class="page-shell eye-care-dashboard" data-locale={currentLocale}>
-  <div class="page-header page-axis-operation">
+  <div class="page-header page-axis-operation persistent-save-header">
     <div class="page-title-group">
       <div class="page-title-badge eye-care-title-badge" aria-hidden="true">
         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1067,6 +1068,7 @@
     font-size: 0.6875rem;
   }
 
+  .eye-care-settings :global(.eye-care-config-lock-row),
   .eye-care-settings :global(.eye-care-config-pause-row) {
     min-height: 3.2rem;
     display: flex;
@@ -1075,15 +1077,22 @@
     padding: 0.5rem 0.8rem;
   }
 
+  .eye-care-settings :global(.eye-care-config-lock-row) {
+    border-bottom: 1px solid rgba(148, 163, 184, 0.18);
+  }
+
+  .eye-care-settings :global(.eye-care-config-lock-copy),
   .eye-care-settings :global(.eye-care-config-pause-copy) {
     min-width: 0;
     flex: 1;
   }
 
+  .eye-care-settings :global(.eye-care-config-lock-copy .settings-text),
   .eye-care-settings :global(.eye-care-config-pause-copy .settings-text) {
     font-size: 0.65625rem;
   }
 
+  .eye-care-settings :global(.eye-care-config-lock-copy .settings-muted),
   .eye-care-settings :global(.eye-care-config-pause-copy .settings-muted),
   .eye-care-settings :global(.eye-care-config-estimate) {
     margin-top: 0.15rem;
