@@ -1,6 +1,6 @@
 [package]
 name = "work-review"
-version = "1.4.0"
+version = "1.4.1"
 description = "本地工作回顾与护眼节奏助手"
 authors = ["WorkBreath Team"]
 edition = "2021"

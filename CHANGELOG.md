@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.1] - 2026-08-10
+
+### 新增
+- **WorkBreath 品牌升级**：应用正式采用 WorkBreath / 息刻与横向呼吸眼图标，并使用「工作有迹，双眼有息」作为中文品牌主张；安装包、桌面入口和应用内界面同步更新。
+- **休息结束后锁屏**：强制护眼休息结束时默认锁定系统屏幕，可在护眼设置中关闭；Windows、Linux 与 macOS 均使用系统原生锁屏能力，并在调用失败时保证休息遮罩能够正常退出。
+
+### 调整
+- **设置操作栏常驻**：护眼页和设置页滚动时，顶部保存操作栏保持可见，长页面修改后无需返回顶部即可保存。
+- **兼容已有用户数据**：数据库目录、更新地址、应用标识与主程序内部名称保持不变，升级后继续使用原有数据和自动更新链路。
+
+### 修复
+- **休息预告圆角阴影**：移除透明预告窗口四角外露的方形阴影，仅保留圆角卡片本身的干净层次。
+
+### 验证
+- GitHub Actions 前端测试、生产构建、Rust `cargo check`、Clippy、Rust 测试与依赖安全审计全部通过。
+
 ## [1.4.0] - 2026-08-10
 
 ### 新增
