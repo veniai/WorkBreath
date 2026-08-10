@@ -352,6 +352,7 @@ export default {
       supportBadge: 'SUPPORT',
       closeSupportDialog: '关闭赞助弹层',
       pageTitle: '关于',
+      basedOn: '基于 wm94i/Work-Review 开源项目',
       updateIdle: '尚未检查更新',
       copyEnvInfo: '复制环境信息',
       envCopied: '环境信息已复制',
