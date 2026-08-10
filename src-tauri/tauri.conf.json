@@ -80,7 +80,7 @@
   },
   "productName": "WorkBreath",
   "mainBinaryName": "Work_Review",
-  "version": "1.4.1",
+  "version": "1.4.2",
   "identifier": "com.workreview.app",
   "plugins": {
     "updater": {

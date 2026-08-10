@@ -21,6 +21,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### 验证
 - GitHub Actions 前端测试、生产构建、Rust `cargo check`、Clippy、Rust 测试与依赖安全审计全部通过。
 
+## [1.4.2] - 2026-08-10
+
+### 修复
+- **关于页更新状态去重**：点击「检查更新」后不再同时显示两行相同的检查状态文本。
+- **设置页保存头可见**：修复设置面板保存时分区标题被遮挡的问题。
+
+### 调整
+- **仓库迁移至 WorkBreath**：GitHub 仓库从 wm94i/Work-Review fork 重命名为 veniai/WorkBreath，应用内链接、更新源、README 徽章和 star-history 全部同步。
+- **原作署名**：关于页底部新增「基于 wm94i/Work-Review」链接；README 版权追加 veniai。
+- **WorkBreath 品牌**：应用名称、图标和安装器统一为 WorkBreath 品牌标识。
+
 ## [1.4.0] - 2026-08-10
 
 ### 新增
