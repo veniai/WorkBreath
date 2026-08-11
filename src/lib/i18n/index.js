@@ -4,7 +4,7 @@ import en from './locales/en.js';
 import zhTW from './locales/zh-TW.js';
 import ar from './locales/ar.js';
 
-const LOCALE_STORAGE_KEY = 'work-review.locale';
+const LOCALE_STORAGE_KEY = 'workbreath.locale';
 const DEFAULT_LOCALE = 'zh-CN';
 
 export const SUPPORTED_LOCALES = ['zh-CN', 'en', 'zh-TW', 'ar'];

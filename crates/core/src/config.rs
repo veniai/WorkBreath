@@ -1987,7 +1987,7 @@ mod tests {
 
     fn unique_temp_dir(name: &str) -> PathBuf {
         std::env::temp_dir().join(format!(
-            "work-review-config-{name}-{}",
+            "workbreath-config-{name}-{}",
             uuid::Uuid::new_v4()
         ))
     }
@@ -2119,11 +2119,11 @@ mod tests {
 
     #[test]
     fn 备份路径应在完整文件名后追加bak() {
-        let path = PathBuf::from("/tmp/work-review/config.json");
+        let path = PathBuf::from("/tmp/workbreath/config.json");
 
         assert_eq!(
             config_backup_path(&path),
-            PathBuf::from("/tmp/work-review/config.json.bak")
+            PathBuf::from("/tmp/workbreath/config.json.bak")
         );
     }
 

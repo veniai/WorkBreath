@@ -11,7 +11,7 @@ use super::model::Message;
 use crate::config::ModelConfig;
 use crate::database::Database;
 use crate::error::AppError;
-use work_review_core::database::MemorySearchItem;
+use workbreath_core::database::MemorySearchItem;
 
 // ══════════════════════════════════════════════════════════
 // 路径类型
@@ -467,7 +467,7 @@ pub fn fast_answer(
     ignored_apps: &[String],
     excluded_domains: &[String],
 ) -> Result<String, AppError> {
-    use work_review_core::categorize::{
+    use workbreath_core::categorize::{
         categorize_app, get_category_name, normalize_display_app_name,
     };
 

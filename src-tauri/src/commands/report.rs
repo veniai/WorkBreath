@@ -192,7 +192,7 @@ pub(crate) async fn generate_report_inner(
     let report_result =
         match tokio::time::timeout(std::time::Duration::from_secs(300), spawn_result).await {
             Ok(Ok(result)) => result,
-            Ok(Err(_)) => Err(work_review_core::error::AppError::Analysis(
+            Ok(Err(_)) => Err(workbreath_core::error::AppError::Analysis(
                 match report_locale {
                     AppLocale::ZhCn => "日报生成过程中发生内部错误，请重试".to_string(),
                     AppLocale::ZhTw => "日報生成過程中發生內部錯誤，請重試".to_string(),
@@ -204,7 +204,7 @@ pub(crate) async fn generate_report_inner(
                     }
                 },
             )),
-            Err(_) => Err(work_review_core::error::AppError::Analysis(
+            Err(_) => Err(workbreath_core::error::AppError::Analysis(
                 match report_locale {
                     AppLocale::ZhCn => "日报生成超时，请稍后重试".to_string(),
                     AppLocale::ZhTw => "日報生成逾時，請稍後重試".to_string(),

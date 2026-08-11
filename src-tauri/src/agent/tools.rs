@@ -10,8 +10,8 @@ use crate::work_intelligence;
 use serde_json::{json, Value};
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
-use work_review_core::categorize::{categorize_app, get_category_name, normalize_display_app_name};
-use work_review_core::database::MemorySearchItem;
+use workbreath_core::categorize::{categorize_app, get_category_name, normalize_display_app_name};
+use workbreath_core::database::MemorySearchItem;
 
 // ══════════════════════════════════════════════════════════
 // 共享 Helper 函数
@@ -174,7 +174,7 @@ pub type CurrentContextFn = Arc<dyn Fn() -> String + Send + Sync>;
 #[derive(Default, Clone)]
 pub struct AssistantRuntime {
     /// 手动待办快照（extract_todos 合并用）。
-    pub assistant_todos: Vec<work_review_core::config::AssistantTodoItem>,
+    pub assistant_todos: Vec<workbreath_core::config::AssistantTodoItem>,
     /// 写操作桥；None = 不注册行动工具。
     pub actions: Option<ActionBridge>,
     /// 确认桥；行动工具存在时必须提供，否则行动工具一律拒绝执行。

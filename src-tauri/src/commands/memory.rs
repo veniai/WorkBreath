@@ -13,7 +13,7 @@ use super::shared::load_filtered_activities_in_range;
 pub(crate) fn synthesize_insights_inner(
     date: &str,
     state: &Arc<Mutex<AppState>>,
-) -> Result<Vec<work_review_core::database::WorkInsight>, AppError> {
+) -> Result<Vec<workbreath_core::database::WorkInsight>, AppError> {
     let state = state.lock().map_err(|e| AppError::Unknown(e.to_string()))?;
     let segments = state.config.effective_work_segments();
     let stats = state
@@ -111,7 +111,7 @@ pub(crate) fn synthesize_insights_inner(
 pub async fn synthesize_insights(
     date: Option<String>,
     state: State<'_, Arc<Mutex<AppState>>>,
-) -> Result<Vec<work_review_core::database::WorkInsight>, AppError> {
+) -> Result<Vec<workbreath_core::database::WorkInsight>, AppError> {
     let today = chrono::Local::now().format("%Y-%m-%d").to_string();
     let date = date.unwrap_or(today);
     synthesize_insights_inner(&date, state.inner())

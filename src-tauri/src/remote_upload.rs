@@ -4,10 +4,10 @@ use sha2::{Digest, Sha256};
 use std::collections::HashSet;
 use std::path::Path;
 use std::sync::{Mutex, OnceLock};
-use work_review_core::config::{
+use workbreath_core::config::{
     RemoteStorageConfig, RemoteStorageProvider, S3Config, WebDavConfig,
 };
-use work_review_core::error::{AppError, Result};
+use workbreath_core::error::{AppError, Result};
 
 type HmacSha256 = Hmac<Sha256>;
 

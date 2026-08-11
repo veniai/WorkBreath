@@ -1585,7 +1585,7 @@ fn ocr_temp_root(data_dir: &Path) -> PathBuf {
     let mut hasher = DefaultHasher::new();
     data_dir.to_string_lossy().hash(&mut hasher);
     std::env::temp_dir()
-        .join("work-review")
+        .join("workbreath")
         .join(format!("ocr-{:016x}", hasher.finish()))
 }
 

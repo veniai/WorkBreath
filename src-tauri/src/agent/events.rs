@@ -5,7 +5,7 @@
 
 use serde::{Deserialize, Serialize};
 use tokio::sync::{mpsc, oneshot};
-use work_review_core::database::MemorySearchItem;
+use workbreath_core::database::MemorySearchItem;
 
 /// 工作助手流式事件（经 Tauri `ipc::Channel` 推送给前端）。
 ///

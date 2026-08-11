@@ -35,7 +35,7 @@ test('品牌升级保留内部标识以兼容旧数据、更新和启动路径',
   const packageJson = JSON.parse(pkg);
   const tauriConfig = JSON.parse(tauri);
 
-  assert.equal(packageJson.name, 'work-review');
-  assert.equal(tauriConfig.mainBinaryName, 'Work_Review');
-  assert.equal(tauriConfig.identifier, 'com.workreview.app');
+  assert.equal(packageJson.name, 'workbreath');
+  assert.equal(tauriConfig.mainBinaryName, 'WorkBreath');
+  assert.equal(tauriConfig.identifier, 'com.workbreath.app');
 });

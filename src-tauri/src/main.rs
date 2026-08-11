@@ -836,7 +836,7 @@ pub(crate) fn resolve_activity_classification(
     // 此前浏览器活动一律归 "browser",B 站和 GitHub 在统计里没有区别。
     // 用户显式规则仍优先:命中 app_category_rules 时 base 已不是 "browser",不会走到这里。
     let domain_knowledge =
-        browser_url.and_then(work_review_core::knowledge::builtin_domain_category);
+        browser_url.and_then(workbreath_core::knowledge::builtin_domain_category);
     if base_category == "browser" {
         if let Some((kb_base, _)) = domain_knowledge {
             if kb_base != "browser" && config.custom_categories.iter().any(|c| c.key == kb_base) {
@@ -850,7 +850,7 @@ pub(crate) fn resolve_activity_classification(
     let cache_lookup = match base_category.as_str() {
         "other" => Some(format!("app:{}", app_name.trim().to_lowercase())),
         "browser" if domain_knowledge.is_none() => browser_url
-            .map(work_review_core::config::PrivacyConfig::extract_domain)
+            .map(workbreath_core::config::PrivacyConfig::extract_domain)
             .map(|d| d.split(':').next().unwrap_or("").to_string())
             .filter(|d| !d.is_empty())
             .map(|d| format!("domain:{d}")),
@@ -2377,7 +2377,7 @@ async fn background_screenshot_task(state: Arc<Mutex<AppState>>, app: AppHandle)
                                                     state.lock().unwrap_or_else(|e| e.into_inner());
                                                 g.config.remote_storage.clone()
                                             };
-                                            if remote_cfg.provider != work_review_core::config::RemoteStorageProvider::None {
+                                            if remote_cfg.provider != workbreath_core::config::RemoteStorageProvider::None {
                                                 let st = state.clone();
                                                 let ap = archive_path.clone();
                                                 let rp = relative_path.clone();
@@ -2812,7 +2812,7 @@ async fn remote_upload_backfill_task(state: Arc<Mutex<AppState>>) {
         let (remote_cfg, data_dir, pending) = {
             let guard = state.lock().unwrap_or_else(|e| e.into_inner());
             let remote_cfg = guard.config.remote_storage.clone();
-            if remote_cfg.provider == work_review_core::config::RemoteStorageProvider::None {
+            if remote_cfg.provider == workbreath_core::config::RemoteStorageProvider::None {
                 (remote_cfg, std::path::PathBuf::new(), Vec::new())
             } else {
                 let since = chrono::Local::now().timestamp() - BACKFILL_WINDOW_SECS;
@@ -2879,7 +2879,7 @@ pub(crate) fn entity_category_cache(
 
 /// 调用文本模型对一批实体做归类,返回 (entity_key, 基础分类, 语义分类)。
 async fn classify_entities_with_model(
-    model: &work_review_core::config::ModelConfig,
+    model: &workbreath_core::config::ModelConfig,
     entities: &[String],
     category_options: &str,
     semantic_options: &str,
@@ -3069,7 +3069,7 @@ async fn entity_classify_task(state: Arc<Mutex<AppState>>) {
         let mut domain_totals: std::collections::HashMap<String, i64> =
             std::collections::HashMap::new();
         for (url, duration) in url_durations {
-            let domain = work_review_core::config::PrivacyConfig::extract_domain(&url);
+            let domain = workbreath_core::config::PrivacyConfig::extract_domain(&url);
             let domain = domain.split(':').next().unwrap_or("").to_string();
             if !domain.is_empty() {
                 *domain_totals.entry(domain).or_insert(0) += duration;
@@ -3079,10 +3079,10 @@ async fn entity_classify_task(state: Arc<Mutex<AppState>>) {
             .into_iter()
             .filter(|(domain, total)| {
                 *total >= MIN_TOTAL_DURATION_SECS
-                    && work_review_core::knowledge::builtin_domain_category(domain).is_none()
+                    && workbreath_core::knowledge::builtin_domain_category(domain).is_none()
                     && !cached_keys.contains(&format!("domain:{domain}"))
                     && !website_rule_domains.iter().any(|rule| {
-                        work_review_core::config::PrivacyConfig::domain_matches(domain, rule)
+                        workbreath_core::config::PrivacyConfig::domain_matches(domain, rule)
                     })
             })
             .collect();
@@ -3154,7 +3154,7 @@ async fn entity_classify_task(state: Arc<Mutex<AppState>>) {
                     .into_iter()
                     .filter(|(_, url)| {
                         let row_domain =
-                            work_review_core::config::PrivacyConfig::extract_domain(url);
+                            workbreath_core::config::PrivacyConfig::extract_domain(url);
                         row_domain.split(':').next().unwrap_or("") == domain
                     })
                     .map(|(id, _)| id)

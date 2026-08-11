@@ -1,1 +1,1 @@
-pub use work_review_core::config::*;
+pub use workbreath_core::config::*;

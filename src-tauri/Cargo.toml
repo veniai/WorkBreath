@@ -11,7 +11,7 @@ tauri-build = { version = "2", features = [] }
 
 [dependencies]
 # 内部共享库
-work-review-core = { path = "../crates/core" }
+workbreath-core = { path = "../crates/core" }
 
 # Tauri 核心
 tauri = { version = "2.9", features = ["macos-private-api", "tray-icon"] }

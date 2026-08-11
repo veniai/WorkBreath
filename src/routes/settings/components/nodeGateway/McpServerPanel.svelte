@@ -91,7 +91,7 @@
         <div class="flex flex-col gap-0.5 rounded-lg bg-white/70 px-3 py-1.5 ring-1 ring-slate-200/70 dark:bg-[#1c1c1e]/20 dark:ring-[var(--surface-border-default)]">
           <div class="flex items-center justify-between gap-2">
             <span class="text-[11px] text-slate-500 dark:text-[#86868b]">{t('nodeGatewayPage.mcpServerBinaryPath')}</span>
-            <button type="button" class="text-[10px] text-primary-600 hover:underline focus:outline-none" on:click={() => copyPath('work-review-mcp-server', 'mcpServerBinaryPath')}>{t('nodeGatewayPage.mcpServerCopyPath')}</button>
+            <button type="button" class="text-[10px] text-primary-600 hover:underline focus:outline-none" on:click={() => copyPath('workbreath-mcp-server', 'mcpServerBinaryPath')}>{t('nodeGatewayPage.mcpServerCopyPath')}</button>
           </div>
           <span class="font-mono text-[11px] text-slate-700 dark:text-[#98989d] break-all select-all">work-review-mcp-server</span>
         </div>

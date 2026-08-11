@@ -19,7 +19,7 @@ scripts/
 | | `deb/`（推荐） | `appimage/` |
 |---|---|---|
 | 依赖怎么来 | apt 自动拉（tesseract、gnome-screenshot、webkit、...） | 脚本 apt 自动装 + 再装 5 个 shim 绕过 `LD_LIBRARY_PATH` 污染 |
-| 产出文件 | `/usr/bin/Work_Review` + `/usr/share/applications/` + `~/.local/bin/gnome-screenshot` (no-flash shim) + `~/.local/share/sounds/{Yaru,freedesktop}/stereo/screen-capture.oga` (静音覆盖) | `~/Applications/*.AppImage` + `~/bin/` + `~/.local/share/applications/` |
+| 产出文件 | `/usr/bin/WorkBreath` + `/usr/share/applications/` + `~/.local/bin/gnome-screenshot` (no-flash shim) + `~/.local/share/sounds/{Yaru,freedesktop}/stereo/screen-capture.oga` (静音覆盖) | `~/Applications/*.AppImage` + `~/bin/` + `~/.local/share/applications/` |
 | GNOME 活动搜索 | 自带 desktop 入口 | 脚本生成 desktop 入口 |
 | 卸载复杂度 | `sudo apt remove work-review` + 删 shim/静音文件/扩展 | 逐个删 shim/launcher/desktop/AppImage |
 | 系统截图是否闪屏 / 咔擦响 | 不闪、不响（shim + 静音 oga 覆盖；详见 work-review-debugging.md "10 秒闪屏 + 咔擦"小节） | 不闪、不响（同 deb 方案的方法） |
@@ -49,7 +49,7 @@ bash scripts/deb/uninstall.sh --dry-run    # 预演一遍不动真格
 
 ### AppImage 方案（如果你非要用）
 ```bash
-# 需要先把 Work_Review_*.AppImage 放到 ~/Applications/ 或项目根目录
+# 需要先把 WorkBreath_*.AppImage 放到 ~/Applications/ 或项目根目录
 bash scripts/appimage/install.sh            # 装（自动扫 AppImage，apt 装依赖，部署 shim + launcher + desktop）
 bash scripts/appimage/uninstall.sh          # 卸（保留数据）
 bash scripts/appimage/uninstall.sh --purge  # 卸（连数据也删）
@@ -63,7 +63,7 @@ bash scripts/appimage/uninstall.sh --purge  # 卸（连数据也删）
 
 | 变量 | 作用 | 默认 |
 |---|---|---|
-| `WR_DEB` | 本地 .deb 文件路径（避免下载） | 自动扫**当前工作目录**的 `Work_Review_*.deb`（任意版本） |
+| `WR_DEB` | 本地 .deb 文件路径（避免下载） | 自动扫**当前工作目录**的 `WorkBreath_*.deb`（任意版本） |
 | `WR_DEB_URL` | .deb 下载 URL | 通过 GitHub API 解析 `veniai/WorkBreath` 的最新 release |
 | `WR_APPIMAGE` | (appimage 方案) 本地 AppImage 路径 | 自动扫 `~/Applications/` 和项目根目录 |
 

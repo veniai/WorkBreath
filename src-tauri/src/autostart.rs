@@ -154,12 +154,12 @@ mod tests {
     #[test]
     fn windows自启动路径应始终带引号() {
         assert_eq!(
-            quote_windows_command_path(r#"C:\Program Files\Work Review\work-review.exe"#),
-            r#""C:\Program Files\Work Review\work-review.exe""#
+            quote_windows_command_path(r#"C:\Program Files\Work Review\workbreath.exe"#),
+            r#""C:\Program Files\Work Review\workbreath.exe""#
         );
         assert_eq!(
-            quote_windows_command_path(r#""C:\Work Review\work-review.exe""#),
-            r#""C:\Work Review\work-review.exe""#
+            quote_windows_command_path(r#""C:\Work Review\workbreath.exe""#),
+            r#""C:\Work Review\workbreath.exe""#
         );
     }
 

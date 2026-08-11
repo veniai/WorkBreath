@@ -79,9 +79,9 @@
     }
   },
   "productName": "WorkBreath",
-  "mainBinaryName": "Work_Review",
+  "mainBinaryName": "WorkBreath",
   "version": "1.5.0",
-  "identifier": "com.workreview.app",
+  "identifier": "com.workbreath.app",
   "plugins": {
     "updater": {
       "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDhFMUQyQzU3OUMyMkQ1NzgKUldSNDFTS2NWeXdkamxnVG1MaTBTamFCSkVWQ0cxOEdtMVlXWSttKzhYcWN1VUtjUS9OQ2lHT3oK",

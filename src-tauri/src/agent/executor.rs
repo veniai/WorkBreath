@@ -17,7 +17,7 @@ use crate::error::AppError;
 use std::future::Future;
 use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
-use work_review_core::database::MemorySearchItem;
+use workbreath_core::database::MemorySearchItem;
 
 // ══════════════════════════════════════════════════════════
 // Agent 执行结果

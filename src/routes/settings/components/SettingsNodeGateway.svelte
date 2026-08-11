@@ -29,8 +29,8 @@
   $: mcpConfigPath = dataDir ? `${dataDir}/config.json` : '';
   $: mcpConfigJson = JSON.stringify({
     mcpServers: {
-      'work-review': {
-        command: 'work-review-mcp-server',
+      'workbreath': {
+        command: 'workbreath-mcp-server',
         env: {
           WORK_REVIEW_DB_PATH: mcpDbPath,
           WORK_REVIEW_CONFIG_PATH: mcpConfigPath,

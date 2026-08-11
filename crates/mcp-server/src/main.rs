@@ -2,17 +2,17 @@ use serde_json::{json, Value};
 use std::collections::HashMap;
 use std::io::{self, BufRead, Write};
 use std::sync::{Arc, Mutex};
-use work_review_core::config::AppConfig;
-use work_review_core::database::{
+use workbreath_core::config::AppConfig;
+use workbreath_core::database::{
     apply_flex_overtime_correction, Activity, DailyStats, Database, MemorySearchItem,
 };
-use work_review_core::policy::{CallSource, Permission, PolicyDecision, PolicyEnforcer};
-use work_review_core::privacy::{
+use workbreath_core::policy::{CallSource, Permission, PolicyDecision, PolicyEnforcer};
+use workbreath_core::privacy::{
     collect_privacy_filters, matches_excluded_domain, matches_ignored_app,
 };
-use work_review_skills_engine::engine::SkillEngine;
-use work_review_skills_engine::executor::{ExecutionContext, OutputContentType};
-use work_review_skills_engine::model::Permission as SkillPermission;
+use workbreath_skills_engine::engine::SkillEngine;
+use workbreath_skills_engine::executor::{ExecutionContext, OutputContentType};
+use workbreath_skills_engine::model::Permission as SkillPermission;
 
 struct AppState {
     db: Database,
@@ -28,7 +28,7 @@ fn main() {
     let db_path = std::env::var("WORK_REVIEW_DB_PATH").unwrap_or_else(|_| {
         let data_dir = dirs::data_dir()
             .unwrap_or_else(|| std::path::PathBuf::from("."))
-            .join("work-review");
+            .join("workbreath");
         data_dir
             .join("work_review.db")
             .to_string_lossy()
@@ -40,7 +40,7 @@ fn main() {
         .unwrap_or_else(|_| {
             let data_dir = dirs::data_dir()
                 .unwrap_or_else(|| std::path::PathBuf::from("."))
-                .join("work-review");
+                .join("workbreath");
             data_dir.join("config.json")
         });
 
@@ -269,7 +269,7 @@ fn localhost_api_base(config: &AppConfig) -> Option<String> {
         return None;
     }
     let port = if config.localhost_api_port == 0 {
-        work_review_core::config::DEFAULT_LOCALHOST_API_PORT
+        workbreath_core::config::DEFAULT_LOCALHOST_API_PORT
     } else {
         config.localhost_api_port
     };
@@ -561,7 +561,7 @@ fn encode_query_param(value: &str) -> String {
 fn load_daily_stats_for_mcp(
     state: &AppState,
     date: &str,
-) -> work_review_core::error::Result<DailyStats> {
+) -> workbreath_core::error::Result<DailyStats> {
     let segments = state.config.effective_work_segments();
     let (ignored_apps, excluded_domains) = collect_privacy_filters(&state.config);
     let mut stats = state.db.get_daily_stats_with_segments_filtered(
@@ -580,7 +580,7 @@ fn load_daily_stats_for_mcp(
 
 fn filter_activities_by_privacy(activities: Vec<Activity>, config: &AppConfig) -> Vec<Activity> {
     let (ignored_apps, excluded_domains) = collect_privacy_filters(config);
-    use work_review_core::privacy::{PrivacyAction, PrivacyFilter};
+    use workbreath_core::privacy::{PrivacyAction, PrivacyFilter};
 
     let privacy = PrivacyFilter::from_config(&config.privacy);
 
@@ -619,7 +619,7 @@ fn filter_memory_results_by_privacy(
     config: &AppConfig,
 ) -> Vec<MemorySearchItem> {
     let (ignored_apps, excluded_domains) = collect_privacy_filters(config);
-    use work_review_core::privacy::{PrivacyAction, PrivacyFilter};
+    use workbreath_core::privacy::{PrivacyAction, PrivacyFilter};
 
     let privacy = PrivacyFilter::from_config(&config.privacy);
 
@@ -694,7 +694,7 @@ fn handle_tool_call(name: &str, args: &Value, state: &Arc<Mutex<AppState>>) -> V
                 Ok(activities) => {
                     let activities = filter_activities_by_privacy(activities, &s.config);
                     let sessions =
-                        work_review_core::work_intelligence::build_work_sessions(&activities);
+                        workbreath_core::work_intelligence::build_work_sessions(&activities);
                     json!({
                         "content": [{ "type": "text", "text": serde_json::to_string_pretty(&sessions).unwrap_or_default() }]
                     })
@@ -707,7 +707,7 @@ fn handle_tool_call(name: &str, args: &Value, state: &Arc<Mutex<AppState>>) -> V
             match s.db.get_timeline(date, None, None) {
                 Ok(activities) => {
                     let activities = filter_activities_by_privacy(activities, &s.config);
-                    let intents = work_review_core::work_intelligence::analyze_intents(&activities);
+                    let intents = workbreath_core::work_intelligence::analyze_intents(&activities);
                     json!({
                         "content": [{ "type": "text", "text": serde_json::to_string_pretty(&intents.summary).unwrap_or_default() }]
                     })
@@ -718,12 +718,12 @@ fn handle_tool_call(name: &str, args: &Value, state: &Arc<Mutex<AppState>>) -> V
         "generate_report" => with_policy_check(state, name, Permission::WriteReport, |s| {
             let date = args["date"].as_str().unwrap_or("");
             let locale =
-                work_review_core::analysis::AppLocale::from_option(args["locale"].as_str());
+                workbreath_core::analysis::AppLocale::from_option(args["locale"].as_str());
 
             // 坑2修复：用户开了 AI 增强（summary 模式）时，委托主应用 localhost API 生成 AI 报表。
             // 主应用有完整的 AI 调用链（尊重 ai_mode/工作时段/自定义 prompt/隐私过滤）。
             // 失败时回退本地模板。
-            if s.config.ai_mode == work_review_core::config::AiMode::Summary {
+            if s.config.ai_mode == workbreath_core::config::AiMode::Summary {
                 let locale_code = locale.as_code();
                 // date 来自外部工具入参，必须做 query 编码，防止注入额外参数
                 let path = format!(
@@ -749,7 +749,7 @@ fn handle_tool_call(name: &str, args: &Value, state: &Arc<Mutex<AppState>>) -> V
             // 回退/默认：本地模板（使用用户配置的工作时段）
             match load_daily_stats_for_mcp(s, date) {
                 Ok(stats) => {
-                    let summary = work_review_core::analysis::generate_stats_summary_for_locale(
+                    let summary = workbreath_core::analysis::generate_stats_summary_for_locale(
                         &stats,
                         locale,
                         &std::collections::HashMap::new(),
@@ -998,7 +998,7 @@ fn handle_resource_read(uri: &str, state: &Arc<Mutex<AppState>>) -> Value {
             Ok(activities) => {
                 let activities = filter_activities_by_privacy(activities, &s.config);
                 let sessions =
-                    work_review_core::work_intelligence::build_work_sessions(&activities);
+                    workbreath_core::work_intelligence::build_work_sessions(&activities);
                 serde_json::to_string_pretty(&sessions).unwrap_or_default()
             }
             Err(e) => return resource_result(uri, &format!("Error: {e}")),
@@ -1078,7 +1078,7 @@ mod tests {
     #![allow(clippy::field_reassign_with_default)]
 
     use super::*;
-    use work_review_core::privacy::{apply_excluded_domains_to_stats, apply_ignored_apps_to_stats};
+    use workbreath_core::privacy::{apply_excluded_domains_to_stats, apply_ignored_apps_to_stats};
 
     const TEST_LOCALHOST_API_TOKEN: &str =
         "wr-local-0123456789abcdef0123456789abcdef";
@@ -1095,10 +1095,10 @@ mod tests {
 
     #[test]
     fn token路径应跟随自定义配置文件目录() {
-        let config_path = std::path::Path::new("/tmp/work-review-custom/config.json");
+        let config_path = std::path::Path::new("/tmp/workbreath-custom/config.json");
         assert_eq!(
             localhost_api_token_path(config_path),
-            std::path::PathBuf::from("/tmp/work-review-custom/localhost_api_token.txt")
+            std::path::PathBuf::from("/tmp/workbreath-custom/localhost_api_token.txt")
         );
     }
 
@@ -1323,9 +1323,9 @@ mod tests {
         config
             .privacy
             .app_rules
-            .push(work_review_core::config::AppPrivacyRule {
+            .push(workbreath_core::config::AppPrivacyRule {
                 app_name: "SecretApp".to_string(),
-                level: work_review_core::config::PrivacyLevel::Ignored,
+                level: workbreath_core::config::PrivacyLevel::Ignored,
             });
         config.privacy.excluded_domains = vec!["secret.example.com".to_string()];
 
@@ -1333,14 +1333,14 @@ mod tests {
             total_duration: 180,
             work_time_duration: 180,
             app_usage: vec![
-                work_review_core::database::AppUsage {
+                workbreath_core::database::AppUsage {
                     app_name: "SecretApp".to_string(),
                     duration: 60,
                     count: 1,
                     executable_path: None,
                     screenshot_url: None,
                 },
-                work_review_core::database::AppUsage {
+                workbreath_core::database::AppUsage {
                     app_name: "Code".to_string(),
                     duration: 120,
                     count: 1,
@@ -1349,31 +1349,31 @@ mod tests {
                 },
             ],
             domain_usage: vec![
-                work_review_core::database::DomainUsage {
+                workbreath_core::database::DomainUsage {
                     domain: "secret.example.com".to_string(),
                     duration: 60,
                     semantic_category: None,
                     urls: vec![],
                 },
-                work_review_core::database::DomainUsage {
+                workbreath_core::database::DomainUsage {
                     domain: "docs.example.com".to_string(),
                     duration: 120,
                     semantic_category: None,
                     urls: vec![],
                 },
             ],
-            browser_usage: vec![work_review_core::database::BrowserUsage {
+            browser_usage: vec![workbreath_core::database::BrowserUsage {
                 browser_name: "Google Chrome".to_string(),
                 duration: 180,
                 executable_path: None,
                 domains: vec![
-                    work_review_core::database::DomainUsage {
+                    workbreath_core::database::DomainUsage {
                         domain: "secret.example.com".to_string(),
                         duration: 60,
                         semantic_category: None,
                         urls: vec![],
                     },
-                    work_review_core::database::DomainUsage {
+                    workbreath_core::database::DomainUsage {
                         domain: "docs.example.com".to_string(),
                         duration: 120,
                         semantic_category: None,
@@ -1407,9 +1407,9 @@ mod tests {
         config
             .privacy
             .app_rules
-            .push(work_review_core::config::AppPrivacyRule {
+            .push(workbreath_core::config::AppPrivacyRule {
                 app_name: "SecretApp".to_string(),
-                level: work_review_core::config::PrivacyLevel::Ignored,
+                level: workbreath_core::config::PrivacyLevel::Ignored,
             });
         config.privacy.excluded_domains = vec!["secret.example.com".to_string()];
 

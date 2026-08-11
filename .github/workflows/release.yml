@@ -182,15 +182,15 @@ jobs:
         run: |
           set -euo pipefail
           # 便携版 = Rust 主程序 exe（前端已嵌入，需 WebView2 运行时，Win10/11 自带）
-          EXE="$(find target -name "Work_Review.exe" -path "*/release/*" -not -path "*/build/*" -not -path "*/deps/*" 2>/dev/null | head -n 1 || true)"
+          EXE="$(find target -name "WorkBreath.exe" -path "*/release/*" -not -path "*/build/*" -not -path "*/deps/*" 2>/dev/null | head -n 1 || true)"
           if [[ -z "$EXE" || ! -f "$EXE" ]]; then
-            echo "Work_Review.exe 未找到，跳过便携版"
+            echo "WorkBreath.exe 未找到，跳过便携版"
             exit 0
           fi
           DIR="$(dirname "$EXE")"
-          printf 'WorkBreath 息刻便携版\n\n- 双击 Work_Review.exe 直接运行，无需安装\n- 需要 WebView2 运行时（Windows 10/11 已自带；旧系统请自行安装）\n- 数据继续保存在兼容目录 %%APPDATA%%\\work-review\n' > "$DIR/PORTABLE_README.txt"
+          printf 'WorkBreath 息刻便携版\n\n- 双击 WorkBreath.exe 直接运行，无需安装\n- 需要 WebView2 运行时（Windows 10/11 已自带；旧系统请自行安装）\n- 数据继续保存在兼容目录 %%APPDATA%%\\workbreath\n' > "$DIR/PORTABLE_README.txt"
           # Windows runner 不带 zip 命令，用 PowerShell 的 Compress-Archive 打包（行为等同 zip -j，文件平铺到 zip 根）
-          (cd "$DIR" && rm -f WorkBreath_portable_x64.zip && powershell.exe -NoProfile -Command "Compress-Archive -Path Work_Review.exe,PORTABLE_README.txt -DestinationPath WorkBreath_portable_x64.zip -Force")
+          (cd "$DIR" && rm -f WorkBreath_portable_x64.zip && powershell.exe -NoProfile -Command "Compress-Archive -Path WorkBreath.exe,PORTABLE_README.txt -DestinationPath WorkBreath_portable_x64.zip -Force")
 
       - name: Rename Linux bundle assets
         if: startsWith(matrix.platform, 'ubuntu')

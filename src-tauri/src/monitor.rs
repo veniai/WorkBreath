@@ -185,7 +185,7 @@ pub fn is_browser_app(app_name: &str) -> bool {
     if substring_match {
         return true;
     }
-    // 与 work_review_core::categorize::is_browser_app 保持一致：
+    // 与 workbreath_core::categorize::is_browser_app 保持一致：
     //   "cent" / "arc" 用精确匹配，避免 "Tencent Lemon" / "Arch Linux" 等被误判为浏览器
     matches!(
         app_lower.as_str(),
@@ -335,6 +335,7 @@ pub fn normalize_display_app_name(app_name: &str) -> String {
         || normalized.contains("work breath")
         || normalized.contains("work_review")
         || normalized.contains("work-review")
+        || normalized.contains("workbreath")
         || normalized.contains("work review")
         || compact.contains("workbreath")
         || compact.contains("workreview"))

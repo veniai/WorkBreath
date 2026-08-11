@@ -70,11 +70,11 @@ test('README 应将 Wayland 启动崩溃的首选绕过方案写为关闭 WebKit
 
   for (const source of [zh, en, tw]) {
     assert.match(source, /Gdk-Message: Error 71/);
-    assert.match(source, /WEBKIT_DISABLE_DMABUF_RENDERER=1 \.\/Work_Review/);
-    assert.match(source, /GDK_BACKEND=x11 \.\/Work_Review/);
+    assert.match(source, /WEBKIT_DISABLE_DMABUF_RENDERER=1 \.\/WorkBreath/);
+    assert.match(source, /GDK_BACKEND=x11 \.\/WorkBreath/);
     assert.ok(
-      source.indexOf('WEBKIT_DISABLE_DMABUF_RENDERER=1 ./Work_Review') <
-        source.indexOf('GDK_BACKEND=x11 ./Work_Review'),
+      source.indexOf('WEBKIT_DISABLE_DMABUF_RENDERER=1 ./WorkBreath') <
+        source.indexOf('GDK_BACKEND=x11 ./WorkBreath'),
       'README 应先推荐关闭 WebKit DMA-BUF 渲染器，再把 X11 作为最后兜底'
     );
   }

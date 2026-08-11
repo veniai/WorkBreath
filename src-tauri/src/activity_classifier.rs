@@ -1,1 +1,1 @@
-pub use work_review_core::activity_classifier::*;
+pub use workbreath_core::activity_classifier::*;

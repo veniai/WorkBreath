@@ -249,13 +249,13 @@ See [scripts/ubuntu-wayland-README.md](scripts/ubuntu-wayland-README.md) for det
 **KDE Plasma / Wayland startup crash (Fedora, Arch, openSUSE, …):** If the app quits immediately with `Gdk-Message: Error 71 (Protocol error) dispatching to Wayland display.`, it is an upstream webkit2gtk/GTK bug on Wayland (see [tauri#10702](https://github.com/tauri-apps/tauri/issues/10702)), most common on KDE Plasma + NVIDIA. Recent builds already inject `WEBKIT_DISABLE_DMABUF_RENDERER=1` at startup. If you still hit it on an older build, launch it with the same workaround manually:
 
 ```bash
-WEBKIT_DISABLE_DMABUF_RENDERER=1 ./Work_Review
+WEBKIT_DISABLE_DMABUF_RENDERER=1 ./WorkBreath
 ```
 
 If that still fails, force the X11 backend as a last-resort fallback. This may render worse on some Wayland desktops:
 
 ```bash
-GDK_BACKEND=x11 ./Work_Review
+GDK_BACKEND=x11 ./WorkBreath
 ```
 
 ---

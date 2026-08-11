@@ -609,8 +609,8 @@ mod tests {
     fn github_拉取请求页面应识别为编码开发() {
         let result = classify_activity(
             "Google Chrome",
-            "Fix updater retry · Pull Request #12 · wm94i/Work_Review",
-            Some("https://github.com/wm94i/Work_Review/pull/12"),
+            "Fix updater retry · Pull Request #12 · veniai/WorkBreath",
+            Some("https://github.com/veniai/WorkBreath/pull/12"),
         );
 
         assert_eq!(result.semantic_category, "编码开发");

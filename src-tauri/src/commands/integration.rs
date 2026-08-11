@@ -87,7 +87,7 @@ pub async fn rotate_localhost_api_token(
 /// 「未配置远程存储」。所测即所见；实际录制上传仍以保存后的配置为准。
 #[tauri::command]
 pub async fn test_remote_storage(
-    remote_storage: work_review_core::config::RemoteStorageConfig,
+    remote_storage: workbreath_core::config::RemoteStorageConfig,
     state: State<'_, Arc<Mutex<AppState>>>,
 ) -> Result<String, AppError> {
     let data_dir = {
@@ -95,7 +95,7 @@ pub async fn test_remote_storage(
         guard.data_dir.clone()
     };
 
-    if remote_storage.provider == work_review_core::config::RemoteStorageProvider::None {
+    if remote_storage.provider == workbreath_core::config::RemoteStorageProvider::None {
         return Err(AppError::Config("未配置远程存储".into()));
     }
 
