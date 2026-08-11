@@ -164,7 +164,7 @@ test('预告非阻挡，休息层覆盖每块显示器且 watchdog 会恢复窗�
   assert.doesNotMatch(overlay, /skip|postpone|延后|跳过/i);
   assert.match(preBreak, /preBreakDescription/);
   assert.match(preBreak, /overflow:\s*hidden/);
-  assert.match(preBreak, /background:.*rgba\(20, 20, 22, 1\)/);
+  assert.match(preBreak, /background:.*#141416/);
   assert.doesNotMatch(preBreak, /backdrop-filter/);
   assert.doesNotMatch(preBreak, /clip-path/);
   assert.match(capabilities, /eye-care-pre-break/);
