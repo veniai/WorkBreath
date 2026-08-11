@@ -59,8 +59,6 @@
   .notice-shell {
     width: 100%;
     height: 100%;
-    /* 透明 WebView 的全窗口 filter 会把矩形合成层也画出来。 */
-    filter: none;
   }
 
   .notice {
@@ -75,11 +73,8 @@
     border: 1px solid rgba(255, 255, 255, 0.14);
     border-radius: 20px;
     overflow: hidden;
-    clip-path: inset(0 round 20px);
-    -webkit-clip-path: inset(0 round 20px);
-    background: rgba(28, 28, 30, 0.78);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.48);
+    background: rgba(20, 20, 22, 0.96);
     color: #f5f5f7;
     font-family: "SF Pro Display", "SF Pro Text", "PingFang SC", "Microsoft YaHei", sans-serif;
     -webkit-font-smoothing: antialiased;
