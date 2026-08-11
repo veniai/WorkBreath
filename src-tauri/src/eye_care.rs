@@ -678,8 +678,13 @@ pub fn sync_pre_break_window(app: &AppHandle, status: &EyeCareStatus) -> tauri::
         return Ok(());
     };
     let scale = monitor.scale_factor();
-    let width = (420.0 * scale).round().max(1.0) as u32;
-    let height = (124.0 * scale).round().max(1.0) as u32;
+    // 窗口比通知卡片大一圈，多出来的空间用于投影视觉。
+    // 这样窗口本身就是不透明的暗色矩形，不需要透明度，彻底消除 Windows 圆角漏光。
+    let shadow_pad = 16.0;
+    let card_w = 420.0;
+    let card_h = 124.0;
+    let width = ((card_w + shadow_pad * 2.0) * scale).round().max(1.0) as u32;
+    let height = ((card_h + shadow_pad * 2.0) * scale).round().max(1.0) as u32;
     let margin = (24.0 * scale).round() as i32;
     let monitor_position = *monitor.position();
     let monitor_size = *monitor.size();
@@ -694,13 +699,13 @@ pub fn sync_pre_break_window(app: &AppHandle, status: &EyeCareStatus) -> tauri::
     } else {
         WebviewWindowBuilder::new(app, PRE_BREAK_LABEL, WebviewUrl::default())
             .title("WorkBreath Break Notice")
-            .inner_size(420.0, 124.0)
+            .inner_size(452.0, 156.0)
             .resizable(false)
             .maximizable(false)
             .minimizable(false)
             .closable(false)
             .decorations(false)
-            .transparent(true)
+            .transparent(false)
             .visible(false)
             .always_on_top(true)
             .skip_taskbar(true)

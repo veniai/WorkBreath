@@ -53,18 +53,27 @@
     width: 100%;
     height: 100%;
     overflow: hidden;
-    background: transparent;
   }
 
+  /* 窗口本身不透明，用径向渐变模拟投影渐隐。
+     外圈暗 → 中心不透明，与 .notice 的 20px 圆角无缝衔接。
+     彻底消除 Windows 透明窗口圆角漏光问题。 */
   .notice-shell {
     width: 100%;
     height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: radial-gradient(ellipse at center,
+      rgba(20, 20, 22, 1) 58%,
+      rgba(20, 20, 22, 0.6) 78%,
+      rgba(20, 20, 22, 0) 100%);
   }
 
   .notice {
     box-sizing: border-box;
-    width: 100%;
-    height: 100%;
+    width: 420px;
+    height: 124px;
     display: grid;
     grid-template-columns: 36px minmax(0, 1fr) auto;
     align-items: center;
@@ -73,8 +82,7 @@
     border: 1px solid rgba(255, 255, 255, 0.14);
     border-radius: 20px;
     overflow: hidden;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.48);
-    background: rgba(20, 20, 22, 0.96);
+    background: rgba(20, 20, 22, 1);
     color: #f5f5f7;
     font-family: "SF Pro Display", "SF Pro Text", "PingFang SC", "Microsoft YaHei", sans-serif;
     -webkit-font-smoothing: antialiased;
