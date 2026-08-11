@@ -50,7 +50,7 @@
     ? 'app-usage-chart__columns app-usage-chart__columns-embedded'
     : 'app-usage-chart__columns rounded-2xl border border-slate-100 bg-white/90 p-4 dark:border-[var(--surface-border-default)]/60 dark:bg-[#2c2c2e]/70';
   $: plotClass = embedded
-    ? 'app-usage-chart__plot relative rounded-[22px] bg-slate-50/90 px-3 pb-3 pt-4 dark:bg-[#1c1c1e]/40'
+    ? 'app-usage-chart__plot relative rounded-[20px] bg-slate-50/90 px-3 pb-3 pt-4 dark:bg-[#1c1c1e]/40'
     : 'app-usage-chart__plot relative rounded-2xl bg-slate-50 px-3 pb-3 pt-4 dark:bg-[#1c1c1e]/40';
 </script>
 

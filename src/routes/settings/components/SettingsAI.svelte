@@ -592,14 +592,14 @@
               />
             {:else}
               <span
-                class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-[13px] font-bold text-white"
+                class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-xs font-bold text-white"
                 style="background: {PROVIDER_BRAND[provider.id] || '#64748b'}"
               >
                 {providerInitial(provider.id)}
               </span>
             {/if}
             <span class="min-w-0 flex-1">
-              <span class="block truncate text-[13px] font-medium text-slate-800 dark:text-[#f5f5f7]">{provider.name}</span>
+              <span class="block truncate text-sm font-medium text-slate-800 dark:text-[#f5f5f7]">{provider.name}</span>
               {#if active}
                 <span class="block text-[10px] leading-tight text-primary-500 dark:text-primary-400">{t('settingsAI.providerActive')}</span>
               {/if}
@@ -613,7 +613,7 @@
     <div class="overflow-hidden rounded-xl border border-slate-200 dark:border-[var(--surface-border-default)]">
       <div class="flex items-center justify-between gap-3 border-b border-slate-200/80 bg-slate-50/70 px-3.5 py-2.5 dark:border-[var(--surface-border-default)] dark:bg-[#1c1c1e]/70">
         <div class="flex min-w-0 items-center gap-2">
-          <span class="text-[13px] font-semibold text-slate-700 dark:text-[#98989d]">{t('settingsAI.connectionTitle')}</span>
+          <span class="text-xs font-semibold text-slate-700 dark:text-[#98989d]">{t('settingsAI.connectionTitle')}</span>
           {#if textTestStatus === 'success'}
             <span class="rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-medium text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400">✓ {t('settingsAI.statusConnected')}</span>
           {:else if textTestStatus === 'error'}

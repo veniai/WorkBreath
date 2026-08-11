@@ -22,9 +22,14 @@
   --editorial-surface-subtle: #f8fafc;
   --content-width-operation: 78rem;
   --content-width-reading: 64rem;
-  --surface-border-subtle: rgba(0, 0, 0, 0.05);
+  --surface-border-subtle: rgba(0, 0, 0, 0.08);
   --surface-border-default: rgba(0, 0, 0, 0.10);
   --surface-border-emphasis: rgba(59, 130, 246, 0.42);
+
+  /* 品牌"呼吸绿"色系 */
+  --brand-accent: #34c3a0;
+  --brand-accent-deep: #0f9d78;
+  --brand-accent-soft: rgba(52, 195, 160, 0.12);
 
   /* 设计 token —— 统一圆角/阴影/间距基准，新样式应引用这些变量而非硬编码 */
   --radius-sm: 8px;     /* 小元素：表格、blockquote、统计卡、输入框 */
@@ -55,12 +60,17 @@
   --editorial-shell-bg: #000000;
   --editorial-surface-featured: #1c1c1e;
   --editorial-surface-subtle: #2c2c2e;
-  --surface-border-subtle: rgba(255, 255, 255, 0.07);
+  --surface-border-subtle: rgba(255, 255, 255, 0.10);
   --surface-border-default: rgba(255, 255, 255, 0.14);
   --surface-border-emphasis: rgba(10, 132, 255, 0.58);
 
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.20), 0 1px 3px rgba(0, 0, 0, 0.24);
-  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.28), 0 1px 3px rgba(0, 0, 0, 0.20);
+  /* 品牌绿暗色变体 */
+  --brand-accent: #5eead4;
+  --brand-accent-deep: #2dd4bf;
+  --brand-accent-soft: rgba(94, 234, 212, 0.14);
+
+  --shadow-sm: none;
+  --shadow-md: none;
   --shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.32), 0 2px 10px rgba(0, 0, 0, 0.20);
 }
 
@@ -108,6 +118,11 @@
   to {
     opacity: 1;
   }
+}
+
+@keyframes breath {
+  0%, 100% { transform: scale(1); }
+  50%      { transform: scale(1.05); }
 }
 
 .animate-fadeIn {
@@ -182,8 +197,8 @@
 
 .app-shell-sidebar-frame,
 .app-shell-main-frame {
-  --app-shell-frame-radius: 2rem;
-  --app-shell-inner-radius: 1.78rem;
+  --app-shell-frame-radius: 1.5rem;
+  --app-shell-inner-radius: 1.3rem;
   min-width: 0;
   min-height: 0;
   padding: 0.2rem;
@@ -462,7 +477,7 @@
 }
 
 .report-hero-meta {
-  @apply mt-2 flex flex-col gap-2 text-[13px] text-slate-500 dark:text-[#86868b];
+  @apply mt-2 flex flex-col gap-2 text-sm text-slate-500 dark:text-[#86868b];
 }
 
 .report-hero-date {
@@ -614,7 +629,7 @@
 }
 
 .page-control-input {
-  @apply min-h-9 px-3 text-sm rounded-xl bg-white dark:bg-[#2c2c2e] border border-slate-200 dark:border-[var(--surface-border-default)] text-slate-700 dark:text-[#98989d] focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent;
+  @apply min-h-9 px-3 text-sm rounded-xl bg-white dark:bg-[#2c2c2e] border border-slate-200 dark:border-[var(--surface-border-default)] text-slate-700 dark:text-[#98989d] focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent;
 }
 
 .page-control-btn {
@@ -630,7 +645,10 @@
 }
 
 .page-control-btn-active {
-  @apply bg-primary-50 border-primary-200 text-primary-700 dark:bg-primary-900/40 dark:border-primary-800 dark:text-primary-300;
+  background: var(--brand-accent-soft);
+  border-color: var(--brand-accent);
+  color: var(--brand-accent-deep);
+  @apply dark:bg-[var(--brand-accent-soft)] dark:border-[var(--brand-accent)] dark:text-[var(--brand-accent)];
 }
 
 .page-action-btn {
@@ -638,7 +656,14 @@
 }
 
 .page-action-brand {
-  @apply page-action-btn bg-primary-500 hover:bg-primary-600 text-white;
+  @apply page-action-btn text-white;
+  background: linear-gradient(180deg, #3fd4ae, #1daa86);
+}
+.page-action-brand:hover {
+  background: linear-gradient(180deg, #34c3a0, #0f9d78);
+}
+.dark .page-action-brand {
+  color: #062e26;
 }
 
 .localized-date-picker {
@@ -756,7 +781,7 @@
 }
 
 .overview-date-trigger {
-  @apply inline-flex min-h-9 min-w-[10.5rem] items-center justify-center rounded-xl border border-slate-200 bg-white px-3 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:border-[var(--surface-border-default)] dark:bg-[#2c2c2e] dark:text-[#98989d] dark:hover:bg-[var(--editorial-surface-subtle)];
+  @apply inline-flex min-h-9 min-w-[10.5rem] items-center justify-center rounded-xl border border-slate-200 bg-white px-3 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent dark:border-[var(--surface-border-default)] dark:bg-[#2c2c2e] dark:text-[#98989d] dark:hover:bg-[var(--editorial-surface-subtle)];
 }
 
 .page-action-warn {
@@ -768,7 +793,7 @@
 }
 
 .page-section-title {
-  @apply text-[13px] font-semibold tracking-[0.01em] text-slate-500 dark:text-[#98989d] mb-3;
+  @apply text-xs font-semibold tracking-[0.01em] text-slate-500 dark:text-[#98989d] mb-3;
 }
 
 .page-banner {
@@ -823,7 +848,9 @@
 }
 
 .sidebar-nav-item-active {
-  @apply text-slate-900 dark:text-[#f5f5f7] font-semibold;
+  @apply font-semibold;
+  background: var(--brand-accent-soft);
+  color: var(--brand-accent-deep);
 }
 
 .sidebar-nav-item-idle {
@@ -863,23 +890,23 @@
 .empty-state {
   @apply page-card-soft py-9;
   background:
-    radial-gradient(circle at top, rgba(224, 231, 255, 0.55), rgba(255, 255, 255, 0.88) 48%),
+    radial-gradient(circle at top, rgba(52, 195, 160, 0.20), rgba(255, 255, 255, 0.88) 48%),
     linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(248, 250, 252, 0.92));
 }
 
 .dark .empty-state {
-  background: radial-gradient(circle at top, rgba(56, 139, 253, 0.10), rgba(0, 0, 0, 0.94) 48%), linear-gradient(180deg, rgba(28, 28, 30, 0.86), rgba(0, 0, 0, 0.92));
+  background: radial-gradient(circle at top, rgba(45, 212, 191, 0.16), rgba(0, 0, 0, 0.94) 48%), linear-gradient(180deg, rgba(28, 28, 30, 0.86), rgba(0, 0, 0, 0.92));
 }
 
 .empty-state-lg {
   @apply page-card-soft py-12;
   background:
-    radial-gradient(circle at top, rgba(224, 231, 255, 0.6), rgba(255, 255, 255, 0.9) 42%),
+    radial-gradient(circle at top, rgba(52, 195, 160, 0.20), rgba(255, 255, 255, 0.9) 42%),
     linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(248, 250, 252, 0.94));
 }
 
 .dark .empty-state-lg {
-  background: radial-gradient(circle at top, rgba(56, 139, 253, 0.12), rgba(0, 0, 0, 0.94) 42%), linear-gradient(180deg, rgba(28, 28, 30, 0.88), rgba(0, 0, 0, 0.94));
+  background: radial-gradient(circle at top, rgba(45, 212, 191, 0.16), rgba(0, 0, 0, 0.94) 42%), linear-gradient(180deg, rgba(28, 28, 30, 0.88), rgba(0, 0, 0, 0.94));
 }
 
 .empty-state-compact {
@@ -887,7 +914,13 @@
 }
 
 .empty-state-icon {
-  @apply inline-flex items-center justify-center w-16 h-16 rounded-[22px] bg-white/90 dark:bg-[#2c2c2e]/80 mx-auto mb-4 ring-1 ring-slate-200/80 dark:ring-[var(--surface-border-default)] shadow-[0_16px_30px_rgba(99,102,241,0.10)];
+  @apply inline-flex items-center justify-center w-16 h-16 rounded-[20px] bg-white/90 dark:bg-[#2c2c2e]/80 mx-auto mb-4 ring-1 ring-slate-200/80 dark:ring-[var(--surface-border-default)];
+  box-shadow: 0 16px 30px rgba(52, 195, 160, 0.18);
+  color: var(--brand-accent-deep);
+  animation: breath 4s ease-in-out infinite;
+}
+.dark .empty-state-icon {
+  color: var(--brand-accent);
 }
 
 .empty-state-title {
@@ -1102,7 +1135,7 @@
 }
 
 .control-input {
-  @apply w-full min-h-9 px-3 py-2 text-sm rounded-lg bg-slate-50 dark:bg-[#1c1c1e] border border-slate-200 dark:border-[var(--surface-border-default)] text-slate-700 dark:text-[#98989d] focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent;
+  @apply w-full min-h-9 px-3 py-2 text-sm rounded-lg bg-slate-50 dark:bg-[#1c1c1e] border border-slate-200 dark:border-[var(--surface-border-default)] text-slate-700 dark:text-[#98989d] focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent;
 }
 
 
@@ -4534,9 +4567,10 @@
 }
 
 .dark .sidebar-nav-item-active {
-  background: rgba(255, 255, 255, 0.09);
+  background: var(--brand-accent-soft);
   border-color: transparent;
   box-shadow: none;
+  color: var(--brand-accent);
 }
 
 .dark .sidebar-toolbelt {
@@ -5651,13 +5685,13 @@
 }
 
 .app-shell .sidebar-nav-item-active {
-  background: #e9f2ff;
-  color: #1d64d6;
+  background: var(--brand-accent-soft);
+  color: var(--brand-accent-deep);
   box-shadow: none;
 }
 
 .app-shell .sidebar-nav-item-active .sidebar-nav-icon {
-  color: #2f78e8 !important;
+  color: var(--brand-accent-deep) !important;
 }
 
 .app-shell .sidebar-nav-item-idle {
@@ -5746,9 +5780,9 @@
 }
 
 .overview-page-shell .overview-command-deck > .page-control-btn-active {
-  background: #ffffff;
-  color: #16212b;
-  box-shadow: 0 1px 3px rgba(27, 46, 60, 0.1);
+  background: var(--brand-accent-soft);
+  color: var(--brand-accent-deep);
+  box-shadow: none;
 }
 
 .overview-page-shell .overview-insight-strip {

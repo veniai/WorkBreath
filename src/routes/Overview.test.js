@@ -124,7 +124,7 @@ test('概览总时长 KPI 应使用紧凑格式并保持单行', async () => {
 
   assert.match(overviewSource, /formatDurationLocalized\(stats\.total_duration, \{ compact: true \}\)/);
   assert.match(overviewSource, /formatDurationLocalized\(stats\.work_time_duration \|\| 0, \{ compact: true \}\)/);
-  assert.match(statsCardSource, /whitespace-nowrap text-\[1\.9rem\]/);
+  assert.match(statsCardSource, /whitespace-nowrap text-2xl/);
 });
 
 test('小时应用明细只应接受最后一次日期范围请求的结果', async () => {

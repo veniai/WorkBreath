@@ -1198,7 +1198,7 @@
               class="min-w-0 flex-1 text-start"
               on:click={() => switchConversation(conv.id)}
             >
-              <span class="block truncate text-[13px] font-medium text-slate-700 dark:text-[#98989d]">{displayConversationTitle(conv.title)}</span>
+              <span class="block truncate text-sm font-medium text-slate-700 dark:text-[#98989d]">{displayConversationTitle(conv.title)}</span>
               <span class="block text-[11px] text-slate-400 dark:text-[#636c76]">{t('ask.conversationMeta', { count: conv.messageCount })}</span>
             </button>
             <button

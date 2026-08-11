@@ -1416,7 +1416,7 @@
   <!-- 洞察条：仅 today 模式、数据非空且上周同日基线可用时组句显示 -->
   {#if overviewMode === 'today' && insightSentence}
     <!-- 窄屏精修：flex-wrap 允许洞察句换行,链接自动下移到第二行,避免最小窗口横向溢出 -->
-    <div class="overview-insight-strip mb-4 flex flex-wrap items-center gap-3.5 rounded-[22px] border border-blue-100 bg-gradient-to-r from-blue-50 via-white to-white px-5 py-3.5 dark:border-blue-900/40 dark:from-blue-950/35 dark:via-[#1c1c1e] dark:to-[#1c1c1e]">
+    <div class="overview-insight-strip mb-4 flex flex-wrap items-center gap-3.5 rounded-[20px] border border-blue-100 bg-gradient-to-r from-blue-50 via-white to-white px-5 py-3.5 dark:border-blue-900/40 dark:from-blue-950/35 dark:via-[#1c1c1e] dark:to-[#1c1c1e]">
       <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-blue-100 text-blue-500 dark:bg-blue-900/40 dark:text-blue-300">
         <svg class="h-[17px] w-[17px]" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
           <path d="M12 2.5l2 6.4 6.5 2.1-6.5 2.1-2 6.4-2-6.4L3.5 11l6.5-2.1zM19 15.5l.9 2.6 2.6.9-2.6.9-.9 2.6-.9-2.6-2.6-.9 2.6-.9z" />
@@ -1425,7 +1425,7 @@
       <p class="min-w-0 flex-1 basis-52 text-sm text-slate-600 dark:text-[#98989d]">{insightSentence}</p>
       <a
         href="#/report"
-        class="shrink-0 whitespace-nowrap text-[13px] font-semibold text-primary-600 transition-colors hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300"
+        class="shrink-0 whitespace-nowrap text-sm font-semibold text-primary-600 transition-colors hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300"
       >
         {t('overview.insightWeekLink')}
       </a>
@@ -1551,13 +1551,13 @@
         <div class="mb-5 h-3.5 rounded-full bg-slate-200 dark:bg-[var(--editorial-surface-subtle)]"></div>
         <div class="mb-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
           {#each [1,2,3,4] as _}
-            <div class="min-h-[88px] rounded-[22px] bg-slate-50/88 p-4 dark:bg-[#1c1c1e]/30">
+            <div class="min-h-[88px] rounded-[20px] bg-slate-50/88 p-4 dark:bg-[#1c1c1e]/30">
               <div class="h-3 w-16 rounded bg-slate-200 dark:bg-[var(--editorial-surface-subtle)]"></div>
               <div class="mt-4 h-7 w-20 rounded bg-slate-200 dark:bg-[var(--editorial-surface-subtle)]"></div>
             </div>
           {/each}
         </div>
-        <div class="rounded-[22px] bg-slate-50/90 p-4 dark:bg-[#1c1c1e]/40">
+        <div class="rounded-[20px] bg-slate-50/90 p-4 dark:bg-[#1c1c1e]/40">
           <div class="flex h-40 items-end gap-1.5">
             {#each Array(24) as _, hour}
               <div class="flex h-full flex-1 flex-col items-center justify-end">
@@ -1682,7 +1682,7 @@
               on:click={() => openDomainDetail(domain)}
             >
               <span class="overview-domain-heading min-w-0">
-                <span class="block truncate text-[13px] font-semibold text-slate-700 dark:text-[#98989d]">
+                <span class="block truncate text-sm font-semibold text-slate-700 dark:text-[#98989d]">
                   {getBrowserDomainDisplayLabel(domain)}
                 </span>
                 <span class="overview-domain-meta overview-domain-category-meta mt-0.5 flex items-center gap-1.5 truncate text-[11px] text-slate-500 dark:text-[#86868b]">

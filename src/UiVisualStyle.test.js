@@ -44,14 +44,14 @@ test('唯一语言的设计 token 锚点：Apple 亮/暗色系', async () => {
 
   // 亮色：#f5f5f7 页面底 + 细黑透明边界
   assert.match(appCssSource, /--editorial-shell-bg:\s*#f5f5f7/);
-  assert.match(appCssSource, /--surface-border-subtle:\s*rgba\(0, 0, 0, 0\.05\)/);
+  assert.match(appCssSource, /--surface-border-subtle:\s*rgba\(0, 0, 0, 0\.08\)/);
   assert.match(appCssSource, /--surface-border-default:\s*rgba\(0, 0, 0, 0\.10\)/);
 
   // 暗色：#000 底 / #1c1c1e 卡片 / #2c2c2e 次级面 + 半透明白边界
   assert.match(appCssSource, /--editorial-shell-bg:\s*#000000/);
   assert.match(appCssSource, /--editorial-surface-featured:\s*#1c1c1e/);
   assert.match(appCssSource, /--editorial-surface-subtle:\s*#2c2c2e/);
-  assert.match(appCssSource, /--surface-border-subtle:\s*rgba\(255, 255, 255, 0\.07\)/);
+  assert.match(appCssSource, /--surface-border-subtle:\s*rgba\(255, 255, 255, 0\.10\)/);
   assert.match(appCssSource, /--surface-border-default:\s*rgba\(255, 255, 255, 0\.14\)/);
 
   // 卡片为无描边无阴影的纯净表面（Apple 纪律）

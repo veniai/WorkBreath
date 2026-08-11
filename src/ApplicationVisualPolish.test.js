@@ -69,7 +69,7 @@ test('深色模式边界 token 应使用低对比中性层级', async () => {
 
   const darkTokens = readCssBlock(css, '.dark');
   // Apple dark 映射：边界以半透明白层级表达
-  assert.match(darkTokens, /--surface-border-subtle:\s*rgba\(255,\s*255,\s*255,\s*0\.07\)/);
+  assert.match(darkTokens, /--surface-border-subtle:\s*rgba\(255,\s*255,\s*255,\s*0\.10\)/);
   assert.match(darkTokens, /--surface-border-default:\s*rgba\(255,\s*255,\s*255,\s*0\.14\)/);
   assert.match(darkTokens, /--editorial-surface-featured:\s*#1c1c1e/);
   assert.match(darkTokens, /--editorial-surface-subtle:\s*#2c2c2e/);

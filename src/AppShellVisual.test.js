@@ -42,7 +42,7 @@ test('侧边栏应使用紧凑字号、蓝色激活态与固定亮色底', async
 
   assert.match(css, /\.app-shell \.sidebar-nav-label\s*\{[^}]*font-size:\s*0\.8125rem/);
   assert.match(css, /\.app-shell \.sidebar-nav-item\s*\{[^}]*min-height:\s*2\.375rem;[^}]*border-radius:\s*0\.5rem/);
-  assert.match(css, /\.app-shell \.sidebar-nav-item-active\s*\{[^}]*background:\s*#e9f2ff;[^}]*color:\s*#1d64d6/);
+  assert.match(css, /\.app-shell \.sidebar-nav-item-active\s*\{[^}]*background:\s*var\(--brand-accent-soft\);[^}]*color:\s*var\(--brand-accent-deep\)/);
   assert.match(css, /\.app-shell \.sidebar-status-panel\s*\{[^}]*border:\s*1px solid #dfe6eb;[^}]*border-radius:\s*0\.625rem;[^}]*background:\s*#ffffff/);
 });
 

@@ -95,7 +95,7 @@
   })();
   $: yAxisTicks = [axisMax, Math.round(axisMax * 2 / 3), Math.round(axisMax / 3), 0];
   $: summaryCardClass = embedded
-    ? 'min-h-[88px] rounded-[22px] bg-slate-50/90 px-2 py-3 text-center dark:bg-[#1c1c1e]/30'
+    ? 'min-h-[88px] rounded-[20px] bg-slate-50/90 px-2 py-3 text-center dark:bg-[#1c1c1e]/30'
     : 'min-h-[104px] rounded-2xl border border-slate-100 bg-white p-4 text-center dark:border-[var(--surface-border-default)]/60 dark:bg-[#2c2c2e]/80';
   $: summaryValueClass =
     'mt-2 text-center text-base font-semibold text-slate-900 dark:text-[#f5f5f7] leading-tight';
@@ -107,19 +107,19 @@
 <div class="activity-hourly-root space-y-4" data-locale={currentLocale}>
   <div class="activity-hourly-summary-grid grid grid-cols-4 gap-2">
     <div class={summaryCardClass}>
-      <p class="text-[13px] font-medium text-slate-400 dark:text-[#636c76]">{peakHourLabel || t('hourlyChart.peakHour')}</p>
+      <p class="text-xs font-medium text-slate-400 dark:text-[#636c76]">{peakHourLabel || t('hourlyChart.peakHour')}</p>
       <p class={summaryValueClass}>
         {hasActiveData ? formatHourLabel(peakBucket.hour) : '--'}
       </p>
     </div>
     <div class={summaryCardClass}>
-      <p class="text-[13px] font-medium text-slate-400 dark:text-[#636c76]">{peakDurationLabel || t('hourlyChart.peakDuration')}</p>
+      <p class="text-xs font-medium text-slate-400 dark:text-[#636c76]">{peakDurationLabel || t('hourlyChart.peakDuration')}</p>
       <p class={summaryValueClass}>
         {hasActiveData ? formatCompact(peakBucket.duration) : '--'}
       </p>
     </div>
     <div class={summaryCardClass}>
-      <p class="text-[13px] font-medium text-slate-400 dark:text-[#636c76]">{t('hourlyChart.activeHours')}</p>
+      <p class="text-xs font-medium text-slate-400 dark:text-[#636c76]">{t('hourlyChart.activeHours')}</p>
       <p class={summaryValueClass}>
         {activeBuckets.length}
       </p>
@@ -129,7 +129,7 @@
         {@const goalSecs = workGoalMinutes * 60}
         {@const pct = Math.min(100, Math.round((workDuration / goalSecs) * 100))}
         {@const reached = workDuration >= goalSecs}
-        <p class="text-[13px] font-medium {reached ? 'text-emerald-500' : 'text-slate-400 dark:text-[#636c76]'}">{t('hourlyChart.workGoal')}</p>
+        <p class="text-xs font-medium {reached ? 'text-emerald-500' : 'text-slate-400 dark:text-[#636c76]'}">{t('hourlyChart.workGoal')}</p>
         <p class={summaryValueClass}>
           {formatCompact(workDuration)} <span class="text-[0.7em] text-slate-400">/ {formatCompact(goalSecs)}</span>
         </p>
@@ -137,7 +137,7 @@
           <div class={`h-full rounded-full transition-all duration-500 ${reached ? 'bg-emerald-500' : 'bg-primary-500'}`} style={`width: ${pct}%;`}></div>
         </div>
       {:else}
-        <p class="text-[13px] font-medium text-slate-400 dark:text-[#636c76]">{t('hourlyChart.totalDuration')}</p>
+        <p class="text-xs font-medium text-slate-400 dark:text-[#636c76]">{t('hourlyChart.totalDuration')}</p>
         <p class={summaryValueClass}>
           {formatCompact(totalDuration)}
         </p>
