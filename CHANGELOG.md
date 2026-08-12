@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.5.5] - 2026-08-12
+
+### 修复
+- **护眼预提醒圆角窗口**：预提醒改用独立透明 HTML 入口，不再继承主页面的根背景；窗口四周增加真实透明留白，仅圆角卡片本身绘制背景和阴影，消除“一层圆角卡片 + 一层方角底”的问题。
+
+### 验证
+- 前端 433 项测试与生产构建通过；GitHub Actions 的 Rust `cargo check`、Clippy 和测试通过。
+
 ## [1.4.1] - 2026-08-10
 
 ### 新增

@@ -7686,7 +7686,7 @@ dependencies = [
 
 [[package]]
 name = "work-review"
-version = "1.4.2"
+version = "1.5.5"
 dependencies = [
  "aes",
  "anyhow",
@@ -7732,12 +7732,12 @@ dependencies = [
  "uuid",
  "winapi",
  "windows-capture",
- "work-review-core",
+ "workbreath-core",
  "x11",
 ]
 
 [[package]]
-name = "work-review-core"
+name = "workbreath-core"
 version = "0.1.0"
 dependencies = [
  "anyhow",
@@ -7758,7 +7758,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "work-review-mcp-server"
+name = "workbreath-mcp-server"
 version = "0.1.0"
 dependencies = [
  "anyhow",
@@ -7771,12 +7771,12 @@ dependencies = [
  "serde_json",
  "tokio",
  "ureq",
- "work-review-core",
- "work-review-skills-engine",
+ "workbreath-core",
+ "workbreath-skills-engine",
 ]
 
 [[package]]
-name = "work-review-skills-engine"
+name = "workbreath-skills-engine"
 version = "0.1.0"
 dependencies = [
  "anyhow",
@@ -7788,7 +7788,7 @@ dependencies = [
  "serde_json",
  "thiserror 1.0.69",
  "uuid",
- "work-review-core",
+ "workbreath-core",
 ]
 
 [[package]]
