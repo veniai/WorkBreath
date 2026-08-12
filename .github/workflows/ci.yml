@@ -26,6 +26,43 @@ jobs:
       - name: 生产构建
         run: npm run build
 
+  ui-smoke:
+    name: 浏览器 UI 烟测
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: 安装 Chromium
+        run: npx playwright install --with-deps chromium
+      - name: 验证主页面与设置分页
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm run dev -- --host 127.0.0.1 --port 4173 --force > /tmp/workbreath-vite.log 2>&1 &
+          vite_pid=$!
+          trap 'kill "$vite_pid" 2>/dev/null || true' EXIT
+
+          for attempt in {1..30}; do
+            if curl --fail --silent http://127.0.0.1:4173/ > /dev/null; then
+              break
+            fi
+            if [[ "$attempt" == 30 ]]; then
+              cat /tmp/workbreath-vite.log
+              exit 1
+            fi
+            sleep 1
+          done
+
+          README_CAPTURE_BASE_URL=http://127.0.0.1:4173 \
+          README_CAPTURE_LOCALES=zh-CN \
+          README_CAPTURE_OUTPUT_ROOT=/tmp/workbreath-ui-smoke \
+          README_CAPTURE_SKIP_GIF=1 \
+            node scripts/capture-readme-pages.mjs
+
   backend:
     name: Rust 检查与测试
     runs-on: macos-latest

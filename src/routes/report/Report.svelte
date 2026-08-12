@@ -593,6 +593,10 @@
   // 生成端输出专用 summary 字段属后端增强,留待后端批次;派生失败时整段隐藏,不占版面。
   const INSIGHT_SCAN_LINES = 40;
   const INSIGHT_MAX_LENGTH = 160;
+  // Svelte 4 / Vite 的依赖扫描会把 <script> 字符串里的 HTML 注释起始符误判为模板注释。
+  // 拆分字面量，保证全新 npm run dev 也能完成依赖预扫描。
+  const HTML_COMMENT_OPEN = '<!-' + '-';
+  const HTML_COMMENT_PATTERN = new RegExp('<!-' + '-[\\s\\S]*?-->', 'g');
 
   function stripInlineMarkdown(text) {
     return (text || '')
@@ -610,7 +614,7 @@
       const line = rawLine.trim();
       if (!line) continue;
       if (
-        line.startsWith('<!--') ||
+        line.startsWith(HTML_COMMENT_OPEN) ||
         line.startsWith('<details') ||
         line.startsWith('#') ||
         line.startsWith('|') ||
@@ -637,7 +641,7 @@
   function countReportChars(content) {
     if (!content) return 0;
     return content
-      .replace(/<!--[\s\S]*?-->/g, '')
+      .replace(HTML_COMMENT_PATTERN, '')
       .replace(/[#>*`_\-|[\]()!]/g, '')
       .replace(/\s+/g, '')
       .length;

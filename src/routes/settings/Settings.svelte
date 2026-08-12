@@ -361,6 +361,7 @@
         <nav class="settings-tab-rail" aria-label={t('settings.title')}>
           {#each tabs as tab}
             <button
+              data-settings-tab={tab.id}
               on:click={() => activeTab = tab.id}
               class="settings-tab-rail-item {activeTab === tab.id ? 'settings-tab-rail-item-active' : ''}"
               aria-current={activeTab === tab.id ? 'page' : undefined}

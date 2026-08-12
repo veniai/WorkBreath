@@ -76,6 +76,11 @@ WorkBreath 面向个人工作复盘，适合用来回答这些问题：
   <img src="docs/Introduction_zh/概览.png" alt="概览" width="720" />
 </p>
 
+<p align="center"><strong>护眼</strong></p>
+<p align="center">
+  <img src="docs/Introduction_zh/护眼.png" alt="护眼计时与休息设置" width="720" />
+</p>
+
 <p align="center"><strong>时间线</strong></p>
 <p align="center">
   <img src="docs/Introduction_zh/时间线.png" alt="时间线" width="720" />
@@ -210,9 +215,10 @@ WorkBreath 的核心始终是**本地记录**。AI 的作用是让记录更容�
 | 平台 | 安装包 |
 |------|--------|
 | macOS (Apple Silicon / Intel) | `.dmg` |
-| Windows | `.exe` / 便携版 `.zip` |
-| Linux x86_64 (X11 / Wayland) | `.deb` / `.rpm` / `.AppImage` |
-| Linux ARM64 (aarch64) | `.deb` |
+| Windows x86_64 | `.exe` |
+| Linux x86_64 (X11 / Wayland) | `.deb` |
+
+> 下载页当前不提供 Windows 便携版、Linux RPM / AppImage 或 Linux ARM64 安装包；上表与实际 Release 产物保持一致。
 
 **macOS：** 截图需「屏幕录制」，活动识别需「辅助功能」，护眼空闲检测可能需「输入监控」。首次提示"已损坏"时：`sudo xattr -rd com.apple.quarantine "/Applications/WorkBreath.app"`
 

@@ -79,3 +79,20 @@ test('CI 与 Release 应使用 Node 24 Actions，并缓存 Rust 和短期保留�
   assert.doesNotMatch(release, /artifacts:\s*["']all-artifacts\/\*\*\/\*,/);
   assert.match(release, /artifacts:[^\n]*all-artifacts\/\*\*\/\*\.dmg[^\n]*all-artifacts\/\*\*\/\*\.deb/);
 });
+
+test('Rust 安全审计应拦截新增 unsound 依赖，并明示现有上游基线', () => {
+  const source = readFileSync(new URL('./.github/workflows/security-audit.yml', import.meta.url), 'utf8');
+
+  assert.match(source, /tool:\s*cargo-audit@0\.22\.2/);
+  assert.match(source, /cargo audit --deny unsound/);
+  for (const advisory of [
+    'RUSTSEC-2024-0429',
+    'RUSTSEC-2026-0097',
+    'RUSTSEC-2026-0186',
+    'RUSTSEC-2026-0194',
+    'RUSTSEC-2026-0195',
+  ]) {
+    assert.match(source, new RegExp(`--ignore ${advisory}`));
+  }
+  assert.doesNotMatch(source, /rustsec\/audit-check@v2/);
+});

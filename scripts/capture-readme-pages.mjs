@@ -10,11 +10,20 @@ const VIEWPORT = { width: 1491, height: 841 };
 const FIXED_TIME = '2026-07-28T10:30:00+08:00';
 const BASE_URL = normalizeBaseUrl(process.env.README_CAPTURE_BASE_URL || 'http://127.0.0.1:5173');
 
-const LOCALES = [
+const ALL_LOCALES = [
   { locale: 'zh-CN', dir: 'Introduction_zh' },
   { locale: 'en', dir: 'Introduction_en' },
   { locale: 'zh-TW', dir: 'Introduction_tw' },
 ];
+const requestedLocales = new Set(
+  (process.env.README_CAPTURE_LOCALES || ALL_LOCALES.map((item) => item.locale).join(','))
+    .split(',')
+    .map((value) => value.trim())
+    .filter(Boolean),
+);
+const LOCALES = ALL_LOCALES.filter((item) => requestedLocales.has(item.locale));
+const OUTPUT_ROOT = path.resolve(process.env.README_CAPTURE_OUTPUT_ROOT || 'docs');
+const SKIP_GIF = process.env.README_CAPTURE_SKIP_GIF === '1';
 
 export function normalizeBaseUrl(value) {
   const url = new URL(value);
@@ -47,6 +56,7 @@ export function createCaptureContextOptions(locale) {
 
 export const README_SCREENSHOT_LABELS = [
   '概览',
+  '护眼',
   '时间线',
   '时间线详情',
   '小时总结',
@@ -350,6 +360,7 @@ const config = {
   eye_care_natural_rest_minutes: 5,
   eye_care_pre_break_seconds: 30,
   eye_care_paused: false,
+  eye_care_lock_on_rest_end: true,
   idle_threshold_minutes: 5,
   goal_notifications: true,
   memory_enabled: true,
@@ -422,6 +433,46 @@ const config = {
   dingtalk_bot_enabled: false,
 };
 
+const eyeCareStatus = {
+  phase: 'WORKING',
+  enabled: true,
+  paused: false,
+  elapsedSeconds: 1_620,
+  remainingSeconds: 780,
+  progress: 0.675,
+  cycleStartedAt: Math.floor(Date.parse('2026-07-28T10:03:00+08:00') / 1000),
+  breakStartedAt: null,
+  timerReason: 'COUNTING',
+  counting: true,
+  countedWorkSeconds: 1_620,
+  excludedSeconds: 96,
+  shortIdleSeconds: 74,
+  lockedSeconds: 0,
+  suspendedSeconds: 0,
+  unavailableSeconds: 0,
+  pausedSeconds: 22,
+  observedSeconds: 1_716,
+  inputIdleSeconds: 4,
+  observedAt: Math.floor(Date.parse('2026-07-28T10:30:00+08:00') / 1000),
+  recentEvents: [
+    {
+      reason: 'COUNTING',
+      occurredAt: Math.floor(Date.parse('2026-07-28T10:28:41+08:00') / 1000),
+      countedWorkSeconds: 1_541,
+    },
+    {
+      reason: 'SHORT_IDLE',
+      occurredAt: Math.floor(Date.parse('2026-07-28T10:27:27+08:00') / 1000),
+      countedWorkSeconds: 1_541,
+    },
+    {
+      reason: 'COUNTING',
+      occurredAt: Math.floor(Date.parse('2026-07-28T10:26:45+08:00') / 1000),
+      countedWorkSeconds: 1_499,
+    },
+  ],
+};
+
 const reportContent = {
   'zh-CN': `# 2026 年 7 月 28 日工作日报\n\n> 今天围绕产品界面打磨与文档体验升级展开，核心功能推进稳定。\n\n## 今日概览\n\n完成概览与日报页面的信息层级优化，并统一浅色主题下的视觉节奏。全天有效投入 **5 小时 40 分钟**，工作重心集中在开发与验证。\n\n## 重点进展\n\n- 完成新版概览主视觉和关键指标区域。\n- 优化日报目录、摘要与数据卡片的阅读顺序。\n- 更新多语言 README 页面截图与演示工作流。\n\n## 专注与协作\n\n上午的高专注时段用于实现和调试，下午集中处理视觉验收、文案同步与构建验证。沟通时间保持在合理范围，没有打断主要开发节奏。\n\n## 明日计划\n\n1. 继续检查不同窗口尺寸下的响应式表现。\n2. 完成剩余文档一致性检查。\n3. 整理发布前验证清单。`,
   en: `# Daily Work Report — July 28, 2026\n\n> Today focused on refining the product interface and improving the documentation experience, with steady progress across the core workflow.\n\n## Today's Overview\n\nCompleted the information hierarchy updates for Overview and Daily Report, while aligning the visual rhythm of the light theme. Effective work time reached **5 hours 40 minutes**, led by development and verification.\n\n## Key Progress\n\n- Completed the refreshed Overview hero and KPI area.\n- Improved the reading order of the report outline, summary, and data cards.\n- Updated multilingual README screenshots and the workflow preview.\n\n## Focus and Collaboration\n\nThe morning focus window was used for implementation and debugging. The afternoon centered on visual QA, copy synchronization, and build verification. Communication stayed focused without disrupting the main development flow.\n\n## Next Steps\n\n1. Continue checking responsive behavior at different window sizes.\n2. Complete the remaining documentation consistency review.\n3. Finalize the pre-release verification checklist.`,
@@ -454,6 +505,7 @@ function mockPayload(locale) {
     hourlySummaries: buildHourlySummaries(locale),
     domains,
     report: buildReport(locale),
+    eyeCareStatus,
   };
 }
 
@@ -508,6 +560,10 @@ async function installTauriMock(context, locale) {
             return null;
           case 'get_recording_state':
             return [true, false];
+          case 'get_eye_care_status':
+            return structuredClone(mock.eyeCareStatus);
+          case 'get_pending_eye_care_recap':
+            return null;
           case 'get_background_image':
             return null;
           case 'get_today_stats':
@@ -641,22 +697,24 @@ async function capturePage(page, route, selector, outputPath) {
   await saveScreenshot(page, outputPath);
 }
 
-async function captureSettingsTab(page, tabIndex, outputPath) {
-  const tab = page.locator('.settings-tab-rail-item').nth(tabIndex);
+async function captureSettingsTab(page, tabId, outputPath) {
+  const tab = page.locator(`.settings-tab-rail-item[data-settings-tab="${tabId}"]`);
   await tab.click();
   await page.waitForFunction(
-    (index) => document.querySelectorAll('.settings-tab-rail-item')[index]?.getAttribute('aria-current') === 'page',
-    tabIndex,
+    (id) => document.querySelector(`.settings-tab-rail-item[data-settings-tab="${id}"]`)?.getAttribute('aria-current') === 'page',
+    tabId,
   );
   await waitForStablePage(page, '.settings-stage-shell .settings-card');
   await saveScreenshot(page, outputPath);
 }
 
 async function checkCaptureDependencies() {
-  for (const command of ['ffmpeg', 'ffprobe']) {
-    const result = spawnSync(command, ['-version'], { encoding: 'utf8' });
-    if (result.error?.code === 'ENOENT' || result.status !== 0) {
-      throw new Error(`未找到可用的 ${command}。请先安装 ffmpeg 工具链，并确认 \`${command} -version\` 可正常执行。`);
+  if (!SKIP_GIF) {
+    for (const command of ['ffmpeg', 'ffprobe']) {
+      const result = spawnSync(command, ['-version'], { encoding: 'utf8' });
+      if (result.error?.code === 'ENOENT' || result.status !== 0) {
+        throw new Error(`未找到可用的 ${command}。请先安装 ffmpeg 工具链，并确认 \`${command} -version\` 可正常执行。`);
+      }
     }
   }
 
@@ -692,6 +750,9 @@ function createWorkflowGif(framePaths, outputPath) {
 
 async function main() {
   validateCaptureFixtures();
+  if (LOCALES.length === 0) {
+    throw new Error('README_CAPTURE_LOCALES 未匹配受支持的语言：zh-CN, en, zh-TW。');
+  }
   await checkCaptureDependencies();
   const browser = await chromium.launch({
     headless: true,
@@ -705,7 +766,7 @@ async function main() {
   });
   try {
     for (const item of LOCALES) {
-      const outDir = path.resolve('docs', item.dir);
+      const outDir = path.join(OUTPUT_ROOT, item.dir);
       await mkdir(outDir, { recursive: true });
 
       const context = await browser.newContext(createCaptureContextOptions(item.locale));
@@ -744,6 +805,9 @@ async function main() {
         window.__README_CAPTURE_SCREENSHOT_BASE64__ = value;
       }, overviewBase64);
 
+      console.log(`[${item.locale}] 截取护眼`);
+      await capturePage(page, '/#/eye-care', '.eye-care-dashboard .eye-care-board', outputPath('护眼'));
+
       console.log(`[${item.locale}] 截取时间线`);
       await capturePage(
         page,
@@ -777,14 +841,14 @@ async function main() {
       console.log(`[${item.locale}] 截取设置页`);
       await capturePage(page, '/#/settings', '.settings-stage-shell .settings-card', outputPath('设置-通用'));
       const settingsTabs = [
-        [1, '设置-外观'],
-        [3, '设置-AI模型'],
-        [4, '设置-隐私'],
-        [5, '设置-存储'],
-        [6, '接入管理'],
+        ['appearance', '设置-外观'],
+        ['ai', '设置-AI模型'],
+        ['privacy', '设置-隐私'],
+        ['storage', '设置-存储'],
+        ['node', '接入管理'],
       ];
-      for (const [tabIndex, label] of settingsTabs) {
-        await captureSettingsTab(page, tabIndex, outputPath(label));
+      for (const [tabId, label] of settingsTabs) {
+        await captureSettingsTab(page, tabId, outputPath(label));
       }
 
       console.log(`[${item.locale}] 截取关于`);
@@ -798,11 +862,13 @@ async function main() {
         throw new Error(`[${item.locale}] 截图过程中出现页面错误：${pageErrors.join(' | ')}`);
       }
 
-      console.log(`[${item.locale}] 生成工作流 GIF`);
-      await createWorkflowGif(
-        [overviewPath, timelinePath, reportPath],
-        path.join(outDir, '工作流.gif'),
-      );
+      if (!SKIP_GIF) {
+        console.log(`[${item.locale}] 生成工作流 GIF`);
+        await createWorkflowGif(
+          [overviewPath, timelinePath, reportPath],
+          path.join(outDir, '工作流.gif'),
+        );
+      }
 
       await context.close();
     }
