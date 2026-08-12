@@ -197,8 +197,23 @@
           "section": "第十轮品牌更新"
         }
       ]
+    },
+    "概览与护眼节奏融合": {
+      "versions": [
+        {
+          "path": "overview-breath-rhythm.html",
+          "createdAt": "2026-08-12T10:54:33.324Z",
+          "status": "needs-review",
+          "subtitle": "三种轻量融合方案；B 洞察与呼吸合流为推荐方向",
+          "viewport": {
+            "width": 1440,
+            "height": 1120
+          },
+          "section": "第十一轮概览护眼融合"
+        }
+      ]
     }
   },
   "createdAt": "2026-08-09T07:59:54.698Z",
-  "updatedAt": "2026-08-10T02:46:28.115Z"
+  "updatedAt": "2026-08-12T10:58:40.442Z"
 }
