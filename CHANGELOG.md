@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.5.7] - 2026-08-12
+
+### 新增
+- **概览页护眼节奏**：在工作洞察旁直接展示护眼倒计时、当前周期进度以及工作、休息、等待返回、暂停等状态，并支持就地暂停或恢复护眼提醒。
+
+### 调整
+- **轻量状态同步**：概览页复用现有护眼状态事件，不增加轮询或后台定时器；窄窗口下自动改为纵向布局。
+- **前端发布保障**：浏览器 UI 烟测覆盖主页面和设置分页，CI 缓存及产物保留策略进一步收敛。
+
+### 验证
+- 443 项前端测试、生产构建、真实 Chromium 宽窄窗口检查与暂停交互验证通过；GitHub Actions 的前端测试、浏览器 UI 烟测、Rust `cargo check`、Clippy 和测试全部通过。
+
 ## [1.5.6] - 2026-08-12
 
 ### 修复
