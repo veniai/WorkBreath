@@ -13,9 +13,13 @@
   let bgUploading = false;
   let appearanceDestroyed = false;
   let blurLabels = [];
+  let opacityLabels = [];
+  // 离散不透明度等级（与模糊度共用 segment-btn 控件语言）
+  const opacityLevels = [0.10, 0.25, 0.45];
   $: {
     currentLocale;
     blurLabels = [t('settingsAppearance.blurClear'), t('settingsAppearance.blurLight'), t('settingsAppearance.blurMedium')];
+    opacityLabels = [t('settingsAppearance.opacitySubtle'), t('settingsAppearance.opacityBalanced'), t('settingsAppearance.opacityVivid')];
   }
 
   onMount(async () => {
@@ -67,6 +71,16 @@
     dispatchBgEvent(bgPreview);
     saveConfigQuietly();
   }
+  function nearestOpacityIndex(val) {
+    const v = val ?? 0.25;
+    let best = 0;
+    let bestDist = Infinity;
+    for (let i = 0; i < opacityLevels.length; i++) {
+      const d = Math.abs(opacityLevels[i] - v);
+      if (d < bestDist) { bestDist = d; best = i; }
+    }
+    return best;
+  }
   function updateBgBlur(val) {
     config.background_blur = parseInt(val);
     dispatch('change', config);
@@ -113,7 +127,7 @@
         {#if bgPreview}
           <button
             on:click={clearBg}
-            class="settings-link-danger"
+            class="settings-link-action"
           >
             {t('settingsAppearance.clearBackground')}
           </button>
@@ -129,20 +143,19 @@
       <div class="settings-block">
         <div class="flex items-center justify-between">
           <span class="settings-text">{t('settingsAppearance.bgStrength')}</span>
-          <span class="settings-value">{Math.round((config.background_opacity ?? 0.25) * 100)}%</span>
         </div>
-        <input
-          type="range"
-          min="0.05"
-          max="0.60"
-          step="0.01"
-          value={config.background_opacity ?? 0.25}
-          on:input={(e) => updateBgOpacity(e.target.value)}
-          class="range-input"
-        />
-        <div class="flex justify-between text-[10px] settings-subtle">
-          <span>{t('settingsAppearance.bgLight')}</span>
-          <span>{t('settingsAppearance.bgStrong')}</span>
+        <div class="flex gap-2">
+          {#each opacityLevels as level, i}
+            <button
+              on:click={() => updateBgOpacity(level)}
+              class="segment-btn
+                {nearestOpacityIndex(config.background_opacity) === i
+                  ? 'settings-segment-active'
+                  : 'settings-segment-base'}"
+            >
+              {opacityLabels[i]}
+            </button>
+          {/each}
         </div>
       </div>
 
