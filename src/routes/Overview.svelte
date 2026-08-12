@@ -8,6 +8,7 @@
   import LocalizedDatePicker from '../lib/components/LocalizedDatePicker.svelte';
   import { cache } from '../lib/stores/cache.js';
   import { recordingStore, isActiveRecording } from '../lib/stores/recording.js';
+  import { eyeCareStore } from '../lib/stores/eyeCare.js';
   import { showToast } from '../lib/stores/toast.js';
   import { preloadAppIcons } from '../lib/stores/iconCache.js';
   import {
@@ -144,6 +145,7 @@
   let hourlyAppBreakdown = [];
   let categoryList = [];
   let workGoalMinutes = null;
+  let togglingEyeCarePause = false;
   // ── 2026-07 概览改版 ──
   // 上周同日基线（today 模式的 KPI 差值与洞察条；加载失败时保持 null，不显示 delta）
   let lastWeekStats = null;
@@ -402,6 +404,49 @@
     const diff = entertainmentSharePct - baselinePct;
     return t('overview.deltaVsLastWeek', { delta: `${diff >= 0 ? '+' : '−'}${Math.abs(diff)}%` });
   })();
+
+  $: eyeCareProgressPercent = Math.max(0, Math.min(100, Math.round(($eyeCareStore?.progress || 0) * 100)));
+  $: eyeCareProgressDashOffset = 100 - eyeCareProgressPercent;
+  $: eyeCarePhase = $eyeCareStore?.phase || 'WORKING';
+  $: eyeCareIsResting = eyeCarePhase === 'RESTING';
+  $: eyeCareIsWaitingReturn = eyeCarePhase === 'WAITING_RETURN';
+  $: eyeCareIsPaused = Boolean($eyeCareStore?.paused);
+  $: eyeCareCanTogglePause = Boolean($eyeCareStore?.enabled) && !eyeCareIsResting && !eyeCareIsWaitingReturn;
+  $: eyeCareSummaryTitle = eyeCareIsResting
+    ? t('overview.eyeCareResting')
+    : eyeCareIsWaitingReturn
+      ? t('overview.eyeCareWaitingReturn')
+      : eyeCareIsPaused
+        ? t('overview.eyeCarePaused')
+        : t('overview.eyeCareBreakIn', { duration: formatDurationLocalized($eyeCareStore?.remainingSeconds || 0, { compact: true }) });
+  $: eyeCareSummarySubtitle = eyeCareIsResting
+    ? t('overview.eyeCareRestRemaining', { duration: formatDurationLocalized($eyeCareStore?.remainingSeconds || 0, { compact: true }) })
+    : eyeCareIsWaitingReturn
+      ? t('overview.eyeCareWaitingReturnHint')
+      : eyeCareIsPaused
+        ? t('overview.eyeCarePausedHint')
+        : t('overview.eyeCareCycleProgress', {
+            elapsed: formatDurationLocalized($eyeCareStore?.elapsedSeconds || 0, { compact: true }),
+            total: formatDurationLocalized(($eyeCareStore?.elapsedSeconds || 0) + ($eyeCareStore?.remainingSeconds || 0), { compact: true }),
+          });
+  $: eyeCareToggleLabel = eyeCareIsPaused ? t('overview.eyeCareResume') : t('overview.eyeCarePause');
+
+  async function toggleEyeCarePause() {
+    if (!eyeCareCanTogglePause || togglingEyeCarePause) return;
+    togglingEyeCarePause = true;
+    try {
+      const config = await invoke('get_config');
+      const nextPaused = !eyeCareIsPaused;
+      config.eye_care_paused = nextPaused;
+      await invoke('save_config', { config });
+      cache.setConfig(config);
+      eyeCareStore.set({ ...$eyeCareStore, paused: nextPaused });
+    } catch (toggleError) {
+      showToast(formatUserError(toggleError, t('overview.eyeCareToggleFailed')), 'error');
+    } finally {
+      togglingEyeCarePause = false;
+    }
+  }
 
   // ── 洞察条（仅 today 模式、数据非空、基线可用时组句） ──
   $: insightSentence = (() => {
@@ -1422,13 +1467,55 @@
           <path d="M12 2.5l2 6.4 6.5 2.1-6.5 2.1-2 6.4-2-6.4L3.5 11l6.5-2.1zM19 15.5l.9 2.6 2.6.9-2.6.9-.9 2.6-.9-2.6-2.6-.9 2.6-.9z" />
         </svg>
       </span>
-      <p class="min-w-0 flex-1 basis-52 text-sm text-slate-600 dark:text-[#98989d]">{insightSentence}</p>
-      <a
-        href="#/report"
-        class="shrink-0 whitespace-nowrap text-sm font-semibold text-primary-600 transition-colors hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300"
-      >
-        {t('overview.insightWeekLink')}
-      </a>
+      <p class="overview-insight-copy min-w-0 flex-1 basis-52 text-sm text-slate-600 dark:text-[#98989d]">{insightSentence}</p>
+      {#if $eyeCareStore?.enabled}
+        <div class="overview-eye-care-summary" class:overview-eye-care-summary-paused={eyeCareIsPaused} class:overview-eye-care-summary-resting={eyeCareIsResting || eyeCareIsWaitingReturn}>
+          <div
+            class="overview-eye-care-progress"
+            role="progressbar"
+            aria-label={t('overview.eyeCareProgress')}
+            aria-valuemin="0"
+            aria-valuemax="100"
+            aria-valuenow={eyeCareProgressPercent}
+          >
+            <svg viewBox="0 0 36 36" aria-hidden="true">
+              <circle class="overview-eye-care-progress-track" cx="18" cy="18" r="15.9" pathLength="100" />
+              <circle class="overview-eye-care-progress-value" cx="18" cy="18" r="15.9" pathLength="100" stroke-dasharray="100" stroke-dashoffset={eyeCareProgressDashOffset} />
+            </svg>
+            <strong>{eyeCareProgressPercent}%</strong>
+          </div>
+          <a class="overview-eye-care-copy" href="#/eye-care" aria-label={t('overview.eyeCareOpen')}>
+            <strong>{eyeCareSummaryTitle}</strong>
+            <span>{eyeCareSummarySubtitle}</span>
+          </a>
+          {#if eyeCareCanTogglePause}
+            <button
+              type="button"
+              class="overview-eye-care-toggle"
+              class:overview-eye-care-toggle-paused={eyeCareIsPaused}
+              aria-label={eyeCareToggleLabel}
+              title={eyeCareToggleLabel}
+              disabled={togglingEyeCarePause}
+              on:click={toggleEyeCarePause}
+            >
+              {#if togglingEyeCarePause}
+                <span class="overview-eye-care-spinner" aria-hidden="true"></span>
+              {:else if eyeCareIsPaused}
+                <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5.5v13l10-6.5z" /></svg>
+              {:else}
+                <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 5h3.5v14H7zM13.5 5H17v14h-3.5z" /></svg>
+              {/if}
+            </button>
+          {/if}
+        </div>
+      {:else}
+        <a
+          href="#/report"
+          class="shrink-0 whitespace-nowrap text-sm font-semibold text-primary-600 transition-colors hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300"
+        >
+          {t('overview.insightWeekLink')}
+        </a>
+      {/if}
     </div>
   {/if}
 

@@ -11,6 +11,7 @@
   import { getCurrentWebviewWindow } from '@tauri-apps/api/webviewWindow';
   import { cache, getLocalDate } from './lib/stores/cache.js';
   import { recordingStore } from './lib/stores/recording.js';
+  import { eyeCareStore } from './lib/stores/eyeCare.js';
   import { applyLocaleToDocument, initializeLocale, locale, t } from '$lib/i18n/index.js';
   import { preloadAppIcons } from './lib/stores/iconCache.js';
   import { runUpdateFlow } from './lib/utils/updater.js';
@@ -389,12 +390,14 @@
 
       try {
         eyeCareStatus = await invoke('get_eye_care_status');
+        eyeCareStore.set(eyeCareStatus);
         eyeCareRecap = await invoke('get_pending_eye_care_recap');
       } catch (e) {
         console.warn('读取护眼状态失败:', e);
       }
       const unlistenEyeCareStatus = await safeListen('eye-care-status-changed', (event) => {
         eyeCareStatus = event.payload;
+        eyeCareStore.set(event.payload);
         if (event.payload?.phase === 'RESTING') eyeCareRecap = null;
       });
       if (disposed) { try { if (unlistenEyeCareStatus) unlistenEyeCareStatus(); } catch {} return; }
