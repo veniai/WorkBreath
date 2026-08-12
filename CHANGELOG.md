@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.5.8] - 2026-08-12
+
+### 性能优化
+- **更轻的应用启动**：启动时不再重复预取时间线、小时摘要和日报数据，页面在实际打开时再加载所需内容。
+- **按需加载高清截图**：时间线只预载缩略图，用户查看记录时才读取高清图片，减少图片解码和内存占用。
+- **减少后台磁盘写入**：护眼状态的常规持久化间隔由 5 秒调整为 30 秒；休息开始、结束、暂停和开关变化等关键状态仍会立即保存。
+- **收敛概览刷新**：复用全局活动事件并增加防抖，后台兜底刷新间隔由 30 秒调整为 120 秒，减少重复查询。
+
+### 验证
+- 445 项前端测试、生产构建和真实 Chromium 全页面烟测通过；GitHub Actions 的前端测试、浏览器 UI 烟测、Rust `cargo check`、Clippy 和测试全部通过。
+
 ## [1.5.7] - 2026-08-12
 
 ### 新增
