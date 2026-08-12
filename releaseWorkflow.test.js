@@ -57,3 +57,25 @@ test('Windows 安装包名称无需规范化时不应把签名文件移动到自
   );
   assert.doesNotMatch(windowsRename, /mv "\$\{file\}\.sig" "\$\{renamed\}\.sig"/);
 });
+
+test('CI 与 Release 应使用 Node 24 Actions，并缓存 Rust 和短期保留中转产物', () => {
+  const workflows = [
+    readFileSync(new URL('./.github/workflows/ci.yml', import.meta.url), 'utf8'),
+    readFileSync(new URL('./.github/workflows/security-audit.yml', import.meta.url), 'utf8'),
+    readFileSync(new URL('./.github/workflows/release.yml', import.meta.url), 'utf8'),
+  ];
+  const release = workflows[2];
+
+  for (const source of workflows) {
+    assert.doesNotMatch(source, /actions\/(?:checkout|setup-node|upload-artifact|download-artifact)@v4/);
+  }
+  assert.match(release, /actions\/checkout@v7/);
+  assert.match(release, /actions\/setup-node@v7/);
+  assert.match(release, /actions\/upload-artifact@v7/);
+  assert.match(release, /actions\/download-artifact@v8/);
+  assert.match(release, /uses:\s*Swatinem\/rust-cache@v2[\s\S]*?key:\s*release-\$\{\{ matrix\.target \}\}/);
+  assert.match(release, /retention-days:\s*2/);
+  assert.match(release, /compression-level:\s*0/);
+  assert.doesNotMatch(release, /artifacts:\s*["']all-artifacts\/\*\*\/\*,/);
+  assert.match(release, /artifacts:[^\n]*all-artifacts\/\*\*\/\*\.dmg[^\n]*all-artifacts\/\*\*\/\*\.deb/);
+});

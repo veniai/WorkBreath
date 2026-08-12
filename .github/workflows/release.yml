@@ -28,15 +28,22 @@ jobs:
     runs-on: ${{ matrix.platform }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Install Rust 1.97.1
         uses: dtolnay/rust-toolchain@1.97.1
         with:
           targets: ${{ matrix.target }}
 
+      - name: Restore Rust build cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: |
+            . -> target
+          key: release-${{ matrix.target }}
+
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: 22
           cache: "npm"
@@ -247,7 +254,7 @@ jobs:
           esac
 
       - name: Upload release assets
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: release-assets-${{ matrix.platform }}-${{ strategy.job-index }}
           path: |
@@ -259,6 +266,10 @@ jobs:
             target/**/release/bundle/nsis/*.sig
             target/**/release/bundle/deb/*.deb
           if-no-files-found: warn
+          # 正式安装包会永久进入 GitHub Release；Actions 副本只需保留到发布任务完成。
+          retention-days: 2
+          # dmg/deb/exe/tar.gz 已经压缩，再压缩只会浪费 runner 时间。
+          compression-level: 0
 
   publish-release:
     needs: build-tauri
@@ -270,10 +281,10 @@ jobs:
       contents: write
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Download all artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           path: all-artifacts
           pattern: "release-assets-*"
@@ -443,7 +454,8 @@ jobs:
           name: "WorkBreath ${{ github.ref_name }}"
           bodyFile: release_notes.md
           token: ${{ secrets.GITHUB_TOKEN }}
-          artifacts: "all-artifacts/**/*,updater.json,updater-ghproxy.json,updater-ghp.json"
+          # 只上传文件，避免 **/* 把中间目录交给 release-action 后产生无效警告。
+          artifacts: "all-artifacts/**/*.dmg,all-artifacts/**/*.deb,all-artifacts/**/*.exe,all-artifacts/**/*.sig,all-artifacts/**/*.tar.gz,updater.json,updater-ghproxy.json,updater-ghp.json"
           artifactErrorsFailBuild: false
           replacesArtifacts: true
           makeLatest: legacy
