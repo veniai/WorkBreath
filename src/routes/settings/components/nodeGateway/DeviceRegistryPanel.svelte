@@ -23,8 +23,8 @@
     </button>
   </div>
   <p class="text-[11px] text-slate-400 dark:text-[#636c76]">{t('nodeGatewayPage.deviceRegistryHint')}</p>
-  <div class="flex items-center gap-2 rounded-lg bg-primary-50/60 px-3 py-1.5 ring-1 ring-primary-200/60 dark:bg-primary-900/20 dark:ring-primary-800/40">
-    <span class="text-xs font-medium text-primary-700 dark:text-primary-300">{t('nodeGatewayPage.localDevice')}</span>
+  <div class="flex items-center gap-2 rounded-lg bg-brand-50/60 px-3 py-1.5 ring-1 ring-brand-200/60 dark:bg-brand-900/20 dark:ring-brand-800/40">
+    <span class="text-xs font-medium text-brand-700 dark:text-brand-300">{t('nodeGatewayPage.localDevice')}</span>
     <span class="text-xs font-mono text-slate-500 dark:text-[#86868b]">{localStatus?.baseUrl || '-'}</span>
   </div>
   {#each config.node_devices || [] as device, i}
@@ -35,7 +35,7 @@
           <input
             type="text"
             bind:value={device.name}
-            class="mt-0.5 w-full rounded-md bg-white/80 px-2 py-1 text-sm text-slate-900 ring-1 ring-slate-200 focus:ring-primary-300 dark:bg-[rgba(255,255,255,0.07)] dark:text-[#f5f5f7] dark:ring-[rgba(255,255,255,0.14)] dark:focus:ring-primary-600 focus:outline-none"
+            class="mt-0.5 w-full rounded-md bg-white/80 px-2 py-1 text-sm text-slate-900 ring-1 ring-slate-200 focus:ring-brand-400 dark:bg-[rgba(255,255,255,0.07)] dark:text-[#f5f5f7] dark:ring-[rgba(255,255,255,0.14)] dark:focus:ring-brand-500 focus:outline-none"
             placeholder="Office PC"
           />
         </label>
@@ -44,7 +44,7 @@
           <input
             type="text"
             bind:value={device.url}
-            class="mt-0.5 w-full rounded-md bg-white/80 px-2 py-1 text-sm font-mono text-slate-900 ring-1 ring-slate-200 focus:ring-primary-300 dark:bg-[rgba(255,255,255,0.07)] dark:text-[#f5f5f7] dark:ring-[rgba(255,255,255,0.14)] dark:focus:ring-primary-600 focus:outline-none"
+            class="mt-0.5 w-full rounded-md bg-white/80 px-2 py-1 text-sm font-mono text-slate-900 ring-1 ring-slate-200 focus:ring-brand-400 dark:bg-[rgba(255,255,255,0.07)] dark:text-[#f5f5f7] dark:ring-[rgba(255,255,255,0.14)] dark:focus:ring-brand-500 focus:outline-none"
             placeholder="http://192.168.1.100:47831"
           />
         </label>
@@ -53,7 +53,7 @@
           <input
             type="password"
             bind:value={device.token}
-            class="mt-0.5 w-full rounded-md bg-white/80 px-2 py-1 text-xs font-mono text-slate-900 ring-1 ring-slate-200 focus:ring-primary-300 dark:bg-[rgba(255,255,255,0.07)] dark:text-[#f5f5f7] dark:ring-[rgba(255,255,255,0.14)] dark:focus:ring-primary-600 focus:outline-none"
+            class="mt-0.5 w-full rounded-md bg-white/80 px-2 py-1 text-xs font-mono text-slate-900 ring-1 ring-slate-200 focus:ring-brand-400 dark:bg-[rgba(255,255,255,0.07)] dark:text-[#f5f5f7] dark:ring-[rgba(255,255,255,0.14)] dark:focus:ring-brand-500 focus:outline-none"
             placeholder="wr-local-..."
           />
         </label>

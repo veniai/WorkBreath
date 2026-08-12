@@ -44,7 +44,7 @@
       type="button"
       on:click={toggle}
       disabled={saving}
-      class="switch-track {config.telegram_bot_enabled ? 'bg-primary-500' : 'bg-slate-300 dark:bg-[rgba(255,255,255,0.14)]'} {saving ? 'opacity-60 cursor-not-allowed' : ''}"
+      class="switch-track {config.telegram_bot_enabled ? 'bg-brand-500' : 'bg-slate-300 dark:bg-[rgba(255,255,255,0.14)]'} {saving ? 'opacity-60 cursor-not-allowed' : ''}"
       role="switch"
       aria-label="Telegram"
       aria-checked={config.telegram_bot_enabled}
@@ -62,7 +62,7 @@
               type="text"
               bind:value={config.telegram_bot_token}
               on:blur={() => dispatch('save')}
-              class="w-full rounded-md bg-white/80 px-3 py-1.5 pr-8 text-sm font-mono text-slate-900 ring-1 ring-slate-200 focus:ring-primary-300 dark:bg-[rgba(255,255,255,0.07)] dark:text-[#f5f5f7] dark:ring-[rgba(255,255,255,0.14)] dark:focus:ring-primary-600 focus:outline-none"
+              class="w-full rounded-md bg-white/80 px-3 py-1.5 pr-8 text-sm font-mono text-slate-900 ring-1 ring-slate-200 focus:ring-brand-400 dark:bg-[rgba(255,255,255,0.07)] dark:text-[#f5f5f7] dark:ring-[rgba(255,255,255,0.14)] dark:focus:ring-brand-500 focus:outline-none"
               placeholder="123456:ABC-DEF..."
             />
           {:else}
@@ -70,7 +70,7 @@
               type="password"
               bind:value={config.telegram_bot_token}
               on:blur={() => dispatch('save')}
-              class="w-full rounded-md bg-white/80 px-3 py-1.5 pr-8 text-sm font-mono text-slate-900 ring-1 ring-slate-200 focus:ring-primary-300 dark:bg-[rgba(255,255,255,0.07)] dark:text-[#f5f5f7] dark:ring-[rgba(255,255,255,0.14)] dark:focus:ring-primary-600 focus:outline-none"
+              class="w-full rounded-md bg-white/80 px-3 py-1.5 pr-8 text-sm font-mono text-slate-900 ring-1 ring-slate-200 focus:ring-brand-400 dark:bg-[rgba(255,255,255,0.07)] dark:text-[#f5f5f7] dark:ring-[rgba(255,255,255,0.14)] dark:focus:ring-brand-500 focus:outline-none"
               placeholder="123456:ABC-DEF..."
             />
           {/if}
@@ -96,7 +96,7 @@
           </div>
         {:else if tgBotStatus.running}
           <div class="flex items-center gap-1.5 text-[11px] text-emerald-600 dark:text-emerald-400">
-            <span class="inline-block h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
+            <span class="inline-block h-1.5 w-1.5 rounded-full bg-brand-500"></span>
             Bot running
           </div>
         {:else if tgBotStatus.lastError}
@@ -112,7 +112,7 @@
           type="text"
           bind:value={config.telegram_bot_proxy}
           on:blur={() => dispatch('save')}
-          class="mt-0.5 w-full rounded-md bg-white/80 px-3 py-1.5 text-sm font-mono text-slate-900 ring-1 ring-slate-200 focus:ring-primary-300 dark:bg-[rgba(255,255,255,0.07)] dark:text-[#f5f5f7] dark:ring-[rgba(255,255,255,0.14)] dark:focus:ring-primary-600 focus:outline-none"
+          class="mt-0.5 w-full rounded-md bg-white/80 px-3 py-1.5 text-sm font-mono text-slate-900 ring-1 ring-slate-200 focus:ring-brand-400 dark:bg-[rgba(255,255,255,0.07)] dark:text-[#f5f5f7] dark:ring-[rgba(255,255,255,0.14)] dark:focus:ring-brand-500 focus:outline-none"
           placeholder="http://127.0.0.1:7890"
         />
       </label>
@@ -148,7 +148,7 @@
             config.telegram_bot_allowed_chat_ids = ids;
             dispatch('save');
           }}
-          class="mt-0.5 w-full rounded-md bg-white/80 px-3 py-1.5 text-sm font-mono text-slate-900 ring-1 ring-slate-200 focus:ring-primary-300 dark:bg-[rgba(255,255,255,0.07)] dark:text-[#f5f5f7] dark:ring-[rgba(255,255,255,0.14)] dark:focus:ring-primary-600 focus:outline-none"
+          class="mt-0.5 w-full rounded-md bg-white/80 px-3 py-1.5 text-sm font-mono text-slate-900 ring-1 ring-slate-200 focus:ring-brand-400 dark:bg-[rgba(255,255,255,0.07)] dark:text-[#f5f5f7] dark:ring-[rgba(255,255,255,0.14)] dark:focus:ring-brand-500 focus:outline-none"
           placeholder="123456789, 987654321"
         />
       </label>

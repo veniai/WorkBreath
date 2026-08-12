@@ -249,7 +249,7 @@
             config.work_time_enabled = !config.work_time_enabled;
             handleChange();
           }}
-          class="switch-track {config.work_time_enabled ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-[rgba(255,255,255,0.14)]'}"
+          class="switch-track {config.work_time_enabled ? 'bg-brand-500' : 'bg-slate-300 dark:bg-[rgba(255,255,255,0.14)]'}"
           role="switch"
           aria-label={t('settingsGeneral.workTime')}
           aria-checked={config.work_time_enabled}
@@ -340,7 +340,7 @@
                   handleChange();
                 }
               }}
-              class="w-20 rounded-md border border-slate-200 bg-white px-2.5 py-1.5 text-center text-sm font-mono text-slate-900 focus:border-primary-400 focus:outline-none dark:border-[var(--surface-border-default)] dark:bg-[#1c1c1e] dark:text-[#f5f5f7]"
+              class="w-20 rounded-md border border-slate-200 bg-white px-2.5 py-1.5 text-center text-sm font-mono text-slate-900 focus:border-brand-400 focus:outline-none dark:border-[var(--surface-border-default)] dark:bg-[#1c1c1e] dark:text-[#f5f5f7]"
             />
             <span class="text-xs text-slate-500 dark:text-[#86868b]">{t('settingsGeneral.hours')}</span>
           </div>
@@ -392,7 +392,7 @@
               config.daily_work_goal_minutes = (!isNaN(hours) && hours > 0) ? Math.round(hours * 60) : null;
               handleChange();
             }}
-            class="w-20 rounded-md border border-slate-200 bg-white px-2.5 py-1.5 text-center text-sm font-mono text-slate-900 focus:border-primary-400 focus:outline-none dark:border-[var(--surface-border-default)] dark:bg-[#1c1c1e] dark:text-[#f5f5f7]"
+            class="w-20 rounded-md border border-slate-200 bg-white px-2.5 py-1.5 text-center text-sm font-mono text-slate-900 focus:border-brand-400 focus:outline-none dark:border-[var(--surface-border-default)] dark:bg-[#1c1c1e] dark:text-[#f5f5f7]"
           />
           <span class="text-xs text-slate-500 dark:text-[#86868b]">{t('settingsGeneral.hours')}</span>
         </div>
@@ -406,7 +406,7 @@
           <span class="settings-text text-sm">{t('settingsGeneral.memoryEnabled')}</span>
           <p class="settings-muted mt-0.5">{t('settingsGeneral.memoryHint')}</p>
         </div>
-        <input type="checkbox" bind:checked={config.memory_enabled} on:change={handleChange} class="accent-primary-500" />
+        <input type="checkbox" bind:checked={config.memory_enabled} on:change={handleChange} class="accent-brand-500" />
       </label>
     </CollapsibleSection>
     <div class="settings-block pt-4 border-t border-slate-200 dark:border-[var(--surface-border-default)]">
@@ -448,7 +448,7 @@
           <button
             type="button"
             on:click={toggleAutoStart}
-            class="switch-track {autoStartEnabled ? 'bg-primary-500' : 'bg-slate-300 dark:bg-[rgba(255,255,255,0.14)]'}"
+            class="switch-track {autoStartEnabled ? 'bg-brand-500' : 'bg-slate-300 dark:bg-[rgba(255,255,255,0.14)]'}"
             role="switch"
             aria-label={t('settingsGeneral.autoStart')}
             aria-checked={autoStartEnabled}
@@ -458,7 +458,7 @@
         </div>
 
         {#if autoStartEnabled}
-          <div class="ml-3 pl-3 border-l-2 border-primary-200/60 dark:border-primary-800/40">
+          <div class="ml-3 pl-3 border-l-2 border-brand-200/60 dark:border-brand-800/40">
             <span class="settings-label">{t('settingsGeneral.autoStartLaunchMode')}</span>
             <div class="mt-2 flex gap-2">
               <button
@@ -484,7 +484,7 @@
           <button
             type="button"
             on:click={toggleDockIcon}
-            class="switch-track {config.hide_dock_icon ? 'bg-primary-500' : 'bg-slate-300 dark:bg-[rgba(255,255,255,0.14)]'}"
+            class="switch-track {config.hide_dock_icon ? 'bg-brand-500' : 'bg-slate-300 dark:bg-[rgba(255,255,255,0.14)]'}"
             role="switch"
             aria-label={t('settingsGeneral.hideDockIcon')}
             aria-checked={config.hide_dock_icon}
@@ -501,7 +501,7 @@
           <button
             type="button"
             on:click={toggleLightweightMode}
-            class="switch-track {config.lightweight_mode ? 'bg-primary-500' : 'bg-slate-300 dark:bg-[rgba(255,255,255,0.14)]'}"
+            class="switch-track {config.lightweight_mode ? 'bg-brand-500' : 'bg-slate-300 dark:bg-[rgba(255,255,255,0.14)]'}"
             role="switch"
             aria-label={t('settingsGeneral.lightweightMode')}
             aria-checked={config.lightweight_mode}

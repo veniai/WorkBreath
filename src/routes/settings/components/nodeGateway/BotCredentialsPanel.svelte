@@ -38,7 +38,7 @@
       type="button"
       on:click={toggle}
       disabled={saving}
-      class="switch-track {config[enabledKey] ? 'bg-primary-500' : 'bg-slate-300 dark:bg-[rgba(255,255,255,0.14)]'} {saving ? 'opacity-60 cursor-not-allowed' : ''}"
+      class="switch-track {config[enabledKey] ? 'bg-brand-500' : 'bg-slate-300 dark:bg-[rgba(255,255,255,0.14)]'} {saving ? 'opacity-60 cursor-not-allowed' : ''}"
       role="switch"
       aria-label={t(titleKey)}
       aria-checked={config[enabledKey]}
@@ -59,7 +59,7 @@
                     type="text"
                     bind:value={config[field.key]}
                     on:blur={() => dispatch('save')}
-                    class="w-full rounded-md bg-white/80 px-3 py-1.5 pr-8 text-sm font-mono text-slate-900 ring-1 ring-slate-200 focus:ring-primary-300 dark:bg-[rgba(255,255,255,0.07)] dark:text-[#f5f5f7] dark:ring-[rgba(255,255,255,0.14)] dark:focus:ring-primary-600 focus:outline-none"
+                    class="w-full rounded-md bg-white/80 px-3 py-1.5 pr-8 text-sm font-mono text-slate-900 ring-1 ring-slate-200 focus:ring-brand-400 dark:bg-[rgba(255,255,255,0.07)] dark:text-[#f5f5f7] dark:ring-[rgba(255,255,255,0.14)] dark:focus:ring-brand-500 focus:outline-none"
                     placeholder={field.placeholder || ''}
                   />
                 {:else}
@@ -67,7 +67,7 @@
                     type="password"
                     bind:value={config[field.key]}
                     on:blur={() => dispatch('save')}
-                    class="w-full rounded-md bg-white/80 px-3 py-1.5 pr-8 text-sm font-mono text-slate-900 ring-1 ring-slate-200 focus:ring-primary-300 dark:bg-[rgba(255,255,255,0.07)] dark:text-[#f5f5f7] dark:ring-[rgba(255,255,255,0.14)] dark:focus:ring-primary-600 focus:outline-none"
+                    class="w-full rounded-md bg-white/80 px-3 py-1.5 pr-8 text-sm font-mono text-slate-900 ring-1 ring-slate-200 focus:ring-brand-400 dark:bg-[rgba(255,255,255,0.07)] dark:text-[#f5f5f7] dark:ring-[rgba(255,255,255,0.14)] dark:focus:ring-brand-500 focus:outline-none"
                     placeholder={field.placeholder || ''}
                   />
                 {/if}
@@ -89,7 +89,7 @@
                 type="text"
                 bind:value={config[field.key]}
                 on:blur={() => dispatch('save')}
-                class="mt-0.5 w-full rounded-md bg-white/80 px-3 py-1.5 text-sm font-mono text-slate-900 ring-1 ring-slate-200 focus:ring-primary-300 dark:bg-[rgba(255,255,255,0.07)] dark:text-[#f5f5f7] dark:ring-[rgba(255,255,255,0.14)] dark:focus:ring-primary-600 focus:outline-none"
+                class="mt-0.5 w-full rounded-md bg-white/80 px-3 py-1.5 text-sm font-mono text-slate-900 ring-1 ring-slate-200 focus:ring-brand-400 dark:bg-[rgba(255,255,255,0.07)] dark:text-[#f5f5f7] dark:ring-[rgba(255,255,255,0.14)] dark:focus:ring-brand-500 focus:outline-none"
                 placeholder={field.placeholder || ''}
               />
             {/if}

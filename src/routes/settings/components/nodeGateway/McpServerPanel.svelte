@@ -55,7 +55,7 @@
       type="button"
       on:click={toggle}
       disabled={saving}
-      class="switch-track {config.mcp_server_enabled ? 'bg-primary-500' : 'bg-slate-300 dark:bg-[rgba(255,255,255,0.14)]'} {saving ? 'opacity-60 cursor-not-allowed' : ''}"
+      class="switch-track {config.mcp_server_enabled ? 'bg-brand-500' : 'bg-slate-300 dark:bg-[rgba(255,255,255,0.14)]'} {saving ? 'opacity-60 cursor-not-allowed' : ''}"
       role="switch"
       aria-label={t('nodeGatewayPage.mcpServer')}
       aria-checked={config.mcp_server_enabled}
@@ -74,7 +74,7 @@
           <div class="flex flex-col gap-0.5 rounded-lg bg-white/70 px-3 py-1.5 ring-1 ring-slate-200/70 dark:bg-[#1c1c1e]/20 dark:ring-[var(--surface-border-default)]">
             <div class="flex items-center justify-between gap-2">
               <span class="text-[11px] text-slate-500 dark:text-[#86868b]">{t('nodeGatewayPage.mcpServerDbPath')}</span>
-              <button type="button" class="text-[10px] text-primary-600 hover:underline focus:outline-none" on:click={() => copyPath(mcpDbPath, 'mcpServerDbPath')}>{t('nodeGatewayPage.mcpServerCopyPath')}</button>
+              <button type="button" class="text-[10px] text-brand-600 hover:underline focus:outline-none" on:click={() => copyPath(mcpDbPath, 'mcpServerDbPath')}>{t('nodeGatewayPage.mcpServerCopyPath')}</button>
             </div>
             <span class="font-mono text-[11px] text-slate-700 dark:text-[#98989d] break-all select-all" title={mcpDbPath}>{mcpDbPath}</span>
           </div>
@@ -83,7 +83,7 @@
           <div class="flex flex-col gap-0.5 rounded-lg bg-white/70 px-3 py-1.5 ring-1 ring-slate-200/70 dark:bg-[#1c1c1e]/20 dark:ring-[var(--surface-border-default)]">
             <div class="flex items-center justify-between gap-2">
               <span class="text-[11px] text-slate-500 dark:text-[#86868b]">{t('nodeGatewayPage.mcpServerConfigPath')}</span>
-              <button type="button" class="text-[10px] text-primary-600 hover:underline focus:outline-none" on:click={() => copyPath(mcpConfigPath, 'mcpServerConfigPath')}>{t('nodeGatewayPage.mcpServerCopyPath')}</button>
+              <button type="button" class="text-[10px] text-brand-600 hover:underline focus:outline-none" on:click={() => copyPath(mcpConfigPath, 'mcpServerConfigPath')}>{t('nodeGatewayPage.mcpServerCopyPath')}</button>
             </div>
             <span class="font-mono text-[11px] text-slate-700 dark:text-[#98989d] break-all select-all" title={mcpConfigPath}>{mcpConfigPath}</span>
           </div>
@@ -91,7 +91,7 @@
         <div class="flex flex-col gap-0.5 rounded-lg bg-white/70 px-3 py-1.5 ring-1 ring-slate-200/70 dark:bg-[#1c1c1e]/20 dark:ring-[var(--surface-border-default)]">
           <div class="flex items-center justify-between gap-2">
             <span class="text-[11px] text-slate-500 dark:text-[#86868b]">{t('nodeGatewayPage.mcpServerBinaryPath')}</span>
-            <button type="button" class="text-[10px] text-primary-600 hover:underline focus:outline-none" on:click={() => copyPath('workbreath-mcp-server', 'mcpServerBinaryPath')}>{t('nodeGatewayPage.mcpServerCopyPath')}</button>
+            <button type="button" class="text-[10px] text-brand-600 hover:underline focus:outline-none" on:click={() => copyPath('workbreath-mcp-server', 'mcpServerBinaryPath')}>{t('nodeGatewayPage.mcpServerCopyPath')}</button>
           </div>
           <span class="font-mono text-[11px] text-slate-700 dark:text-[#98989d] break-all select-all">work-review-mcp-server</span>
         </div>

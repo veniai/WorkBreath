@@ -158,7 +158,7 @@
 
   {#if loading}
     <div class="flex items-center justify-center py-8">
-      <div class="animate-spin h-5 w-5 border-2 border-primary-500 border-t-transparent rounded-full"></div>
+      <div class="animate-spin h-5 w-5 border-2 border-brand-500 border-t-transparent rounded-full"></div>
     </div>
   {:else}
     <div class="space-y-4">

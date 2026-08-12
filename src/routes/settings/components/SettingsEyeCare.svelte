@@ -25,7 +25,7 @@
     </div>
     <button
       type="button"
-      class="switch-track {config.eye_care_enabled ? 'bg-primary-500' : 'bg-slate-300 dark:bg-[rgba(255,255,255,0.14)]'}"
+      class="switch-track {config.eye_care_enabled ? 'bg-brand-500' : 'bg-slate-300 dark:bg-[rgba(255,255,255,0.14)]'}"
       role="switch"
       aria-checked={config.eye_care_enabled}
       aria-label={t('eyeCare.enabled')}
@@ -68,7 +68,7 @@
     </div>
     <button
       type="button"
-      class="switch-track {config.eye_care_lock_on_rest_end ? 'bg-primary-500' : 'bg-slate-300 dark:bg-[rgba(255,255,255,0.14)]'}"
+      class="switch-track {config.eye_care_lock_on_rest_end ? 'bg-brand-500' : 'bg-slate-300 dark:bg-[rgba(255,255,255,0.14)]'}"
       role="switch"
       aria-checked={config.eye_care_lock_on_rest_end}
       aria-label={t('eyeCare.lockOnRestEnd')}
@@ -85,7 +85,7 @@
     <p class="settings-muted eye-care-config-estimate">{t('eyeCare.estimateNotice')}</p>
     <button
       type="button"
-      class="switch-track {config.eye_care_paused ? 'bg-amber-500' : 'bg-slate-300 dark:bg-[rgba(255,255,255,0.14)]'}"
+      class="switch-track {config.eye_care_paused ? 'bg-brand-500' : 'bg-slate-300 dark:bg-[rgba(255,255,255,0.14)]'}"
       role="switch"
       aria-checked={config.eye_care_paused}
       aria-label={t('eyeCare.pause')}

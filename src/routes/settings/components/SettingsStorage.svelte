@@ -225,7 +225,7 @@
     : 0;
 
   // 使用量颜色
-  $: usageColor = usagePercent > 80 ? 'bg-red-500' : usagePercent > 50 ? 'bg-amber-500' : 'bg-emerald-500';
+  $: usageColor = usagePercent > 80 ? 'bg-red-500' : usagePercent > 50 ? 'bg-amber-500' : 'bg-brand-500';
   $: usingDefaultDataDir = dataDir && defaultDataDir && dataDir === defaultDataDir;
   $: {
     currentLocale;
@@ -260,7 +260,7 @@
           config.storage.screenshots_enabled = !config.storage.screenshots_enabled;
           handleChange();
         }}
-        class="switch-track {config.storage.screenshots_enabled ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-[rgba(255,255,255,0.14)]'}"
+        class="switch-track {config.storage.screenshots_enabled ? 'bg-brand-500' : 'bg-slate-300 dark:bg-[rgba(255,255,255,0.14)]'}"
         role="switch"
         aria-label={t('settingsStorage.screenshotsEnabled')}
         aria-checked={config.storage.screenshots_enabled}
@@ -505,7 +505,7 @@
         </div>
         <button
           type="button"
-          class="switch-track {config.daily_report_auto_export ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-[rgba(255,255,255,0.14)]'} {!config.daily_report_export_dir ? 'opacity-60 cursor-not-allowed' : ''}"
+          class="switch-track {config.daily_report_auto_export ? 'bg-brand-500' : 'bg-slate-300 dark:bg-[rgba(255,255,255,0.14)]'} {!config.daily_report_export_dir ? 'opacity-60 cursor-not-allowed' : ''}"
           on:click={() => { if (config.daily_report_export_dir) config.daily_report_auto_export = !config.daily_report_auto_export; }}
           disabled={!config.daily_report_export_dir}
           role="switch"
@@ -528,8 +528,8 @@
   <div class="settings-section space-y-4">
     <div class="rounded-2xl border border-slate-200/80 bg-slate-50/90 p-4 dark:border-[var(--surface-border-default)] dark:bg-[#2c2c2e]/40">
       <div class="flex items-center gap-2 mb-3">
-        <div class="flex h-6 w-6 items-center justify-center rounded-md bg-primary-100 dark:bg-primary-900/30">
-          <svg class="w-3.5 h-3.5 text-primary-600 dark:text-primary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div class="flex h-6 w-6 items-center justify-center rounded-md bg-brand-100 dark:bg-brand-900/30">
+          <svg class="w-3.5 h-3.5 text-brand-600 dark:text-brand-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
           </svg>
         </div>
@@ -578,7 +578,7 @@
               type="text"
               bind:value={config.remote_storage.s3.endpoint}
               on:blur={handleChange}
-              class="mt-0.5 w-full rounded-md bg-white/80 px-3 py-1.5 text-sm font-mono text-slate-900 ring-1 ring-slate-200 focus:ring-primary-300 dark:bg-[rgba(255,255,255,0.07)] dark:text-[#f5f5f7] dark:ring-[rgba(255,255,255,0.14)] dark:focus:ring-primary-600 focus:outline-none"
+              class="mt-0.5 w-full rounded-md bg-white/80 px-3 py-1.5 text-sm font-mono text-slate-900 ring-1 ring-slate-200 focus:ring-brand-400 dark:bg-[rgba(255,255,255,0.07)] dark:text-[#f5f5f7] dark:ring-[rgba(255,255,255,0.14)] dark:focus:ring-brand-500 focus:outline-none"
               placeholder={t('settingsStorage.s3EndpointHint')}
             />
           </label>
@@ -588,7 +588,7 @@
               type="text"
               bind:value={config.remote_storage.s3.bucket}
               on:blur={handleChange}
-              class="mt-0.5 w-full rounded-md bg-white/80 px-3 py-1.5 text-sm font-mono text-slate-900 ring-1 ring-slate-200 focus:ring-primary-300 dark:bg-[rgba(255,255,255,0.07)] dark:text-[#f5f5f7] dark:ring-[rgba(255,255,255,0.14)] dark:focus:ring-primary-600 focus:outline-none"
+              class="mt-0.5 w-full rounded-md bg-white/80 px-3 py-1.5 text-sm font-mono text-slate-900 ring-1 ring-slate-200 focus:ring-brand-400 dark:bg-[rgba(255,255,255,0.07)] dark:text-[#f5f5f7] dark:ring-[rgba(255,255,255,0.14)] dark:focus:ring-brand-500 focus:outline-none"
               placeholder="my-bucket"
             />
           </label>
@@ -603,7 +603,7 @@
                   type="text"
                   bind:value={config.remote_storage.s3.access_key}
                   on:blur={handleChange}
-                  class="w-full rounded-md bg-white/80 px-3 py-1.5 pr-8 text-sm font-mono text-slate-900 ring-1 ring-slate-200 focus:ring-primary-300 dark:bg-[rgba(255,255,255,0.07)] dark:text-[#f5f5f7] dark:ring-[rgba(255,255,255,0.14)] dark:focus:ring-primary-600 focus:outline-none"
+                  class="w-full rounded-md bg-white/80 px-3 py-1.5 pr-8 text-sm font-mono text-slate-900 ring-1 ring-slate-200 focus:ring-brand-400 dark:bg-[rgba(255,255,255,0.07)] dark:text-[#f5f5f7] dark:ring-[rgba(255,255,255,0.14)] dark:focus:ring-brand-500 focus:outline-none"
                   placeholder="Access Key"
                   autocomplete="off"
                 />
@@ -612,7 +612,7 @@
                   type="password"
                   bind:value={config.remote_storage.s3.access_key}
                   on:blur={handleChange}
-                  class="w-full rounded-md bg-white/80 px-3 py-1.5 pr-8 text-sm font-mono text-slate-900 ring-1 ring-slate-200 focus:ring-primary-300 dark:bg-[rgba(255,255,255,0.07)] dark:text-[#f5f5f7] dark:ring-[rgba(255,255,255,0.14)] dark:focus:ring-primary-600 focus:outline-none"
+                  class="w-full rounded-md bg-white/80 px-3 py-1.5 pr-8 text-sm font-mono text-slate-900 ring-1 ring-slate-200 focus:ring-brand-400 dark:bg-[rgba(255,255,255,0.07)] dark:text-[#f5f5f7] dark:ring-[rgba(255,255,255,0.14)] dark:focus:ring-brand-500 focus:outline-none"
                   placeholder="Access Key"
                   autocomplete="off"
                 />
@@ -639,7 +639,7 @@
                   type="text"
                   bind:value={config.remote_storage.s3.secret_key}
                   on:blur={handleChange}
-                  class="w-full rounded-md bg-white/80 px-3 py-1.5 pr-8 text-sm font-mono text-slate-900 ring-1 ring-slate-200 focus:ring-primary-300 dark:bg-[rgba(255,255,255,0.07)] dark:text-[#f5f5f7] dark:ring-[rgba(255,255,255,0.14)] dark:focus:ring-primary-600 focus:outline-none"
+                  class="w-full rounded-md bg-white/80 px-3 py-1.5 pr-8 text-sm font-mono text-slate-900 ring-1 ring-slate-200 focus:ring-brand-400 dark:bg-[rgba(255,255,255,0.07)] dark:text-[#f5f5f7] dark:ring-[rgba(255,255,255,0.14)] dark:focus:ring-brand-500 focus:outline-none"
                   placeholder="Secret Key"
                   autocomplete="off"
                 />
@@ -648,7 +648,7 @@
                   type="password"
                   bind:value={config.remote_storage.s3.secret_key}
                   on:blur={handleChange}
-                  class="w-full rounded-md bg-white/80 px-3 py-1.5 pr-8 text-sm font-mono text-slate-900 ring-1 ring-slate-200 focus:ring-primary-300 dark:bg-[rgba(255,255,255,0.07)] dark:text-[#f5f5f7] dark:ring-[rgba(255,255,255,0.14)] dark:focus:ring-primary-600 focus:outline-none"
+                  class="w-full rounded-md bg-white/80 px-3 py-1.5 pr-8 text-sm font-mono text-slate-900 ring-1 ring-slate-200 focus:ring-brand-400 dark:bg-[rgba(255,255,255,0.07)] dark:text-[#f5f5f7] dark:ring-[rgba(255,255,255,0.14)] dark:focus:ring-brand-500 focus:outline-none"
                   placeholder="Secret Key"
                   autocomplete="off"
                 />
@@ -676,7 +676,7 @@
               type="text"
               bind:value={config.remote_storage.s3.region}
               on:blur={handleChange}
-              class="mt-0.5 w-full rounded-md bg-white/80 px-3 py-1.5 text-sm font-mono text-slate-900 ring-1 ring-slate-200 focus:ring-primary-300 dark:bg-[rgba(255,255,255,0.07)] dark:text-[#f5f5f7] dark:ring-[rgba(255,255,255,0.14)] dark:focus:ring-primary-600 focus:outline-none"
+              class="mt-0.5 w-full rounded-md bg-white/80 px-3 py-1.5 text-sm font-mono text-slate-900 ring-1 ring-slate-200 focus:ring-brand-400 dark:bg-[rgba(255,255,255,0.07)] dark:text-[#f5f5f7] dark:ring-[rgba(255,255,255,0.14)] dark:focus:ring-brand-500 focus:outline-none"
               placeholder="us-east-1"
             />
           </label>
@@ -686,7 +686,7 @@
               type="text"
               bind:value={config.remote_storage.s3.path_prefix}
               on:blur={handleChange}
-              class="mt-0.5 w-full rounded-md bg-white/80 px-3 py-1.5 text-sm font-mono text-slate-900 ring-1 ring-slate-200 focus:ring-primary-300 dark:bg-[rgba(255,255,255,0.07)] dark:text-[#f5f5f7] dark:ring-[rgba(255,255,255,0.14)] dark:focus:ring-primary-600 focus:outline-none"
+              class="mt-0.5 w-full rounded-md bg-white/80 px-3 py-1.5 text-sm font-mono text-slate-900 ring-1 ring-slate-200 focus:ring-brand-400 dark:bg-[rgba(255,255,255,0.07)] dark:text-[#f5f5f7] dark:ring-[rgba(255,255,255,0.14)] dark:focus:ring-brand-500 focus:outline-none"
               placeholder={t('settingsStorage.s3PathPrefixHint')}
             />
           </label>
@@ -698,7 +698,7 @@
             type="text"
             bind:value={config.remote_storage.s3.public_url_base}
             on:blur={handleChange}
-            class="mt-0.5 w-full rounded-md bg-white/80 px-3 py-1.5 text-sm font-mono text-slate-900 ring-1 ring-slate-200 focus:ring-primary-300 dark:bg-[rgba(255,255,255,0.07)] dark:text-[#f5f5f7] dark:ring-[rgba(255,255,255,0.14)] dark:focus:ring-primary-600 focus:outline-none"
+            class="mt-0.5 w-full rounded-md bg-white/80 px-3 py-1.5 text-sm font-mono text-slate-900 ring-1 ring-slate-200 focus:ring-brand-400 dark:bg-[rgba(255,255,255,0.07)] dark:text-[#f5f5f7] dark:ring-[rgba(255,255,255,0.14)] dark:focus:ring-brand-500 focus:outline-none"
             placeholder={t('settingsStorage.s3PublicUrlBaseHint')}
           />
         </label>
@@ -735,7 +735,7 @@
             type="text"
             bind:value={config.remote_storage.webdav.url}
             on:blur={handleChange}
-            class="mt-0.5 w-full rounded-md bg-white/80 px-3 py-1.5 text-sm font-mono text-slate-900 ring-1 ring-slate-200 focus:ring-primary-300 dark:bg-[rgba(255,255,255,0.07)] dark:text-[#f5f5f7] dark:ring-[rgba(255,255,255,0.14)] dark:focus:ring-primary-600 focus:outline-none"
+            class="mt-0.5 w-full rounded-md bg-white/80 px-3 py-1.5 text-sm font-mono text-slate-900 ring-1 ring-slate-200 focus:ring-brand-400 dark:bg-[rgba(255,255,255,0.07)] dark:text-[#f5f5f7] dark:ring-[rgba(255,255,255,0.14)] dark:focus:ring-brand-500 focus:outline-none"
             placeholder={t('settingsStorage.webdavUrlHint')}
           />
         </label>
@@ -747,7 +747,7 @@
               type="text"
               bind:value={config.remote_storage.webdav.username}
               on:blur={handleChange}
-              class="mt-0.5 w-full rounded-md bg-white/80 px-3 py-1.5 text-sm font-mono text-slate-900 ring-1 ring-slate-200 focus:ring-primary-300 dark:bg-[rgba(255,255,255,0.07)] dark:text-[#f5f5f7] dark:ring-[rgba(255,255,255,0.14)] dark:focus:ring-primary-600 focus:outline-none"
+              class="mt-0.5 w-full rounded-md bg-white/80 px-3 py-1.5 text-sm font-mono text-slate-900 ring-1 ring-slate-200 focus:ring-brand-400 dark:bg-[rgba(255,255,255,0.07)] dark:text-[#f5f5f7] dark:ring-[rgba(255,255,255,0.14)] dark:focus:ring-brand-500 focus:outline-none"
               placeholder="username"
             />
           </label>
@@ -759,7 +759,7 @@
                   type="text"
                   bind:value={config.remote_storage.webdav.password}
                   on:blur={handleChange}
-                  class="w-full rounded-md bg-white/80 px-3 py-1.5 pr-8 text-sm font-mono text-slate-900 ring-1 ring-slate-200 focus:ring-primary-300 dark:bg-[rgba(255,255,255,0.07)] dark:text-[#f5f5f7] dark:ring-[rgba(255,255,255,0.14)] dark:focus:ring-primary-600 focus:outline-none"
+                  class="w-full rounded-md bg-white/80 px-3 py-1.5 pr-8 text-sm font-mono text-slate-900 ring-1 ring-slate-200 focus:ring-brand-400 dark:bg-[rgba(255,255,255,0.07)] dark:text-[#f5f5f7] dark:ring-[rgba(255,255,255,0.14)] dark:focus:ring-brand-500 focus:outline-none"
                   placeholder="password"
                   autocomplete="off"
                 />
@@ -768,7 +768,7 @@
                   type="password"
                   bind:value={config.remote_storage.webdav.password}
                   on:blur={handleChange}
-                  class="w-full rounded-md bg-white/80 px-3 py-1.5 pr-8 text-sm font-mono text-slate-900 ring-1 ring-slate-200 focus:ring-primary-300 dark:bg-[rgba(255,255,255,0.07)] dark:text-[#f5f5f7] dark:ring-[rgba(255,255,255,0.14)] dark:focus:ring-primary-600 focus:outline-none"
+                  class="w-full rounded-md bg-white/80 px-3 py-1.5 pr-8 text-sm font-mono text-slate-900 ring-1 ring-slate-200 focus:ring-brand-400 dark:bg-[rgba(255,255,255,0.07)] dark:text-[#f5f5f7] dark:ring-[rgba(255,255,255,0.14)] dark:focus:ring-brand-500 focus:outline-none"
                   placeholder="password"
                   autocomplete="off"
                 />
@@ -795,7 +795,7 @@
             type="text"
             bind:value={config.remote_storage.webdav.path_prefix}
             on:blur={handleChange}
-            class="mt-0.5 w-full rounded-md bg-white/80 px-3 py-1.5 text-sm font-mono text-slate-900 ring-1 ring-slate-200 focus:ring-primary-300 dark:bg-[rgba(255,255,255,0.07)] dark:text-[#f5f5f7] dark:ring-[rgba(255,255,255,0.14)] dark:focus:ring-primary-600 focus:outline-none"
+            class="mt-0.5 w-full rounded-md bg-white/80 px-3 py-1.5 text-sm font-mono text-slate-900 ring-1 ring-slate-200 focus:ring-brand-400 dark:bg-[rgba(255,255,255,0.07)] dark:text-[#f5f5f7] dark:ring-[rgba(255,255,255,0.14)] dark:focus:ring-brand-500 focus:outline-none"
             placeholder={t('settingsStorage.webdavPathPrefixHint')}
           />
         </label>
@@ -806,7 +806,7 @@
             type="text"
             bind:value={config.remote_storage.webdav.public_url_base}
             on:blur={handleChange}
-            class="mt-0.5 w-full rounded-md bg-white/80 px-3 py-1.5 text-sm font-mono text-slate-900 ring-1 ring-slate-200 focus:ring-primary-300 dark:bg-[rgba(255,255,255,0.07)] dark:text-[#f5f5f7] dark:ring-[rgba(255,255,255,0.14)] dark:focus:ring-primary-600 focus:outline-none"
+            class="mt-0.5 w-full rounded-md bg-white/80 px-3 py-1.5 text-sm font-mono text-slate-900 ring-1 ring-slate-200 focus:ring-brand-400 dark:bg-[rgba(255,255,255,0.07)] dark:text-[#f5f5f7] dark:ring-[rgba(255,255,255,0.14)] dark:focus:ring-brand-500 focus:outline-none"
             placeholder={t('settingsStorage.webdavPublicUrlBaseHint')}
           />
         </label>
@@ -937,7 +937,7 @@
                   config.storage.storage_limit_mb = Math.max(256, Number(config.storage.storage_limit_mb) || 2048);
                   handleChange();
                 }}
-                class="w-24 rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-right text-sm font-mono text-slate-700 ring-1 ring-slate-200 focus:ring-primary-300 dark:border-[rgba(255,255,255,0.14)] dark:bg-[#2c2c2e] dark:text-[#98989d] dark:ring-[rgba(255,255,255,0.14)] dark:focus:ring-primary-600 focus:outline-none"
+                class="w-24 rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-right text-sm font-mono text-slate-700 ring-1 ring-slate-200 focus:ring-brand-400 dark:border-[rgba(255,255,255,0.14)] dark:bg-[#2c2c2e] dark:text-[#98989d] dark:ring-[rgba(255,255,255,0.14)] dark:focus:ring-brand-500 focus:outline-none"
               />
               <span class="text-xs text-slate-400 dark:text-[#636c76]">MB</span>
             </div>

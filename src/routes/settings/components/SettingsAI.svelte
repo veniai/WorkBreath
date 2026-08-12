@@ -579,7 +579,7 @@
             type="button"
             class="flex items-center gap-2.5 rounded-xl border px-3 py-2.5 text-start transition
               {active
-                ? 'border-primary-400 bg-primary-50/70 ring-1 ring-primary-300/60 dark:border-primary-500/70 dark:bg-primary-900/30 dark:ring-primary-500/40'
+                ? 'border-brand-400 bg-brand-50/70 ring-1 ring-brand-300/60 dark:border-brand-500/70 dark:bg-brand-900/30 dark:ring-brand-500/40'
                 : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50 dark:border-[var(--surface-border-default)] dark:bg-[#1c1c1e] dark:hover:border-[rgba(255,255,255,0.24)] dark:hover:bg-[#2c2c2e]'}"
             on:click={() => selectProvider(provider.id)}
           >
@@ -601,7 +601,7 @@
             <span class="min-w-0 flex-1">
               <span class="block truncate text-sm font-medium text-slate-800 dark:text-[#f5f5f7]">{provider.name}</span>
               {#if active}
-                <span class="block text-[10px] leading-tight text-primary-500 dark:text-primary-400">{t('settingsAI.providerActive')}</span>
+                <span class="block text-[10px] leading-tight text-brand-500 dark:text-brand-400">{t('settingsAI.providerActive')}</span>
               {/if}
             </span>
           </button>
@@ -689,6 +689,8 @@
         </div>
       </div>
     {/if}
+      </div>
+    </div>
 
     <!-- 模型选择 -->
     <div>
@@ -767,9 +769,6 @@
       </div>
     {/if}
 
-      </div>
-    </div>
-
     </div>
     {:else if aiSection === 'web'}
     <!-- 助手联网能力：默认关闭；开启后助手可读网页/查天气，配搜索 Key 后可联网搜索 -->
@@ -786,7 +785,7 @@
         </div>
         <button
           type="button"
-          class="switch-track shrink-0 {config.assistant_web_access_enabled ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-[rgba(255,255,255,0.14)]'}"
+          class="switch-track shrink-0 {config.assistant_web_access_enabled ? 'bg-brand-500' : 'bg-slate-300 dark:bg-[rgba(255,255,255,0.14)]'}"
           role="switch"
           aria-label={t('settingsAI.webAccess.title')}
           aria-checked={config.assistant_web_access_enabled}
@@ -871,7 +870,7 @@
         </div>
         <button
           type="button"
-          class="switch-track shrink-0 {config.memory_semantic_enabled ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-[rgba(255,255,255,0.14)]'}"
+          class="switch-track shrink-0 {config.memory_semantic_enabled ? 'bg-brand-500' : 'bg-slate-300 dark:bg-[rgba(255,255,255,0.14)]'}"
           role="switch"
           aria-label={t('settingsAI.semanticMemory.title')}
           aria-checked={config.memory_semantic_enabled}
@@ -959,7 +958,7 @@
             <span>{t('memoryPage.indexStatus', { embedded: semanticStats.embeddedChunks ?? 0, total: semanticStats.totalChunks ?? 0 })}</span>
             <button
               type="button"
-              class="text-primary-500 hover:text-primary-600 dark:text-primary-400 dark:hover:text-primary-300 disabled:opacity-50"
+              class="text-brand-500 hover:text-brand-600 dark:text-brand-400 dark:hover:text-brand-300 disabled:opacity-50"
               on:click={startSemanticIndexing}
               disabled={semanticIndexing}
             >

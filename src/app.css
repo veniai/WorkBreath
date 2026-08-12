@@ -1021,7 +1021,13 @@
 }
 
 .settings-row {
-  @apply flex items-center justify-between gap-3 rounded-2xl bg-white/70 px-3.5 py-3 ring-1 ring-slate-200/70 dark:bg-[#1c1c1e]/20 dark:ring-[var(--surface-border-default)];
+  @apply flex items-center justify-between gap-3 px-4 py-3.5;
+  border-radius: 0;
+  background: transparent;
+  transition: background-color 120ms ease;
+}
+.settings-row:hover {
+  background: var(--editorial-surface-subtle);
 }
 
 .settings-item-row {
@@ -1047,7 +1053,14 @@
 }
 
 .settings-link-action {
-  @apply text-xs font-medium text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300 transition-colors;
+  @apply text-xs font-medium transition-colors;
+  color: var(--brand-accent-deep);
+}
+.settings-link-action:hover {
+  color: var(--brand-accent);
+}
+.dark .settings-link-action {
+  color: var(--brand-accent);
 }
 
 .settings-link-danger {
@@ -1055,7 +1068,14 @@
 }
 
 .settings-action-primary {
-  @apply control-button-sm bg-primary-500 text-white hover:bg-primary-600 disabled:opacity-50 disabled:cursor-not-allowed;
+  @apply control-button-sm text-white disabled:opacity-50 disabled:cursor-not-allowed;
+  background: linear-gradient(180deg, #3fd4ae, #1daa86);
+}
+.settings-action-primary:hover {
+  background: linear-gradient(180deg, #34c3a0, #0f9d78);
+}
+.dark .settings-action-primary {
+  color: #062e26;
 }
 
 .settings-action-secondary {
@@ -4016,14 +4036,14 @@
 }
 
 .settings-tab-rail-item:focus-visible {
-  outline: 2px solid rgba(99, 102, 241, 0.36);
+  outline: 2px solid var(--brand-accent);
   outline-offset: 2px;
 }
 
 .settings-tab-rail-item-active {
   border-color: transparent;
-  background: #e9f2ff;
-  color: #1d64d6;
+  background: var(--brand-accent-soft);
+  color: var(--brand-accent-deep);
 }
 
 .settings-tab-rail-item-active::before {
@@ -4034,7 +4054,7 @@
   bottom: 0.55rem;
   width: 2px;
   border-radius: 999px;
-  background: #2f78e8;
+  background: var(--brand-accent);
 }
 
 .settings-tab-rail-icon {
@@ -4129,9 +4149,10 @@
 }
 
 .settings-save-dock {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.55rem;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.125rem;
   padding: 0;
 }
 
@@ -4148,7 +4169,7 @@
 
 .settings-save-button {
   min-height: 2.2rem;
-  border: 1px solid #2f78e8;
+  border: 1px solid var(--brand-accent-deep, #1daa86);
   border-radius: 0.5rem;
 }
 
@@ -4206,7 +4227,7 @@
 
 .settings-editorial-shell .settings-row {
   gap: 1rem;
-  padding: 0.65rem 0;
+  padding: 0.7rem 0;
   border-radius: 0;
   background: transparent;
   box-shadow: none;
@@ -4262,9 +4283,9 @@
 }
 
 .dark .settings-tab-rail-item-active {
-  border-color: var(--surface-border-default);
-  background: rgba(49, 46, 129, 0.34);
-  color: #c4b5fd;
+  border-color: transparent;
+  background: var(--brand-accent-soft);
+  color: var(--brand-accent);
 }
 
 .dark .settings-tab-rail-icon {
@@ -4658,9 +4679,9 @@
 }
 
 .dark .settings-tab-rail-item-active {
-  border-color: var(--surface-border-default);
-  background: var(--editorial-surface-featured);
-  color: #c4b5fd;
+  border-color: transparent;
+  background: var(--brand-accent-soft);
+  color: var(--brand-accent);
   box-shadow: none;
 }
 
