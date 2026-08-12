@@ -80,7 +80,7 @@
   },
   "productName": "WorkBreath",
   "mainBinaryName": "WorkBreath",
-  "version": "1.5.6",
+  "version": "1.5.7",
   "identifier": "com.workbreath.app",
   "plugins": {
     "updater": {
