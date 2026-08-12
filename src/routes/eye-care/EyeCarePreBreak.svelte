@@ -8,6 +8,11 @@
 
   onMount(() => {
     initializeLocale();
+    // 标记根元素，让组件 scoped CSS 能用高优先级覆盖全局 :root/.dark 背景。
+    // 全局 app.css 的 :root { background-color:#f5f5f7 } 和 .dark { background-color:#000000 }
+    // 会让透明窗口四角漏出浅色/黑色，class 选择器 + !important 确保真正透明。
+    document.documentElement.classList.add('eye-care-pre-break-root');
+
     let disposed = false;
     let unlisten = () => {};
 
@@ -27,6 +32,7 @@
     return () => {
       disposed = true;
       unlisten();
+      document.documentElement.classList.remove('eye-care-pre-break-root');
     };
   });
 </script>
@@ -48,26 +54,48 @@
 </div>
 
 <style>
-  /* 窗口背景必须完全透明，让透明窗口的四角真正透出桌面。
-     卡片（.notice）用 margin 包裹，圆角外是真正的透明区。 */
-  :global(html), :global(body), :global(#app) {
-    margin: 0;
-    width: 100%;
-    height: 100%;
-    overflow: hidden;
-    background: transparent;
+  /*
+   * 透明窗口圆角根治方案：
+   *
+   * 1. 全局 app.css 的 :root 画了 background-color:#f5f5f7，.dark 画了 #000000。
+   *    组件 scoped :global(html) 的优先级不一定能赢过全局规则。
+   *    用 html.eye-care-pre-break-root（class 选择器，specificity 0,1,1 > :root 的 0,1,0）
+   *    加 !important 确保根画布完全透明。
+   *
+   * 2. 卡片不占满窗口 100%——留 3px 透明 gutter，圆角弧线外是真正的透明区，
+   *    box-shadow 也有空间扩散而不被窗口物理边界裁掉。
+   */
+
+  /* 覆盖全局 :root 和 .dark 的背景色 */
+  :global(html.eye-care-pre-break-root),
+  :global(html.eye-care-pre-break-root body) {
+    margin: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    overflow: hidden !important;
+    background: transparent !important;
+    background-color: transparent !important;
+  }
+
+  :global(html.eye-care-pre-break-root.dark),
+  :global(html.eye-care-pre-break-root .dark) {
+    background: transparent !important;
+    background-color: transparent !important;
   }
 
   .notice-shell {
     width: 100%;
     height: 100%;
-    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
 
   .notice {
     box-sizing: border-box;
-    width: 100%;
-    height: 100%;
+    width: calc(100% - 6px);
+    height: calc(100% - 6px);
+    margin: 3px;
     display: grid;
     grid-template-columns: 36px minmax(0, 1fr) auto;
     align-items: center;
@@ -81,7 +109,6 @@
     font-family: "SF Pro Display", "SF Pro Text", "PingFang SC", "Microsoft YaHei", sans-serif;
     -webkit-font-smoothing: antialiased;
     user-select: none;
-    /* 深色投影模拟毛玻璃层次感，因为窗口 shadow(false) 不画系统阴影 */
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
   }
 

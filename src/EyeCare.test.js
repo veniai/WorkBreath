@@ -167,6 +167,11 @@ test('预告非阻挡，休息层覆盖每块显示器且 watchdog 会恢复窗�
   assert.match(preBreak, /background:.*#141416/);
   assert.doesNotMatch(preBreak, /backdrop-filter/);
   assert.doesNotMatch(preBreak, /clip-path/);
+  // 透明窗口根治：根元素加专属 class 强制透明背景，卡片留 gutter 不占满窗口
+  assert.match(preBreak, /eye-care-pre-break-root/);
+  assert.match(preBreak, /background:\s*transparent\s*!important/);
+  assert.match(preBreak, /margin:\s*3px/);
+  assert.match(preBreak, /calc\(100%\s*-\s*6px\)/);
   assert.match(capabilities, /eye-care-pre-break/);
   assert.match(capabilities, /eye-care-overlay-\*/);
 });
