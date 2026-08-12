@@ -136,11 +136,15 @@ test('护眼状态机独立使用单调增量并覆盖等待返回、锁屏、�
 });
 
 test('预告非阻挡，休息层覆盖每块显示器且 watchdog 会恢复窗口', async () => {
-  const [engine, main, overlay, preBreak, capabilities] = await Promise.all([
+  const [engine, main, overlay, preBreak, preBreakHtml, preBreakEntry, vite, appCss, capabilities] = await Promise.all([
     read('../src-tauri/src/eye_care.rs'),
     read('../src-tauri/src/main.rs'),
     read('./routes/eye-care/EyeCareOverlay.svelte'),
     read('./routes/eye-care/EyeCarePreBreak.svelte'),
+    read('../pre-break.html'),
+    read('./pre-break.js'),
+    read('../vite.config.js'),
+    read('./app.css'),
     read('../src-tauri/capabilities/migrated.json'),
   ]);
 
@@ -167,11 +171,16 @@ test('预告非阻挡，休息层覆盖每块显示器且 watchdog 会恢复窗�
   assert.match(preBreak, /background:.*#141416/);
   assert.doesNotMatch(preBreak, /backdrop-filter/);
   assert.doesNotMatch(preBreak, /clip-path/);
-  // 透明窗口根治：根元素加专属 class 强制透明背景，卡片留 gutter 不占满窗口
-  assert.match(preBreak, /eye-care-pre-break-root/);
-  assert.match(preBreak, /background:\s*transparent\s*!important/);
-  assert.match(preBreak, /margin:\s*3px/);
-  assert.match(preBreak, /calc\(100%\s*-\s*6px\)/);
+  // 预提醒使用独立入口，不能继承主应用不透明的 :root 画布。
+  assert.match(appCss, /:root\s*\{[\s\S]*?background-color:\s*#f5f5f7/);
+  assert.match(engine, /WebviewUrl::App\("pre-break\.html"\.into\(\)\)/);
+  assert.match(vite, /preBreak:\s*path\.resolve\('pre-break\.html'\)/);
+  assert.match(preBreakHtml, /<html[^>]*style="background:\s*transparent"/);
+  assert.match(preBreakHtml, /:root,[\s\S]*?background:\s*transparent/);
+  assert.doesNotMatch(preBreakEntry, /app\.css/);
+  assert.match(preBreak, /padding:\s*12px/);
+  assert.match(engine, /PRE_BREAK_TRANSPARENT_GUTTER:\s*f64\s*=\s*12\.0/);
+  assert.match(engine, /PRE_BREAK_CARD_WIDTH\s*\+\s*PRE_BREAK_TRANSPARENT_GUTTER\s*\*\s*2\.0/);
   assert.match(capabilities, /eye-care-pre-break/);
   assert.match(capabilities, /eye-care-overlay-\*/);
 });

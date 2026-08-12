@@ -20,6 +20,10 @@ pub const OVERLAY_PREFIX: &str = "eye-care-overlay-";
 pub const PRE_BREAK_LABEL: &str = "eye-care-pre-break";
 pub const STATUS_EVENT: &str = "eye-care-status-changed";
 pub const RECAP_EVENT: &str = "eye-care-recap-ready";
+const PRE_BREAK_CARD_WIDTH: f64 = 420.0;
+const PRE_BREAK_CARD_HEIGHT: f64 = 124.0;
+const PRE_BREAK_TRANSPARENT_GUTTER: f64 = 12.0;
+const PRE_BREAK_SCREEN_MARGIN: f64 = 24.0;
 const MAX_TRUSTED_RESTART_GAP_SECS: i64 = 7 * 24 * 60 * 60;
 const MAX_TRUSTED_RESTART_GAP_MS: u64 = MAX_TRUSTED_RESTART_GAP_SECS as u64 * 1_000;
 const UNKNOWN_TICK_GAP_MS: u64 = 5_000;
@@ -678,37 +682,47 @@ pub fn sync_pre_break_window(app: &AppHandle, status: &EyeCareStatus) -> tauri::
         return Ok(());
     };
     let scale = monitor.scale_factor();
-    let width = (420.0 * scale).round().max(1.0) as u32;
-    let height = (124.0 * scale).round().max(1.0) as u32;
-    let margin = (24.0 * scale).round() as i32;
+    // 卡片四周保留真实透明像素。圆角抗锯齿与投影只和透明画布合成，
+    // 不再暴露 WebView 物理矩形的根背景。
+    let logical_width = PRE_BREAK_CARD_WIDTH + PRE_BREAK_TRANSPARENT_GUTTER * 2.0;
+    let logical_height = PRE_BREAK_CARD_HEIGHT + PRE_BREAK_TRANSPARENT_GUTTER * 2.0;
+    let width = (logical_width * scale).round().max(1.0) as u32;
+    let height = (logical_height * scale).round().max(1.0) as u32;
+    // 窗口边缘离屏幕 12px，内部 gutter 再提供 12px，使卡片仍保持 24px 边距。
+    let window_margin =
+        ((PRE_BREAK_SCREEN_MARGIN - PRE_BREAK_TRANSPARENT_GUTTER) * scale).round() as i32;
     let monitor_position = *monitor.position();
     let monitor_size = *monitor.size();
     let x = monitor_position
         .x
         .saturating_add(monitor_size.width.saturating_sub(width) as i32)
-        .saturating_sub(margin);
-    let y = monitor_position.y.saturating_add(margin);
+        .saturating_sub(window_margin);
+    let y = monitor_position.y.saturating_add(window_margin);
 
     let window = if let Some(window) = app.get_webview_window(PRE_BREAK_LABEL) {
         window
     } else {
-        WebviewWindowBuilder::new(app, PRE_BREAK_LABEL, WebviewUrl::default())
-            .title("WorkBreath Break Notice")
-            .inner_size(420.0, 124.0)
-            .resizable(false)
-            .maximizable(false)
-            .minimizable(false)
-            .closable(false)
-            .decorations(false)
-            .transparent(true)
-            .visible(false)
-            .always_on_top(true)
-            .skip_taskbar(true)
-            .shadow(false)
-            .focused(false)
-            .focusable(false)
-            .content_protected(true)
-            .build()?
+        WebviewWindowBuilder::new(
+            app,
+            PRE_BREAK_LABEL,
+            WebviewUrl::App("pre-break.html".into()),
+        )
+        .title("WorkBreath Break Notice")
+        .inner_size(logical_width, logical_height)
+        .resizable(false)
+        .maximizable(false)
+        .minimizable(false)
+        .closable(false)
+        .decorations(false)
+        .transparent(true)
+        .visible(false)
+        .always_on_top(true)
+        .skip_taskbar(true)
+        .shadow(false)
+        .focused(false)
+        .focusable(false)
+        .content_protected(true)
+        .build()?
     };
     let _ = window.set_position(Position::Physical(PhysicalPosition::new(x, y)));
     let _ = window.set_size(Size::Physical(PhysicalSize::new(width, height)));
