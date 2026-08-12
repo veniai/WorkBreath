@@ -149,7 +149,8 @@ test('多语言 README 应覆盖当前版本关键能力和安装资产', async 
     {
       file: './README.md',
       patterns: [
-        /Windows \| `\.exe` \/ portable `\.zip` \|/,
+        /Windows x86_64 \| `\.exe` \|/,
+        /does not provide a portable Windows build, Linux RPM\/AppImage, or Linux ARM64 package/,
         /hourly activity across Today, Week, Date, and Range views/,
         /dynamic opening prompts after a model is configured/,
         /browser sources, page counts, duration, inline expansion, and editable semantic categorization/,
@@ -158,7 +159,8 @@ test('多语言 README 应覆盖当前版本关键能力和安装资产', async 
     {
       file: './README.zh.md',
       patterns: [
-        /Windows \| `\.exe` \/ 便携版 `\.zip` \|/,
+        /Windows x86_64 \| `\.exe` \|/,
+        /不提供 Windows 便携版、Linux RPM \/ AppImage 或 Linux ARM64 安装包/,
         /按今日、本周、指定日期、日期范围查看小时活跃度/,
         /配置模型后显示动态开场提示/,
         /展示浏览器来源、页面数和时长，支持卡片内展开全部网站并编辑语义分类/,
@@ -167,7 +169,8 @@ test('多语言 README 应覆盖当前版本关键能力和安装资产', async 
     {
       file: './README.tw.md',
       patterns: [
-        /Windows \| `\.exe` \/ 便攜版 `\.zip` \|/,
+        /Windows x86_64 \| `\.exe` \|/,
+        /不提供 Windows 便攜版、Linux RPM \/ AppImage 或 Linux ARM64 安裝包/,
         /按今日、本週、指定日期、日期範圍查看小時活躍度/,
         /配置模型後顯示動態開場提示/,
         /展示瀏覽器來源、頁面數和時長，支援在卡片內展開全部網站並編輯語義分類/,
@@ -200,6 +203,7 @@ test('多语言 README 应展示完整界面预览截图且图片文件存在', 
   ];
   const labels = [
     '概览',
+    '护眼',
     '时间线',
     '时间线详情',
     '小时总结',

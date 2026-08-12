@@ -28,6 +28,7 @@ test('截图上下文应固定上海时区与媒体规格所需视口', () => {
 test('截图脚本应覆盖 README 引用的全部页面，并用核心流程生成 GIF', () => {
   assert.deepEqual(README_SCREENSHOT_LABELS, [
     '概览',
+    '护眼',
     '时间线',
     '时间线详情',
     '小时总结',
@@ -42,6 +43,33 @@ test('截图脚本应覆盖 README 引用的全部页面，并用核心流程生
     '关于',
   ]);
   assert.deepEqual(WORKFLOW_FRAME_LABELS, ['概览', '时间线', '日报']);
+});
+
+test('设置截图应按稳定 tab id 定位，不依赖会随页面变化的序号', async () => {
+  const source = await readFile(new URL('./capture-readme-pages.mjs', import.meta.url), 'utf8');
+
+  assert.match(source, /data-settings-tab/);
+  assert.match(source, /\['ai', '设置-AI模型'\]/);
+  assert.match(source, /\['node', '接入管理'\]/);
+  assert.doesNotMatch(source, /\.settings-tab-rail-item'\)\.nth\(/);
+});
+
+test('浏览器烟测应支持单语言和临时输出目录', async () => {
+  const source = await readFile(new URL('./capture-readme-pages.mjs', import.meta.url), 'utf8');
+
+  assert.match(source, /README_CAPTURE_LOCALES/);
+  assert.match(source, /README_CAPTURE_OUTPUT_ROOT/);
+  assert.match(source, /README_CAPTURE_SKIP_GIF/);
+});
+
+test('CI 应用 Chromium 执行主页面浏览器烟测', async () => {
+  const workflow = await readFile(new URL('../.github/workflows/ci.yml', import.meta.url), 'utf8');
+
+  assert.match(workflow, /ui-smoke:/);
+  assert.match(workflow, /playwright install --with-deps chromium/);
+  assert.match(workflow, /README_CAPTURE_LOCALES=zh-CN/);
+  assert.match(workflow, /README_CAPTURE_OUTPUT_ROOT=\/tmp\/workbreath-ui-smoke/);
+  assert.match(workflow, /README_CAPTURE_SKIP_GIF=1/);
 });
 
 test('截图模拟统计应保持总投入、应用、分类与网站口径一致', () => {

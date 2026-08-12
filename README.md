@@ -76,6 +76,11 @@ The screenshots below are captured from the running desktop app with localized U
   <img src="docs/Introduction_en/概览.png" alt="Overview" width="720" />
 </p>
 
+<p align="center"><strong>Eye Care</strong></p>
+<p align="center">
+  <img src="docs/Introduction_en/护眼.png" alt="Eye-care timer and break settings" width="720" />
+</p>
+
 <p align="center"><strong>Timeline</strong></p>
 <p align="center">
   <img src="docs/Introduction_en/时间线.png" alt="Timeline" width="720" />
@@ -210,9 +215,10 @@ Supported providers: Ollama (local) / LM Studio (local) / OpenAI compatible / De
 | Platform | Installer |
 |------|--------|
 | macOS (Apple Silicon / Intel) | `.dmg` |
-| Windows | `.exe` / portable `.zip` |
-| Linux x86_64 (X11 / Wayland) | `.deb` / `.rpm` / `.AppImage` |
-| Linux ARM64 (aarch64) | `.deb` |
+| Windows x86_64 | `.exe` |
+| Linux x86_64 (X11 / Wayland) | `.deb` |
+
+> The current download page does not provide a portable Windows build, Linux RPM/AppImage, or Linux ARM64 package. The table above intentionally matches the assets published in Releases.
 
 **macOS:** Screenshots require "Screen Recording"; activity recognition uses "Accessibility", and eye-care idle detection may require "Input Monitoring". If you see a "damaged" warning on first launch: `sudo xattr -rd com.apple.quarantine "/Applications/WorkBreath.app"`
 
