@@ -48,20 +48,20 @@
 </div>
 
 <style>
-  /* 窗口 = 卡片本身，不有多余空间。
-     圆角直接画在 html/body 上，透明窗口让四角真正透明。 */
+  /* 窗口背景必须完全透明，让透明窗口的四角真正透出桌面。
+     卡片（.notice）用 margin 包裹，圆角外是真正的透明区。 */
   :global(html), :global(body), :global(#app) {
     margin: 0;
     width: 100%;
     height: 100%;
     overflow: hidden;
-    border-radius: 20px;
-    background: #141416;
+    background: transparent;
   }
 
   .notice-shell {
     width: 100%;
     height: 100%;
+    padding: 0;
   }
 
   .notice {
@@ -81,6 +81,8 @@
     font-family: "SF Pro Display", "SF Pro Text", "PingFang SC", "Microsoft YaHei", sans-serif;
     -webkit-font-smoothing: antialiased;
     user-select: none;
+    /* 深色投影模拟毛玻璃层次感，因为窗口 shadow(false) 不画系统阴影 */
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
   }
 
   .icon {
