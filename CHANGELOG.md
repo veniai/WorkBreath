@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.5.6] - 2026-08-12
+
+### 修复
+- **Linux 护眼预提醒稳定性**：调整透明预提醒窗口的原生调用顺序，先显示并完成窗口创建，再启用鼠标事件穿透，避免 Tao 在未实现的 GDK window 上触发崩溃。
+
+### 验证
+- 前端自动化测试与生产构建通过；Linux 原生崩溃已用 v1.5.5 安装包复现并增加调用顺序回归测试。本版本按发布决策未执行修复后二进制的本机原生视觉验收。
+
 ## [1.5.5] - 2026-08-12
 
 ### 修复

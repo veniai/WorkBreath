@@ -181,6 +181,15 @@ test('预告非阻挡，休息层覆盖每块显示器且 watchdog 会恢复窗�
   assert.match(preBreak, /padding:\s*12px/);
   assert.match(engine, /PRE_BREAK_TRANSPARENT_GUTTER:\s*f64\s*=\s*12\.0/);
   assert.match(engine, /PRE_BREAK_CARD_WIDTH\s*\+\s*PRE_BREAK_TRANSPARENT_GUTTER\s*\*\s*2\.0/);
+  // Linux 的 GDK window 只有 show 后才会完成 realize；过早设置鼠标穿透会在 Tao 内部 unwrap(None) 崩溃。
+  const preBreakSync = engine.slice(
+    engine.indexOf('pub fn sync_pre_break_window'),
+    engine.indexOf('pub fn sync_overlay_windows'),
+  );
+  assert.ok(
+    preBreakSync.indexOf('window.show()') < preBreakSync.indexOf('window.set_ignore_cursor_events(true)'),
+    '预提醒必须先显示并完成原生窗口创建，再设置鼠标事件穿透',
+  );
   assert.match(capabilities, /eye-care-pre-break/);
   assert.match(capabilities, /eye-care-overlay-\*/);
 });
