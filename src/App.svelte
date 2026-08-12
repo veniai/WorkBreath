@@ -109,50 +109,6 @@
     }
   }
 
-  // 预加载核心数据
-  async function preloadApp() {
-    devLog('开始预加载数据...');
-    const today = getLocalDate();
-    
-    // 并行预加载：概览、时间线(今天)、日报(今天)
-    Promise.all([
-      // 1. 概览
-      invoke('get_today_stats').then(stats => {
-        cache.setOverview(stats);
-
-        preloadAppIcons(
-          (stats?.browser_usage || []).map((browser) => ({
-            appName: browser.browser_name,
-            executablePath: browser.executable_path,
-          })),
-          invoke,
-          { priority: true }
-        );
-
-        preloadAppIcons(
-          (stats?.app_usage || []).slice(0, 6).map((app) => ({
-            appName: app.app_name,
-            executablePath: app.executable_path,
-          })),
-          invoke
-        );
-      }),
-      // 2. 时间线 (今天) - 仅预加载前 20 条
-      Promise.all([
-        invoke('get_timeline', { date: today, limit: 20, offset: 0 }),
-        invoke('get_hourly_summaries', { date: today })
-      ]).then(([activities, summaries]) => cache.setTimeline(today, activities, summaries)),
-      // 3. 日报 (今天) - 检查是否已存在（必须带上当前语言，否则会把中文日报缓存到其他语言的 key 下）
-      invoke('get_saved_report', { date: today, locale: $locale }).then(report => {
-        if (report) cache.setReport(`${today}:${$locale}`, report);
-      })
-    ]).then(() => {
-      devLog('预加载完成');
-    }).catch(e => {
-      console.warn('预加载部分失败:', e);
-    });
-  }
-
   const routes = {
     '/': wrap({ asyncComponent: () => import('./routes/Overview.svelte') }),
     '/eye-care': wrap({ asyncComponent: () => import('./routes/eye-care/EyeCare.svelte') }),
@@ -412,9 +368,6 @@
       const handleBgChange = (e) => handleBackgroundChanged(e);
       window.addEventListener('background-changed', handleBgChange);
       pendingCleanup.push(() => window.removeEventListener('background-changed', handleBgChange));
-
-      // 启动预加载
-      preloadApp();
 
       // 启动后延迟执行一次自动更新检查，避免阻塞首屏渲染
       const autoUpdateTimer = setTimeout(async () => {
