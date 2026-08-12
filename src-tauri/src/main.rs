@@ -1285,10 +1285,20 @@ fn should_skip_system_window(active_window: &monitor::ActiveWindow) -> bool {
 }
 
 async fn background_eye_care_task(state: Arc<Mutex<AppState>>, app: AppHandle) {
+    const PERSIST_INTERVAL_TICKS: u8 = 30;
+
+    #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+    struct PersistenceMarker {
+        phase: eye_care::EyeCarePhase,
+        enabled: bool,
+        paused: bool,
+    }
+
     let lock_monitor = screen_lock::ScreenLockMonitor::new();
     let mut last_tick = std::time::Instant::now();
     let mut last_suspend_clock_ms = eye_care::suspend_aware_clock_ms();
     let mut ticks_since_save = 0u8;
+    let mut previous_persistence_marker: Option<PersistenceMarker> = None;
     let mut post_rest_lock_grace_until: Option<std::time::Instant> = None;
 
     loop {
@@ -1403,12 +1413,19 @@ async fn background_eye_care_task(state: Arc<Mutex<AppState>>, app: AppHandle) {
         }
 
         ticks_since_save = ticks_since_save.saturating_add(1);
-        if ticks_since_save >= 5
-            || transition.entered_rest
-            || transition.completed_rest
-            || transition.returned
-            || transition.natural_reset
-        {
+        let persistence_marker = PersistenceMarker {
+            phase: status.phase,
+            enabled: status.enabled,
+            paused: status.paused,
+        };
+        let persistence_state_changed = previous_persistence_marker != Some(persistence_marker);
+        previous_persistence_marker = Some(persistence_marker);
+        if should_persist_eye_care_state(
+            ticks_since_save,
+            PERSIST_INTERVAL_TICKS,
+            persistence_state_changed,
+            transition,
+        ) {
             let mut state_guard = state.lock().unwrap_or_else(|e| e.into_inner());
             if let Err(error) = state_guard.eye_care.save(&state_path, now_unix) {
                 log::warn!("持久化护眼运行状态失败: {error}");
@@ -1416,6 +1433,20 @@ async fn background_eye_care_task(state: Arc<Mutex<AppState>>, app: AppHandle) {
             ticks_since_save = 0;
         }
     }
+}
+
+fn should_persist_eye_care_state(
+    ticks_since_save: u8,
+    persist_interval_ticks: u8,
+    persistence_state_changed: bool,
+    transition: eye_care::EyeCareTransition,
+) -> bool {
+    ticks_since_save >= persist_interval_ticks
+        || persistence_state_changed
+        || transition.entered_rest
+        || transition.completed_rest
+        || transition.returned
+        || transition.natural_reset
 }
 
 async fn background_screenshot_task(state: Arc<Mutex<AppState>>, app: AppHandle) {
@@ -3924,7 +3955,8 @@ mod tests {
         recording_loop_decision, resolve_activity_classification,
         screen_lock_check_interval_ms_for_platform, should_confirm_idle,
         should_hide_main_window_on_setup, should_initialize_startup_permissions,
-        should_merge_contiguous_activity, should_persist_merge_update, should_prevent_exit,
+        should_merge_contiguous_activity, should_persist_eye_care_state,
+        should_persist_merge_update, should_prevent_exit,
         should_probe_browser_url_before_change_detection, should_request_screen_capture_permission,
         should_run_startup_cleanup, should_skip_system_window, tray_recording_toggle_action,
         tray_recording_toggle_label, MainWindowCloseBehavior, RecordingToggleAction,
@@ -3950,6 +3982,20 @@ mod tests {
             initial_recording_state(ConfigLoadStatus::Corrupted),
             (false, true)
         );
+    }
+
+    #[test]
+    fn 护眼状态应降低普通写盘频率但立即保存关键变化() {
+        let no_transition = crate::eye_care::EyeCareTransition::default();
+        assert!(!should_persist_eye_care_state(29, 30, false, no_transition));
+        assert!(should_persist_eye_care_state(30, 30, false, no_transition));
+        assert!(should_persist_eye_care_state(1, 30, true, no_transition));
+
+        let entered_rest = crate::eye_care::EyeCareTransition {
+            entered_rest: true,
+            ..Default::default()
+        };
+        assert!(should_persist_eye_care_state(1, 30, false, entered_rest));
     }
 
     #[test]

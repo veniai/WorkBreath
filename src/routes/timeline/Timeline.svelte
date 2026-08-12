@@ -711,9 +711,6 @@
       // 预加载缩略图
       activities.slice(6).forEach(a => loadThumbnail(a.screenshot_path));
       
-      // 后台预加载前 6 张高清图（避免点击时等待）
-      activities.slice(0, 6).forEach(a => loadFullImage(a.screenshot_path));
-      
       // 预加载应用图标（获取唯一应用名并批量加载）
       const uniqueIconEntries = Array.from(
         new Map(

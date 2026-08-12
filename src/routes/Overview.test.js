@@ -268,15 +268,16 @@ test('概览页面在不可见时应暂停时钟与定时刷新', async () => {
   assert.match(source, /document\.removeEventListener\('visibilitychange'/);
 });
 
-test('概览页面在浏览器预览环境缺少 Tauri event metadata 时不应中断挂载', async () => {
+test('概览页面应复用全局活动事件并合并高频刷新', async () => {
   const source = await readFile(new URL('./Overview.svelte', import.meta.url), 'utf8');
 
-  assert.match(source, /async function safeListen\(eventName, handler\)/);
-  assert.match(source, /return await listen\(eventName, handler\);/);
-  assert.match(source, /return \(\) => \{\};/);
-  assert.match(source, /await safeListen\('screenshot-taken'/);
-  // 销毁后注册完成的监听器应被立即释放，避免泄漏
-  assert.match(source, /if \(componentDestroyed\)/);
+  assert.doesNotMatch(source, /from '@tauri-apps\/api\/event'/);
+  assert.doesNotMatch(source, /safeListen\('screenshot-taken'/);
+  assert.match(source, /const OVERVIEW_FALLBACK_REFRESH_MS = 120000;/);
+  assert.match(source, /const OVERVIEW_EVENT_DEBOUNCE_MS = 750;/);
+  assert.match(source, /function scheduleOverviewRefresh\(forceRefresh = true\)/);
+  assert.match(source, /window\.addEventListener\('activity-added', handleActivityAdded\)/);
+  assert.match(source, /if \(refreshDebounceTimer\) clearTimeout\(refreshDebounceTimer\)/);
 });
 
 test('概览页面应支持今日、指定日期与本周三种时间视角切换', async () => {

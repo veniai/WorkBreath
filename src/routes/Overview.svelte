@@ -1,7 +1,6 @@
 <script>
   import { onMount, onDestroy, tick } from 'svelte';
   import { invoke } from '@tauri-apps/api/core';
-  import { listen } from '@tauri-apps/api/event';
   import StatsCard from '../lib/components/StatsCard.svelte';
   import AppUsageChart from '../lib/components/AppUsageChart.svelte';
   import ActivityHourlyChart from '../lib/components/ActivityHourlyChart.svelte';
@@ -30,15 +29,6 @@
     getSemanticCategoryColor,
   } from './overviewDomainPresentation.js';
   import { buildCategoryCompositionSummary } from './overviewCategoryPresentation.js';
-
-  async function safeListen(eventName, handler) {
-    try {
-      return await listen(eventName, handler);
-    } catch (e) {
-      console.warn(`当前环境无法注册 Tauri 事件 ${eventName}，已跳过:`, e);
-      return () => {};
-    }
-  }
 
   function getLocalDateString() {
     const now = new Date();
@@ -121,8 +111,6 @@
   let stats = null;
   let loading = true;
   let error = null;
-  let unlisten = null;
-  let componentDestroyed = false;
   let currentTime = new Date();
   let overviewMode = 'today';
   let selectedCompositionCategory = null;
@@ -130,11 +118,14 @@
   let selectedDateTo = getLocalDateString();
   let clockInterval;
   let refreshInterval;
+  let refreshDebounceTimer;
   let handleActivityAdded;
   let handleVisibilityChange;
   let overviewRefreshPromise = null;
   let overviewRefreshKey = '';
   let overviewRequestId = 0;
+  const OVERVIEW_FALLBACK_REFRESH_MS = 120000;
+  const OVERVIEW_EVENT_DEBOUNCE_MS = 750;
   let lastCheckDate = currentTime.getDate();
   let appUsageViewMode = 'row';
   let domainUsageExpanded = false;
@@ -1044,6 +1035,19 @@
     return overviewMode !== 'date';
   }
 
+  function scheduleOverviewRefresh(forceRefresh = true) {
+    if (!shouldAutoRefreshOverview() || document.hidden) {
+      return;
+    }
+    if (refreshDebounceTimer) {
+      clearTimeout(refreshDebounceTimer);
+    }
+    refreshDebounceTimer = setTimeout(() => {
+      refreshDebounceTimer = null;
+      loadStats(forceRefresh);
+    }, OVERVIEW_EVENT_DEBOUNCE_MS);
+  }
+
   function setOverviewMode(mode) {
     if (overviewMode === mode) {
       return;
@@ -1280,15 +1284,17 @@
         if (shouldAutoRefreshOverview()) {
           loadStats();
         }
-      }, 30000);
+      }, OVERVIEW_FALLBACK_REFRESH_MS);
     }
 
     handleVisibilityChange = () => {
       if (document.hidden) {
         clearInterval(clockInterval);
         clearInterval(refreshInterval);
+        if (refreshDebounceTimer) clearTimeout(refreshDebounceTimer);
         clockInterval = null;
         refreshInterval = null;
+        refreshDebounceTimer = null;
       } else {
         currentTime = new Date();
         lastCheckDate = currentTime.getDate();
@@ -1310,30 +1316,15 @@
           if (shouldAutoRefreshOverview()) {
             loadStats();
           }
-        }, 30000);
+        }, OVERVIEW_FALLBACK_REFRESH_MS);
         loadStats(true);
       }
     };
     document.addEventListener('visibilitychange', handleVisibilityChange);
-    
-    // 监听 Tauri 截屏事件（后备）
-    const un = await safeListen('screenshot-taken', () => {
-      if (!document.hidden && shouldAutoRefreshOverview()) {
-        loadStats(true);
-      }
-    });
-    // 组件可能在 await 期间已销毁，避免监听器泄漏
-    if (componentDestroyed) {
-      if (un) un();
-    } else {
-      unlisten = un;
-    }
-    
+
     // 监听全局 activity-added 事件（实时同步）
     handleActivityAdded = () => {
-      if (!document.hidden && shouldAutoRefreshOverview()) {
-        loadStats(true);
-      }
+      scheduleOverviewRefresh(true);
     };
     window.addEventListener('activity-added', handleActivityAdded);
   });
@@ -1343,11 +1334,10 @@
   }
 
   onDestroy(() => {
-    componentDestroyed = true;
     hourlyBreakdownRequestId += 1;
-    if (unlisten) unlisten();
     if (clockInterval) clearInterval(clockInterval);
     if (refreshInterval) clearInterval(refreshInterval);
+    if (refreshDebounceTimer) clearTimeout(refreshDebounceTimer);
     if (handleActivityAdded) window.removeEventListener('activity-added', handleActivityAdded);
     if (handleVisibilityChange) document.removeEventListener('visibilitychange', handleVisibilityChange);
   });
