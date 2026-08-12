@@ -729,9 +729,12 @@ pub fn sync_pre_break_window(app: &AppHandle, status: &EyeCareStatus) -> tauri::
     let _ = window.set_always_on_top(true);
     let _ = window.set_skip_taskbar(true);
     let _ = window.set_content_protected(true);
-    let _ = window.set_ignore_cursor_events(true);
+    // Linux/Tao 在隐藏窗口尚未 realize 时调用鼠标穿透会对不存在的 GDK window
+    // 执行 unwrap() 并导致整个应用崩溃。先 show，让同一事件队列中的原生窗口完成创建，
+    // 再设置穿透；窗口本身不可聚焦，因此不会抢走用户当前焦点。
     let _ = window.show();
     let _ = window.unminimize();
+    let _ = window.set_ignore_cursor_events(true);
     let _ = app.emit_to(PRE_BREAK_LABEL, STATUS_EVENT, status);
     Ok(())
 }
