@@ -212,8 +212,23 @@
           "section": "第十一轮概览护眼融合"
         }
       ]
+    },
+    "独立护眼回顾窗口": {
+      "versions": [
+        {
+          "path": "eye-care-recap-window.html",
+          "createdAt": "2026-08-13T01:00:38.980Z",
+          "status": "approved",
+          "subtitle": "休息结束返回后只显示回顾小窗口；关闭后直接回到原工作界面，不唤醒主页面",
+          "viewport": {
+            "width": 1440,
+            "height": 900
+          },
+          "section": "第十二轮护眼回顾窗口"
+        }
+      ]
     }
   },
   "createdAt": "2026-08-09T07:59:54.698Z",
-  "updatedAt": "2026-08-12T11:02:26.768Z"
+  "updatedAt": "2026-08-13T01:00:38.980Z"
 }

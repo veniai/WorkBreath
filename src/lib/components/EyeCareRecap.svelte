@@ -4,6 +4,7 @@
   import { t } from '$lib/i18n/index.js';
 
   export let recap = null;
+  export let standalone = false;
   const dispatch = createEventDispatcher();
 
   function formatDuration(seconds) {
@@ -21,7 +22,7 @@
 </script>
 
 {#if recap}
-  <div class="recap-backdrop" role="presentation">
+  <div class:standalone class="recap-backdrop" role="presentation">
     <section class="recap-card" role="dialog" aria-modal="true" aria-labelledby="eye-care-recap-title">
       <div class="recap-eyebrow">{t('eyeCare.recapKicker')}</div>
       <h2 id="eye-care-recap-title">{t('eyeCare.recapTitle')}</h2>
@@ -74,6 +75,27 @@
     background: rgba(0, 0, 0, 0.45);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
+  }
+
+  .recap-backdrop.standalone {
+    box-sizing: border-box;
+    position: static;
+    width: 100%;
+    height: 100%;
+    padding: 24px;
+    background: #f5f5f7;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+
+  .recap-backdrop.standalone .recap-card {
+    box-sizing: border-box;
+    width: 100%;
+    max-height: 100%;
+    padding: 26px 28px 28px;
+    border-radius: 18px;
+    background: #ffffff;
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.10);
   }
 
   .recap-card {

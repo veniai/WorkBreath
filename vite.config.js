@@ -28,6 +28,7 @@ export default defineConfig({
       input: {
         main: path.resolve('index.html'),
         preBreak: path.resolve('pre-break.html'),
+        eyeCareRecap: path.resolve('eye-care-recap.html'),
       },
     },
   },

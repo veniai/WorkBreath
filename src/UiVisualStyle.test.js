@@ -67,11 +67,12 @@ test('壳层不再渲染 ambient 装饰光斑', async () => {
   assert.doesNotMatch(appSource, /app-shell-ambient/);
 });
 
-test('护眼休息遮罩为深色静谧全屏，提醒条为深色玻璃拟态，复盘卡为标准模态', async () => {
-  const [overlay, preBreak, recap] = await Promise.all([
+test('护眼休息遮罩为深色静谧全屏，提醒条为深色玻璃拟态，复盘卡支持独立窗口', async () => {
+  const [overlay, preBreak, recap, recapWindow] = await Promise.all([
     read('./routes/eye-care/EyeCareOverlay.svelte'),
     read('./routes/eye-care/EyeCarePreBreak.svelte'),
     read('./lib/components/EyeCareRecap.svelte'),
+    read('./routes/eye-care/EyeCareRecapWindow.svelte'),
   ]);
 
   // 遮罩：radial 深底 + 呼吸光晕 + tabular-nums 倒计时，无糖果色 orb
@@ -90,5 +91,7 @@ test('护眼休息遮罩为深色静谧全屏，提醒条为深色玻璃拟态�
   assert.match(recap, /border-radius:\s*22px/);
   assert.match(recap, /1\.85rem/);
   assert.match(recap, /border-radius:\s*999px/);
+  assert.match(recap, /\.recap-backdrop\.standalone/);
+  assert.match(recapWindow, /<EyeCareRecap \{recap\} standalone/);
   assert.doesNotMatch(recap, /#eff8f6|#4f7f9a/);
 });
