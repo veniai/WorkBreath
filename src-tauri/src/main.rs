@@ -1260,6 +1260,7 @@ pub(crate) fn is_own_app_window(app_name: &str, window_title: &str) -> bool {
         || title == "work review"
         || title == "workbreath rest"
         || title == "workbreath break notice"
+        || title == "workbreath cycle recap"
         || title == "eye review rest"
         || title == "eye review break notice"
 }
@@ -1350,8 +1351,13 @@ async fn background_eye_care_task(state: Arc<Mutex<AppState>>, app: AppHandle) {
                     state_guard.eye_care.recap_break_started_at,
                 ) {
                     let recap = eye_care::build_recap(&state_guard, cycle_start, break_start);
-                    state_guard.pending_eye_care_recap = Some(recap.clone());
-                    Some(recap)
+                    if recap.empty {
+                        state_guard.pending_eye_care_recap = None;
+                        None
+                    } else {
+                        state_guard.pending_eye_care_recap = Some(recap.clone());
+                        Some(recap)
+                    }
                 } else {
                     None
                 }
@@ -1403,12 +1409,15 @@ async fn background_eye_care_task(state: Arc<Mutex<AppState>>, app: AppHandle) {
             }
         }
 
+        if transition.entered_rest {
+            eye_care::close_recap_window(&app);
+        }
+
         if transition.returned {
-            if let Err(error) = reveal_main_window(&app, None) {
-                log::warn!("显示本轮回顾主窗口失败: {error}");
-            }
             if let Some(recap) = recap {
-                let _ = app.emit(eye_care::RECAP_EVENT, recap);
+                if let Err(error) = eye_care::show_recap_window(&app, &recap) {
+                    log::warn!("显示独立本轮回顾窗口失败: {error}");
+                }
             }
         }
 
@@ -3522,13 +3531,24 @@ async fn main() {
                 }
                 return;
             }
+            if eye_care::is_recap_label(window.label()) {
+                if matches!(
+                    event,
+                    tauri::WindowEvent::CloseRequested { .. } | tauri::WindowEvent::Destroyed
+                ) {
+                    if let Some(state) = window.try_state::<Arc<Mutex<AppState>>>() {
+                        let mut state = state.lock().unwrap_or_else(|e| e.into_inner());
+                        state.pending_eye_care_recap = None;
+                    }
+                }
+                return;
+            }
             if window.label() != MAIN_WINDOW_LABEL {
                 return;
             }
 
             if let tauri::WindowEvent::CloseRequested { api, .. } = event {
-                // 休息期间主窗口必须继续存活，避免轻量模式把它销毁后，休息层关闭时
-                // 没有可承载“本轮回顾”的窗口。隐藏不影响休息，销毁则必须拦截。
+                // 休息期间保持主窗口生命周期稳定，避免切换轻量模式影响后台状态同步。
                 if eye_care::is_resting(window.app_handle()) {
                     let _ = window.hide();
                     let _ = window.app_handle().emit("main-window-visibility", false);

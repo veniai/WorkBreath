@@ -5,7 +5,6 @@
   import Sidebar from './lib/components/Sidebar.svelte';
   import Toast from './lib/components/Toast.svelte';
   import ConfirmDialog from './lib/components/ConfirmDialog.svelte';
-  import EyeCareRecap from './lib/components/EyeCareRecap.svelte';
   import { invoke } from '@tauri-apps/api/core';
   import { listen } from '@tauri-apps/api/event';
   import { getCurrentWebviewWindow } from '@tauri-apps/api/webviewWindow';
@@ -129,7 +128,6 @@
   let backgroundBlur = 1;
   let runtimeConfig = null;
   let eyeCareStatus = null;
-  let eyeCareRecap = null;
   let unsubscribeLocale = () => {};
   $: currentLocale = $locale;
 
@@ -347,22 +345,15 @@
       try {
         eyeCareStatus = await invoke('get_eye_care_status');
         eyeCareStore.set(eyeCareStatus);
-        eyeCareRecap = await invoke('get_pending_eye_care_recap');
       } catch (e) {
         console.warn('读取护眼状态失败:', e);
       }
       const unlistenEyeCareStatus = await safeListen('eye-care-status-changed', (event) => {
         eyeCareStatus = event.payload;
         eyeCareStore.set(event.payload);
-        if (event.payload?.phase === 'RESTING') eyeCareRecap = null;
       });
       if (disposed) { try { if (unlistenEyeCareStatus) unlistenEyeCareStatus(); } catch {} return; }
       pendingCleanup.push(unlistenEyeCareStatus);
-      const unlistenEyeCareRecap = await safeListen('eye-care-recap-ready', (event) => {
-        eyeCareRecap = event.payload;
-      });
-      if (disposed) { try { if (unlistenEyeCareRecap) unlistenEyeCareRecap(); } catch {} return; }
-      pendingCleanup.push(unlistenEyeCareRecap);
 
       // 监听背景图更新事件（来自设置页，实时预览）
       const handleBgChange = (e) => handleBackgroundChanged(e);
@@ -577,7 +568,6 @@
         </main>
         <Toast />
         <ConfirmDialog />
-        <EyeCareRecap recap={eyeCareRecap} on:close={() => { eyeCareRecap = null; }} />
       </div>
     </section>
   </div>

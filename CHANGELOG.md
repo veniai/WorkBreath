@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.5.9] - 2026-08-13
+
+### 修复
+- **护眼回顾不再唤醒主页面**：固定休息结束并返回后，本轮回顾改为独立轻量窗口；关闭回顾即可直接回到原工作界面，不再需要额外关闭 WorkBreath 主窗口。
+
+### 调整
+- **空回顾不打扰**：本轮没有有效活动记录时不再弹出空回顾窗口；休息结束锁屏与护眼计时逻辑保持不变。
+- **独立窗口交互**：支持“继续”、系统关闭按钮和 Escape 三种关闭方式，并继续跟随简体中文、英文、繁体中文和阿拉伯文界面语言。
+
+### 验证
+- 445 项前端测试、生产构建、720×600 独立窗口检查与主页面 Chromium 烟测通过；GitHub Actions 的前端测试、浏览器 UI 烟测、Rust `cargo check`、Clippy 和测试全部通过。
+
 ## [1.5.8] - 2026-08-12
 
 ### 性能优化

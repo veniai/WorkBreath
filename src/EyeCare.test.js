@@ -195,10 +195,12 @@ test('预告非阻挡，休息层覆盖每块显示器且 watchdog 会恢复窗�
 });
 
 test('周期回顾只读现有活动并复用隐私过滤，自有窗口不进入采集', async () => {
-  const [engine, main, recap] = await Promise.all([
+  const [engine, main, recap, recapWindow, viteConfig] = await Promise.all([
     read('../src-tauri/src/eye_care.rs'),
     read('../src-tauri/src/main.rs'),
     read('./lib/components/EyeCareRecap.svelte'),
+    read('./routes/eye-care/EyeCareRecapWindow.svelte'),
+    read('../vite.config.js'),
   ]);
 
   assert.match(engine, /get_activities_in_range/);
@@ -208,10 +210,21 @@ test('周期回顾只读现有活动并复用隐私过滤，自有窗口不进�
   assert.match(engine, /overlap_start/);
   assert.match(engine, /overlap_end/);
   assert.match(main, /if transition\.returned[\s\S]*build_recap/);
+  assert.match(main, /if recap\.empty[\s\S]*pending_eye_care_recap = None/);
+  assert.match(main, /transition\.returned[\s\S]*show_recap_window/);
+  assert.doesNotMatch(main, /transition\.returned[\s\S]{0,180}reveal_main_window/);
   assert.match(main, /is_own_app_window/);
   assert.match(main, /title == "workbreath rest"/);
+  assert.match(main, /title == "workbreath cycle recap"/);
   assert.match(main, /title == "eye review rest"/);
   assert.match(recap, /recap\.empty/);
+  assert.match(engine, /RECAP_LABEL:\s*&str = "eye-care-recap"/);
+  assert.match(engine, /WebviewUrl::App\("eye-care-recap\.html"\.into\(\)\)/);
+  assert.match(recapWindow, /get_pending_eye_care_recap/);
+  assert.match(recapWindow, /getCurrentWebviewWindow/);
+  assert.match(recapWindow, /\$:\s*currentLocale = \$locale/);
+  assert.match(recapWindow, /event\.key === 'Escape'/);
+  assert.match(viteConfig, /eyeCareRecap:\s*path\.resolve\('eye-care-recap\.html'\)/);
   assert.doesNotMatch(engine, /capture\(|upload_screenshot|generate_text_with_model/);
 });
 

@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>WorkBreath · 独立护眼回顾窗口</title>
+    <style>
+      :root {
+        color-scheme: light;
+        font-family: "SF Pro Display", "SF Pro Text", "PingFang SC", "Microsoft YaHei", sans-serif;
+        color: #1d1d1f;
+        background: #dfe4ea;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
+        overflow: hidden;
+        background:
+          radial-gradient(circle at 18% 18%, rgba(255,255,255,.9), transparent 30%),
+          linear-gradient(145deg, #edf1f5, #d9dee5);
+      }
+      .desktop-note {
+        position: fixed;
+        left: 24px;
+        bottom: 22px;
+        color: #6e6e73;
+        font-size: 12px;
+      }
+      .window {
+        width: min(680px, calc(100vw - 48px));
+        max-height: calc(100vh - 48px);
+        overflow: hidden;
+        border: 1px solid rgba(0, 0, 0, .10);
+        border-radius: 18px;
+        background: #fff;
+        box-shadow: 0 24px 70px rgba(31, 41, 55, .20), 0 4px 18px rgba(31, 41, 55, .10);
+      }
+      .titlebar {
+        height: 42px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 12px 0 18px;
+        border-bottom: 1px solid rgba(0, 0, 0, .07);
+        background: #fbfbfc;
+        user-select: none;
+      }
+      .brand { display: flex; align-items: center; gap: 9px; font-size: 12px; font-weight: 650; }
+      .mark { width: 24px; height: 14px; color: #2563eb; }
+      .close {
+        width: 28px;
+        height: 28px;
+        display: grid;
+        place-items: center;
+        border: 0;
+        border-radius: 7px;
+        background: transparent;
+        color: #6e6e73;
+        cursor: pointer;
+      }
+      .close:hover { background: #eceef1; color: #1d1d1f; }
+      .content { padding: 26px 28px 28px; }
+      .eyebrow { color: #2563eb; font-size: 11px; font-weight: 700; letter-spacing: .16em; }
+      h1 { margin: 8px 0 20px; font-size: 22px; line-height: 1.25; letter-spacing: -.015em; }
+      .total {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 16px;
+        padding: 15px 17px;
+        border-radius: 12px;
+        background: #f6f8fb;
+      }
+      .total span { color: #6e6e73; font-size: 13px; }
+      .total strong { font-size: 28px; font-weight: 650; font-variant-numeric: tabular-nums; }
+      .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; }
+      h2 { margin: 20px 0 8px; color: #6e6e73; font-size: 12px; font-weight: 650; }
+      ul { margin: 0; padding: 0; list-style: none; }
+      li { display: flex; justify-content: space-between; gap: 14px; padding: 8px 0; border-bottom: 1px solid rgba(0,0,0,.055); font-size: 13px; }
+      li b { flex: none; color: #86868b; font-size: 12px; font-weight: 500; }
+      .actions { display: flex; justify-content: flex-end; margin-top: 24px; }
+      .continue {
+        min-height: 38px;
+        padding: 0 22px;
+        border: 0;
+        border-radius: 999px;
+        background: #2563eb;
+        color: #fff;
+        font: inherit;
+        font-size: 13px;
+        font-weight: 650;
+        cursor: pointer;
+      }
+      .continue:hover { background: #1d4ed8; }
+      .closed {
+        display: none;
+        padding: 16px 20px;
+        border: 1px solid rgba(0,0,0,.08);
+        border-radius: 12px;
+        background: rgba(255,255,255,.88);
+        color: #4b5563;
+        box-shadow: 0 12px 36px rgba(31,41,55,.12);
+        font-size: 13px;
+      }
+      body.is-closed .window { display: none; }
+      body.is-closed .closed { display: block; }
+      @media (max-width: 620px) {
+        .grid { grid-template-columns: 1fr; gap: 0; }
+        .content { padding: 22px; }
+      }
+    </style>
+  </head>
+  <body>
+    <section class="window" role="dialog" aria-modal="true" aria-labelledby="recap-title">
+      <header class="titlebar">
+        <div class="brand">
+          <svg class="mark" viewBox="0 0 44 24" fill="none" aria-hidden="true">
+            <path d="M3 7.5h14l5 9 5-9h14" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <span>WorkBreath · 息刻</span>
+        </div>
+        <button class="close" type="button" aria-label="关闭回顾" data-close>×</button>
+      </header>
+      <div class="content">
+        <div class="eyebrow">本轮回顾</div>
+        <h1 id="recap-title">休息好了，看看刚才完成了什么</h1>
+        <div class="total"><span>估算的有效屏幕使用记录</span><strong>37 分钟</strong></div>
+        <div class="grid">
+          <div>
+            <h2>主要应用</h2>
+            <ul>
+              <li><span>Visual Studio Code</span><b>19 分钟</b></li>
+              <li><span>Chrome</span><b>11 分钟</b></li>
+              <li><span>Figma</span><b>7 分钟</b></li>
+            </ul>
+          </div>
+          <div>
+            <h2>主要网站</h2>
+            <ul>
+              <li><span>github.com</span><b>7 分钟</b></li>
+              <li><span>docs.rs</span><b>3 分钟</b></li>
+            </ul>
+          </div>
+        </div>
+        <div class="actions"><button class="continue" type="button" data-close>继续工作</button></div>
+      </div>
+    </section>
+    <div class="closed" role="status">回顾窗口已关闭；WorkBreath 主页面不会被唤醒。</div>
+    <div class="desktop-note">交互说明：关闭回顾后直接回到原工作界面，不显示 WorkBreath 主页面。</div>
+    <script>
+      document.querySelectorAll('[data-close]').forEach((button) => {
+        button.addEventListener('click', () => document.body.classList.add('is-closed'));
+      });
+    </script>
+  </body>
+</html>

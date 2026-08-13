@@ -18,12 +18,15 @@ use tauri::{
 
 pub const OVERLAY_PREFIX: &str = "eye-care-overlay-";
 pub const PRE_BREAK_LABEL: &str = "eye-care-pre-break";
+pub const RECAP_LABEL: &str = "eye-care-recap";
 pub const STATUS_EVENT: &str = "eye-care-status-changed";
 pub const RECAP_EVENT: &str = "eye-care-recap-ready";
 const PRE_BREAK_CARD_WIDTH: f64 = 420.0;
 const PRE_BREAK_CARD_HEIGHT: f64 = 124.0;
 const PRE_BREAK_TRANSPARENT_GUTTER: f64 = 12.0;
 const PRE_BREAK_SCREEN_MARGIN: f64 = 24.0;
+const RECAP_WINDOW_WIDTH: f64 = 720.0;
+const RECAP_WINDOW_HEIGHT: f64 = 600.0;
 const MAX_TRUSTED_RESTART_GAP_SECS: i64 = 7 * 24 * 60 * 60;
 const MAX_TRUSTED_RESTART_GAP_MS: u64 = MAX_TRUSTED_RESTART_GAP_SECS as u64 * 1_000;
 const UNKNOWN_TICK_GAP_MS: u64 = 5_000;
@@ -811,6 +814,53 @@ pub fn sync_overlay_windows(app: &AppHandle, status: &EyeCareStatus) -> tauri::R
         let _ = app.emit_to(label.as_str(), STATUS_EVENT, status);
     }
     Ok(())
+}
+
+pub fn show_recap_window(app: &AppHandle, recap: &EyeCareRecap) -> tauri::Result<()> {
+    let window = if let Some(window) = app.get_webview_window(RECAP_LABEL) {
+        window
+    } else {
+        WebviewWindowBuilder::new(
+            app,
+            RECAP_LABEL,
+            WebviewUrl::App("eye-care-recap.html".into()),
+        )
+        .title("WorkBreath Cycle Recap")
+        .inner_size(RECAP_WINDOW_WIDTH, RECAP_WINDOW_HEIGHT)
+        .center()
+        .resizable(false)
+        .maximizable(false)
+        .minimizable(true)
+        .closable(true)
+        .decorations(true)
+        .transparent(false)
+        .visible(false)
+        .always_on_top(true)
+        .skip_taskbar(false)
+        .shadow(true)
+        .focused(true)
+        .content_protected(true)
+        .build()?
+    };
+
+    let _ = window.center();
+    let _ = window.set_always_on_top(true);
+    let _ = window.set_content_protected(true);
+    let _ = window.show();
+    let _ = window.unminimize();
+    let _ = window.set_focus();
+    let _ = app.emit_to(RECAP_LABEL, RECAP_EVENT, recap);
+    Ok(())
+}
+
+pub fn close_recap_window(app: &AppHandle) {
+    if let Some(window) = app.get_webview_window(RECAP_LABEL) {
+        let _ = window.close();
+    }
+}
+
+pub fn is_recap_label(label: &str) -> bool {
+    label == RECAP_LABEL
 }
 
 pub fn is_resting(app: &AppHandle) -> bool {
