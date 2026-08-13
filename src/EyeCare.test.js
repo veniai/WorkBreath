@@ -195,12 +195,14 @@ test('预告非阻挡，休息层覆盖每块显示器且 watchdog 会恢复窗�
 });
 
 test('周期回顾只读现有活动并复用隐私过滤，自有窗口不进入采集', async () => {
-  const [engine, main, recap, recapWindow, viteConfig] = await Promise.all([
+  const [engine, main, recap, recapWindow, recapHtml, viteConfig, capabilities] = await Promise.all([
     read('../src-tauri/src/eye_care.rs'),
     read('../src-tauri/src/main.rs'),
     read('./lib/components/EyeCareRecap.svelte'),
     read('./routes/eye-care/EyeCareRecapWindow.svelte'),
+    read('../eye-care-recap.html'),
     read('../vite.config.js'),
+    read('../src-tauri/capabilities/migrated.json'),
   ]);
 
   assert.match(engine, /get_activities_in_range/);
@@ -220,8 +222,47 @@ test('周期回顾只读现有活动并复用隐私过滤，自有窗口不进�
   assert.match(recap, /recap\.empty/);
   assert.match(engine, /RECAP_LABEL:\s*&str = "eye-care-recap"/);
   assert.match(engine, /WebviewUrl::App\("eye-care-recap\.html"\.into\(\)\)/);
+  // 回顾的居中位置、720×600 尺寸和内容保持原状，只移除原生标题栏与方形底。
+  assert.match(engine, /RECAP_WINDOW_WIDTH:\s*f64\s*=\s*720\.0/);
+  assert.match(engine, /RECAP_WINDOW_HEIGHT:\s*f64\s*=\s*600\.0/);
+  const recapWindowBuilder = engine.slice(
+    engine.indexOf('pub fn show_recap_window'),
+    engine.indexOf('pub fn close_recap_window'),
+  );
+  assert.match(recapWindowBuilder, /\.inner_size\(RECAP_WINDOW_WIDTH, RECAP_WINDOW_HEIGHT\)/);
+  assert.match(recapWindowBuilder, /\.center\(\)/);
+  assert.match(recapWindowBuilder, /\.decorations\(false\)/);
+  assert.match(recapWindowBuilder, /\.transparent\(true\)/);
+  assert.match(recapWindowBuilder, /\.skip_taskbar\(true\)/);
+  assert.match(recapWindowBuilder, /\.shadow\(false\)/);
+  assert.doesNotMatch(recapWindowBuilder, /setTimeout|from_secs|sleep/);
+  assert.match(recapHtml, /background:\s*transparent/);
+  assert.match(recap, /\.recap-backdrop\.standalone[\s\S]*?background:\s*transparent/);
+  assert.match(capabilities, /"eye-care-recap"/);
+
+  // “继续/知道了”必须让 Rust 先隐藏再关闭整扇窗口，不能先清空内容留下空壳。
+  const closeRecapWindow = engine.slice(
+    engine.indexOf('pub fn close_recap_window'),
+    engine.indexOf('pub fn is_recap_label'),
+  );
+  assert.ok(
+    closeRecapWindow.indexOf('window.hide()') < closeRecapWindow.indexOf('window.close()'),
+    '回顾窗口必须先隐藏再关闭',
+  );
+  const dismissRecap = engine.slice(
+    engine.indexOf('pub async fn dismiss_eye_care_recap'),
+    engine.indexOf('/// 紧急退出休息层'),
+  );
+  assert.match(dismissRecap, /app:\s*AppHandle/);
+  assert.match(dismissRecap, /close_recap_window\(&app\)/);
   assert.match(recapWindow, /get_pending_eye_care_recap/);
   assert.match(recapWindow, /getCurrentWebviewWindow/);
+  assert.match(recapWindow, /invoke\('dismiss_eye_care_recap'\)/);
+  const closeWindowHandler = recapWindow.slice(
+    recapWindow.indexOf('async function closeWindow'),
+    recapWindow.indexOf('onMount(() =>'),
+  );
+  assert.doesNotMatch(closeWindowHandler, /recap\s*=\s*null/);
   assert.match(recapWindow, /\$:\s*currentLocale = \$locale/);
   assert.match(recapWindow, /event\.key === 'Escape'/);
   assert.match(viteConfig, /eyeCareRecap:\s*path\.resolve\('eye-care-recap\.html'\)/);

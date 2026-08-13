@@ -1410,7 +1410,7 @@ async fn background_eye_care_task(state: Arc<Mutex<AppState>>, app: AppHandle) {
         }
 
         if transition.entered_rest {
-            eye_care::close_recap_window(&app);
+            let _ = eye_care::close_recap_window(&app);
         }
 
         if transition.returned {

@@ -87,11 +87,12 @@ test('护眼休息遮罩为深色静谧全屏，提醒条为深色玻璃拟态�
   assert.match(preBreak, /<svg viewBox="0 0 24 24"/);
   assert.doesNotMatch(preBreak, /◌|#72cbb5/);
 
-  // 复盘卡：22px 圆角模态 + 大号 KPI 数字 + 主色 pill 按钮
+  // 复盘卡内容保持不变；独立窗口外围改为透明，不再露出方形底壳。
   assert.match(recap, /border-radius:\s*22px/);
   assert.match(recap, /1\.85rem/);
   assert.match(recap, /border-radius:\s*999px/);
-  assert.match(recap, /\.recap-backdrop\.standalone/);
+  assert.match(recap, /\.recap-backdrop\.standalone[\s\S]*?background:\s*transparent/);
   assert.match(recapWindow, /<EyeCareRecap \{recap\} standalone/);
+  assert.match(recapWindow, /background:\s*transparent/);
   assert.doesNotMatch(recap, /#eff8f6|#4f7f9a/);
 });

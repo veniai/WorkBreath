@@ -830,14 +830,14 @@ pub fn show_recap_window(app: &AppHandle, recap: &EyeCareRecap) -> tauri::Result
         .center()
         .resizable(false)
         .maximizable(false)
-        .minimizable(true)
+        .minimizable(false)
         .closable(true)
-        .decorations(true)
-        .transparent(false)
+        .decorations(false)
+        .transparent(true)
         .visible(false)
         .always_on_top(true)
-        .skip_taskbar(false)
-        .shadow(true)
+        .skip_taskbar(true)
+        .shadow(false)
         .focused(true)
         .content_protected(true)
         .build()?
@@ -853,10 +853,14 @@ pub fn show_recap_window(app: &AppHandle, recap: &EyeCareRecap) -> tauri::Result
     Ok(())
 }
 
-pub fn close_recap_window(app: &AppHandle) {
+pub fn close_recap_window(app: &AppHandle) -> tauri::Result<()> {
     if let Some(window) = app.get_webview_window(RECAP_LABEL) {
-        let _ = window.close();
+        // 先隐藏，确保即使原生 close 失败，用户也不会看到空白窗口外壳。
+        if let (Err(_), Err(error)) = (window.hide(), window.close()) {
+            return Err(error);
+        }
     }
+    Ok(())
 }
 
 pub fn is_recap_label(label: &str) -> bool {
@@ -997,10 +1001,14 @@ pub async fn get_pending_eye_care_recap(
 
 #[tauri::command]
 pub async fn dismiss_eye_care_recap(
+    app: AppHandle,
     state: State<'_, Arc<Mutex<AppState>>>,
 ) -> Result<(), AppError> {
-    let mut state = state.lock().map_err(|e| AppError::Unknown(e.to_string()))?;
-    state.pending_eye_care_recap = None;
+    {
+        let mut state = state.lock().map_err(|e| AppError::Unknown(e.to_string()))?;
+        state.pending_eye_care_recap = None;
+    }
+    close_recap_window(&app).map_err(|error| AppError::Unknown(error.to_string()))?;
     Ok(())
 }
 
