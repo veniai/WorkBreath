@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.5.10] - 2026-08-13
+
+### 修复
+- **护眼回顾不再留下窗口外壳**：回顾继续保持原来的居中位置、720×600 窗口、内容和操作方式，仅移除系统标题栏与方形底；点击“继续”或按 Escape 后会先隐藏再关闭整扇原生窗口，不再留下需要额外点击叉号的空壳。
+- **补齐独立窗口权限**：将 `eye-care-recap` 纳入 Tauri 窗口权限范围，前端关闭兜底不再因缺少权限失效。
+
+### 调整
+- **保持手动确认**：回顾不会自动消失，也不会唤醒 WorkBreath 主页面或在任务栏留下额外入口。
+
+### 验证
+- 445 项前端测试、生产构建、720×600 独立入口浏览器验证、透明根画布检查与关闭路径回归测试通过；跨平台原生构建和 Rust 测试继续由 GitHub Actions 验证。
+
 ## [1.5.9] - 2026-08-13
 
 ### 修复
