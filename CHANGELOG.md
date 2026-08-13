@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.5.11] - 2026-08-13
+
+### 调整
+- **关于页版本信息去重**：当前版本只在 WorkBreath 产品名称旁显示一次；更新区域专注保留“启动时自动检查更新”和“检查更新”两项操作，减少重复信息并让页面层级更清楚。
+
+### 验证
+- 445 项前端测试、生产构建及 1000×700 实际页面 Chromium 检查通过；版本号唯一性、双项更新布局和浏览器运行错误均已自动验证，更新功能行为保持不变。
+
 ## [1.5.10] - 2026-08-13
 
 ### 修复

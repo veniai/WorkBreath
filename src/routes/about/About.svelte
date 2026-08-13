@@ -173,11 +173,6 @@
 
         <div class="about-update-grid">
           <div class="about-update-unit">
-            <span>{t('about.currentVersionTag')}</span>
-            <strong>v{appVersion}</strong>
-          </div>
-
-          <div class="about-update-unit">
             <span>{t('about.autoCheckUpdate')}</span>
             <button
               type="button"
