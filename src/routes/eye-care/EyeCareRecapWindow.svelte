@@ -29,13 +29,19 @@
     try {
       return getCurrentWebviewWindow();
     } catch {
-      return { close: async () => {} };
+      return { hide: async () => {}, close: async () => {} };
     }
   }
 
   async function closeWindow() {
-    recap = null;
-    await currentWindow().close();
+    try {
+      await invoke('dismiss_eye_care_recap');
+    } catch {
+      // 后端命令通常已经隐藏并关闭整扇窗口；这里只在命令不可用时兜底。
+      const window = currentWindow();
+      try { await window.hide(); } catch {}
+      try { await window.close(); } catch {}
+    }
   }
 
   onMount(() => {
@@ -93,7 +99,7 @@
     width: 100%;
     height: 100%;
     overflow: hidden;
-    background: #f5f5f7;
+    background: transparent;
   }
 
   .recap-window-shell {

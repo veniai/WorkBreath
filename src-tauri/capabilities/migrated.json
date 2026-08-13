@@ -5,6 +5,7 @@
   "windows": [
     "main",
     "eye-care-pre-break",
+    "eye-care-recap",
     "eye-care-overlay-*"
   ],
   "permissions": [

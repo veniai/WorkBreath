@@ -1,6 +1,5 @@
 <script>
   import { createEventDispatcher } from 'svelte';
-  import { invoke } from '@tauri-apps/api/core';
   import { t } from '$lib/i18n/index.js';
 
   export let recap = null;
@@ -15,8 +14,7 @@
       : t('eyeCare.recapMinutes', { minutes });
   }
 
-  async function close() {
-    try { await invoke('dismiss_eye_care_recap'); } catch {}
+  function close() {
     dispatch('close');
   }
 </script>
@@ -83,7 +81,7 @@
     width: 100%;
     height: 100%;
     padding: 24px;
-    background: #f5f5f7;
+    background: transparent;
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
   }
