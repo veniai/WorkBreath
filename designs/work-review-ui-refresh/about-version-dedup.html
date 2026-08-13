@@ -1,0 +1,408 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="design-variant" content="compact-light-about" />
+    <title>Work Review · 紧凑关于页原型</title>
+    <!--
+      设计上下文：延续已确认的方案 A，固定亮色、204px 侧栏、细边框、小圆角与蓝色主动作。
+      设计目标：把品牌、常用操作和更新管理放进一个紧凑产品面板，减少无效留白与重复版本信息。
+      原型范围：GitHub/数据目录反馈、赞助弹窗、二维码放大、自动检查开关和检查更新反馈；不修改任何真实功能。
+    -->
+    <style>
+      :root {
+        color-scheme: light;
+        --page: #eef1f4;
+        --shell: #f8fafb;
+        --sidebar: #f2f5f7;
+        --surface: #ffffff;
+        --surface-2: #f6f8fa;
+        --surface-3: #edf2f6;
+        --ink: #16212b;
+        --ink-2: #4d5c68;
+        --ink-3: #81909c;
+        --line: #dfe6eb;
+        --line-soft: #ebf0f3;
+        --brand: #2f78e8;
+        --brand-strong: #1d64d6;
+        --brand-soft: #e9f2ff;
+        --green: #159b76;
+        --green-soft: #e8f7f2;
+        --rose: #db5265;
+        --rose-soft: #fff0f2;
+        --shadow: 0 20px 60px rgba(22, 33, 43, 0.22);
+        font-family: -apple-system, "SF Pro Text", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+      }
+
+      * { box-sizing: border-box; }
+      html, body { min-width: 840px; min-height: 100%; margin: 0; }
+      body { overflow: hidden; background: var(--page); color: var(--ink); font-size: 14px; -webkit-font-smoothing: antialiased; }
+      button { font: inherit; color: inherit; }
+      button:focus-visible { outline: 2px solid rgba(47, 120, 232, 0.42); outline-offset: 2px; }
+      svg { display: block; }
+      .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+
+      .app-window { width: 100%; height: 100vh; overflow: hidden; background: var(--shell); }
+      .windowbar { height: 28px; display: flex; align-items: center; border-bottom: 1px solid var(--line-soft); background: var(--shell); user-select: none; }
+      .windowbar-title { flex: 1; padding-left: 16px; color: var(--ink-3); font-size: 10px; font-weight: 700; }
+      .window-controls { height: 100%; display: flex; }
+      .window-control { width: 46px; border: 0; background: transparent; color: var(--ink-3); display: grid; place-items: center; }
+      .window-control:hover { background: var(--surface-3); color: var(--ink); }
+      .window-control.close:hover { background: #e74b55; color: #fff; }
+      .window-control svg { width: 10px; height: 10px; }
+
+      .workspace { height: calc(100vh - 28px); display: grid; grid-template-columns: 204px minmax(0, 1fr); }
+      .sidebar { min-width: 0; display: flex; flex-direction: column; padding: 16px 14px 14px; border-right: 1px solid var(--line); background: var(--sidebar); }
+      .brand-row { display: flex; align-items: center; gap: 10px; padding: 0 8px 14px; }
+      .brand-mark { width: 32px; height: 32px; flex: none; overflow: hidden; border-radius: 8px; background: #dceef2; box-shadow: 0 2px 7px rgba(36, 112, 130, 0.14); }
+      .brand-mark img { width: 100%; height: 100%; object-fit: cover; }
+      .brand-name { margin: 0; font-size: 14px; line-height: 1.2; font-weight: 760; }
+      .brand-edition { margin-top: 2px; color: var(--ink-3); font-size: 10px; }
+      .capture-panel { display: flex; align-items: center; gap: 8px; margin-bottom: 17px; padding: 9px 10px; border: 1px solid var(--line); border-radius: 9px; background: var(--surface); }
+      .capture-dot { width: 7px; height: 7px; flex: none; border-radius: 50%; background: var(--green); box-shadow: 0 0 0 4px rgba(21, 155, 118, 0.1); }
+      .capture-copy { min-width: 0; flex: 1; }
+      .capture-title { display: block; font-size: 10.5px; font-weight: 700; }
+      .capture-meta { display: block; margin-top: 2px; color: var(--ink-3); font-size: 10px; }
+      .pause-btn { width: 27px; height: 25px; display: grid; place-items: center; border: 1px solid var(--line); border-radius: 7px; background: var(--surface-2); cursor: pointer; }
+      .pause-btn svg { width: 11px; height: 11px; }
+      .nav-label { padding: 0 10px 7px; color: var(--ink-3); font-size: 10px; font-weight: 750; letter-spacing: 0.12em; }
+      .nav-list { display: flex; flex-direction: column; gap: 3px; }
+      .nav-item { width: 100%; min-height: 37px; display: flex; align-items: center; gap: 10px; padding: 0 10px; border: 0; border-radius: 7px; background: transparent; color: var(--ink-2); font-size: 12px; font-weight: 600; text-align: left; cursor: pointer; }
+      .nav-item:hover { color: var(--ink); background: rgba(237, 242, 246, 0.8); }
+      .nav-item.active { color: var(--brand-strong); background: var(--brand-soft); }
+      .nav-item svg { width: 16px; height: 16px; color: var(--ink-3); }
+      .nav-item.active svg { color: var(--brand); }
+      .sidebar-spacer { flex: 1; }
+      .sidebar-tools { padding: 10px 5px 0; border-top: 1px solid var(--line); }
+      .locale-button { height: 29px; padding: 0 9px; border: 1px solid var(--line); border-radius: 7px; background: var(--surface); color: var(--ink-2); font-size: 10px; font-weight: 700; cursor: pointer; }
+
+      .main { min-width: 0; min-height: 0; background: var(--shell); }
+      .about-shell { width: min(1024px, calc(100% - 40px)); height: 100%; margin: 0 auto; padding: 20px 0 18px; overflow-y: auto; scrollbar-gutter: stable; }
+      .page-head { min-height: 40px; display: flex; align-items: center; gap: 16px; padding-bottom: 12px; border-bottom: 1px solid var(--line-soft); }
+      .heading-row { min-width: 0; flex: 1; display: flex; align-items: center; gap: 10px; }
+      .heading-icon { width: 31px; height: 31px; display: grid; place-items: center; flex: none; border-radius: 8px; background: var(--brand-soft); color: var(--brand); }
+      .heading-icon svg { width: 16px; height: 16px; }
+      .page-heading h1 { margin: 0; font-size: 20px; line-height: 1.2; }
+      .page-subtitle { margin: 4px 0 0; color: var(--ink-3); font-size: 10.5px; }
+
+      .product-panel { display: grid; grid-template-columns: minmax(0, 1.18fr) minmax(350px, 0.82fr); margin-top: 14px; overflow: hidden; border: 1px solid var(--line); border-radius: 9px; background: var(--surface); }
+      .identity-pane { min-width: 0; display: flex; gap: 18px; padding: 26px; border-right: 1px solid var(--line-soft); }
+      .app-icon { width: 70px; height: 70px; flex: none; overflow: hidden; padding: 5px; border: 1px solid var(--line); border-radius: 17px; background: var(--surface-2); }
+      .app-icon img { width: 100%; height: 100%; border-radius: 13px; object-fit: cover; }
+      .identity-copy { min-width: 0; flex: 1; }
+      .product-kicker { margin: 1px 0 8px; color: var(--ink-3); font-size: 10px; font-weight: 750; letter-spacing: 0.1em; text-transform: uppercase; }
+      .product-title-row { display: flex; flex-wrap: wrap; align-items: center; gap: 9px; }
+      .product-title { margin: 0; font-size: 25px; line-height: 1.15; font-weight: 730; letter-spacing: -0.015em; }
+      .version-tag { display: inline-flex; min-height: 24px; align-items: center; padding: 0 8px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface-2); color: var(--ink-2); font-size: 10px; font-weight: 700; font-variant-numeric: tabular-nums; }
+      .product-description { max-width: 430px; margin: 10px 0 0; color: var(--ink-2); font-size: 12px; line-height: 1.7; }
+      .privacy-note { display: flex; align-items: center; gap: 7px; margin-top: 13px; color: var(--green); font-size: 10.5px; font-weight: 650; }
+      .privacy-note svg { width: 14px; height: 14px; }
+      .action-row { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 18px; }
+      .action-button { min-height: 34px; display: inline-flex; align-items: center; gap: 7px; padding: 0 11px; border: 1px solid var(--line); border-radius: 7px; background: var(--surface); color: var(--ink-2); font-size: 10.5px; font-weight: 650; cursor: pointer; }
+      .action-button:hover { border-color: #c9d4dc; background: var(--surface-2); color: var(--ink); }
+      .action-button svg { width: 14px; height: 14px; }
+      .action-button.support { border-color: transparent; color: var(--rose); }
+      .action-button.support:hover { border-color: #f0cbd1; background: var(--rose-soft); }
+
+      .update-pane { min-width: 0; padding: 18px 20px; background: #fbfcfd; }
+      .panel-title-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-bottom: 13px; border-bottom: 1px solid var(--line-soft); }
+      .panel-title-row h2 { margin: 0; font-size: 12px; font-weight: 720; }
+      .status-pill { display: inline-flex; align-items: center; gap: 6px; color: var(--green); font-size: 10px; font-weight: 680; }
+      .status-pill::before { width: 6px; height: 6px; border-radius: 50%; background: currentColor; content: ""; }
+      .update-list { display: grid; }
+      .update-row { min-height: 58px; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 14px; align-items: center; border-bottom: 1px solid var(--line-soft); }
+      .update-row:last-child { border-bottom: 0; }
+      .update-copy strong { display: block; color: var(--ink-2); font-size: 10.5px; }
+      .update-copy span { display: block; margin-top: 3px; color: var(--ink-3); font-size: 10px; line-height: 1.45; }
+      .update-value { color: var(--ink); font-size: 11px; font-weight: 720; font-variant-numeric: tabular-nums; }
+      .switch { width: 38px; height: 22px; position: relative; flex: none; padding: 0; border: 0; border-radius: 999px; background: #cdd6de; cursor: pointer; }
+      .switch::after { position: absolute; top: 3px; left: 3px; width: 16px; height: 16px; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgba(22, 33, 43, 0.25); content: ""; transition: transform 150ms ease; }
+      .switch.on { background: var(--brand); }
+      .switch.on::after { transform: translateX(16px); }
+      .check-button { min-height: 32px; display: inline-flex; align-items: center; gap: 6px; padding: 0 10px; border: 1px solid var(--line); border-radius: 7px; background: var(--surface); color: var(--ink-2); font-size: 10px; font-weight: 680; cursor: pointer; }
+      .check-button:hover { border-color: #c9d4dc; color: var(--ink); }
+      .check-button:disabled { cursor: default; opacity: 0.62; }
+      .check-button svg { width: 13px; height: 13px; }
+      .check-button.checking svg { animation: spin 0.8s linear infinite; }
+
+      .principles-panel { margin-top: 12px; overflow: hidden; border: 1px solid var(--line); border-radius: 9px; background: var(--surface); }
+      .section-head { min-height: 48px; display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 9px 14px; border-bottom: 1px solid var(--line-soft); background: #fbfcfd; }
+      .section-head h2 { margin: 0; font-size: 12px; }
+      .section-head p { margin: 3px 0 0; color: var(--ink-3); font-size: 10px; }
+      .principle-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      .principle { min-width: 0; display: grid; grid-template-columns: 28px minmax(0, 1fr); gap: 10px; align-items: start; padding: 15px 16px; }
+      .principle + .principle { border-left: 1px solid var(--line-soft); }
+      .principle-index { width: 26px; height: 26px; display: grid; place-items: center; border-radius: 7px; background: var(--surface-2); color: var(--brand); font-size: 9px; font-weight: 780; font-variant-numeric: tabular-nums; }
+      .principle h3 { margin: 1px 0 0; font-size: 11px; }
+      .principle p { margin: 5px 0 0; color: var(--ink-3); font-size: 10px; line-height: 1.6; }
+
+      .foundation-row { min-height: 48px; display: flex; align-items: center; gap: 16px; margin-top: 12px; padding: 0 14px; border-top: 1px solid var(--line-soft); border-bottom: 1px solid var(--line-soft); color: var(--ink-3); }
+      .foundation-label { color: var(--ink-2); font-size: 10px; font-weight: 700; }
+      .tech-list { display: flex; align-items: center; gap: 9px; }
+      .tech-item { display: inline-flex; align-items: center; gap: 9px; font-size: 10px; font-weight: 650; }
+      .tech-item + .tech-item::before { width: 3px; height: 3px; border-radius: 50%; background: #c5d0d9; content: ""; }
+      .foundation-note { margin-left: auto; font-size: 10px; }
+
+      .modal-layer, .zoom-layer { position: fixed; inset: 0; z-index: 80; display: grid; place-items: center; padding: 28px; background: rgba(20, 29, 38, 0.52); backdrop-filter: blur(5px); opacity: 0; pointer-events: none; transition: opacity 160ms ease; }
+      .modal-layer.open, .zoom-layer.open { opacity: 1; pointer-events: auto; }
+      .modal-backdrop { position: absolute; inset: 0; border: 0; background: transparent; cursor: default; }
+      .support-dialog { position: relative; z-index: 1; width: min(900px, 100%); overflow: hidden; border: 1px solid rgba(255, 255, 255, 0.72); border-radius: 12px; background: var(--surface); box-shadow: var(--shadow); transform: translateY(8px) scale(0.99); transition: transform 160ms ease; }
+      .modal-layer.open .support-dialog { transform: translateY(0) scale(1); }
+      .dialog-head { display: flex; align-items: flex-start; gap: 18px; padding: 18px 20px; border-bottom: 1px solid var(--line-soft); background: #fbfcfd; }
+      .dialog-heading { min-width: 0; flex: 1; }
+      .dialog-kicker { margin: 0 0 5px; color: var(--rose); font-size: 10px; font-weight: 760; letter-spacing: 0.1em; }
+      .dialog-heading h2 { margin: 0; font-size: 18px; }
+      .dialog-heading p { max-width: 660px; margin: 6px 0 0; color: var(--ink-3); font-size: 10.5px; line-height: 1.65; }
+      .dialog-close { width: 32px; height: 32px; display: grid; place-items: center; flex: none; border: 1px solid var(--line); border-radius: 7px; background: var(--surface); color: var(--ink-3); cursor: pointer; }
+      .dialog-close:hover { color: var(--ink); background: var(--surface-2); }
+      .dialog-close svg { width: 14px; height: 14px; }
+      .payment-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      .payment-method { min-width: 0; padding: 18px; text-align: center; }
+      .payment-method + .payment-method { border-left: 1px solid var(--line-soft); }
+      .payment-name { display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 24px; }
+      .payment-dot { width: 8px; height: 8px; border-radius: 50%; background: #18a66a; }
+      .payment-method:nth-child(2) .payment-dot { background: #2688dc; }
+      .payment-method:nth-child(3) .payment-dot { background: #d99b31; }
+      .payment-name h3 { margin: 0; font-size: 11px; }
+      .qr-button { width: min(176px, 100%); aspect-ratio: 1; display: block; margin: 13px auto 0; padding: 9px; border: 1px solid var(--line); border-radius: 9px; background: var(--surface-2); cursor: zoom-in; }
+      .qr-button:hover { border-color: #c5d3dd; background: var(--surface); }
+      .qr-button img { width: 100%; height: 100%; display: block; border-radius: 5px; object-fit: cover; }
+      .payment-hint { margin: 9px 0 0; color: var(--ink-3); font-size: 10px; }
+      .zoom-layer { z-index: 100; background: rgba(15, 23, 31, 0.72); cursor: zoom-out; }
+      .zoom-image { position: relative; z-index: 1; width: min(460px, 72vw); max-height: 78vh; border: 10px solid #fff; border-radius: 12px; background: #fff; box-shadow: var(--shadow); object-fit: contain; transform: scale(0.97); transition: transform 160ms ease; }
+      .zoom-layer.open .zoom-image { transform: scale(1); }
+
+      .toast { position: fixed; left: 50%; bottom: 22px; z-index: 120; display: flex; align-items: center; gap: 7px; max-width: 390px; padding: 9px 12px; border-radius: 8px; background: #17222c; color: #f5f8fa; box-shadow: var(--shadow); font-size: 10.5px; opacity: 0; pointer-events: none; transform: translate(-50%, 8px); transition: opacity 150ms ease, transform 150ms ease; }
+      .toast.show { opacity: 1; transform: translate(-50%, 0); }
+      .toast svg { width: 13px; height: 13px; color: #82d7bd; }
+
+      @keyframes spin { to { transform: rotate(360deg); } }
+      @media (max-width: 1080px) {
+        .about-shell { width: calc(100% - 28px); }
+        .product-panel { grid-template-columns: 1fr; }
+        .identity-pane { border-right: 0; border-bottom: 1px solid var(--line-soft); }
+        .update-pane { padding-block: 13px; }
+        .update-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        .update-row { min-height: 72px; display: flex; flex-direction: column; align-items: flex-start; justify-content: center; gap: 8px; padding: 8px 12px; border-bottom: 0; border-left: 1px solid var(--line-soft); }
+        .update-row:first-child { border-left: 0; }
+        .payment-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="app-window" data-screen-label="关于 · 紧凑浅色方案" aria-label="Work Review 紧凑关于页原型">
+      <header class="windowbar">
+        <span class="windowbar-title">Work Review</span>
+        <div class="window-controls" aria-hidden="true">
+          <button class="window-control" type="button"><svg><use href="#i-min"></use></svg></button>
+          <button class="window-control" type="button"><svg><use href="#i-max"></use></svg></button>
+          <button class="window-control close" type="button"><svg><use href="#i-close"></use></svg></button>
+        </div>
+      </header>
+
+      <div class="workspace">
+        <aside class="sidebar">
+          <div class="brand-row">
+            <span class="brand-mark"><img src="./assets/icon.png" alt="" /></span>
+            <div><h2 class="brand-name">Work Review</h2><div class="brand-edition">本地工作回顾</div></div>
+          </div>
+          <div class="capture-panel">
+            <span class="capture-dot"></span>
+            <span class="capture-copy"><span class="capture-title">正在记录</span><span class="capture-meta">仅保存在本机</span></span>
+            <button class="pause-btn" type="button" data-toast="记录状态保持不变；本轮只评审关于页"><svg><use href="#i-pause"></use></svg></button>
+          </div>
+          <div class="nav-label">工作空间</div>
+          <nav class="nav-list">
+            <button class="nav-item" type="button"><svg><use href="#i-overview"></use></svg>概览</button>
+            <button class="nav-item" type="button"><svg><use href="#i-eye"></use></svg>护眼</button>
+            <button class="nav-item" type="button"><svg><use href="#i-timeline"></use></svg>时间线</button>
+            <button class="nav-item" type="button"><svg><use href="#i-report"></use></svg>日报</button>
+            <button class="nav-item" type="button"><svg><use href="#i-ask"></use></svg>助手</button>
+            <button class="nav-item" type="button"><svg><use href="#i-settings"></use></svg>设置</button>
+            <button class="nav-item active" type="button"><svg><use href="#i-info"></use></svg>关于</button>
+          </nav>
+          <div class="sidebar-spacer"></div>
+          <div class="sidebar-tools"><button class="locale-button" type="button" data-toast="语言切换保持现有功能">简体中文</button></div>
+        </aside>
+
+        <section class="main">
+          <div class="about-shell">
+            <header class="page-head">
+              <div class="heading-row">
+                <span class="heading-icon"><svg><use href="#i-info"></use></svg></span>
+                <div class="page-heading"><h1>关于</h1><p class="page-subtitle">产品信息、更新与本地数据说明</p></div>
+              </div>
+            </header>
+
+            <section class="product-panel" aria-labelledby="product-title">
+              <div class="identity-pane">
+                <div class="app-icon"><img src="./assets/icon.png" alt="Work Review" /></div>
+                <div class="identity-copy">
+                  <p class="product-kicker">应用信息</p>
+                  <div class="product-title-row"><h2 class="product-title" id="product-title">Work Review</h2><span class="version-tag">v1.3.8</span></div>
+                  <p class="product-description">记录工作过程、生成时间线和日报，帮助你在本机完成每天的工作回顾。</p>
+                  <div class="privacy-note"><svg><use href="#i-lock"></use></svg><span>核心记录默认只保存在当前设备</span></div>
+                  <div class="action-row">
+                    <button class="action-button" type="button" data-toast="原型：将打开 Work Review 的 GitHub 仓库"><svg><use href="#i-github"></use></svg><span>GitHub</span></button>
+                    <button class="action-button" type="button" data-toast="原型：将打开本机数据目录"><svg><use href="#i-folder"></use></svg><span>打开数据目录</span></button>
+                    <button class="action-button support" id="supportButton" type="button"><svg><use href="#i-heart"></use></svg><span>赞助支持</span></button>
+                  </div>
+                </div>
+              </div>
+
+              <div class="update-pane">
+                <div class="panel-title-row"><h2>版本与更新</h2><span class="status-pill" id="statusPill">运行正常</span></div>
+                <div class="update-list">
+                  <div class="update-row"><div class="update-copy"><strong>启动时自动检查</strong><span id="autoCheckCopy">已开启，只检查不自动重启</span></div><button class="switch on" id="autoCheckSwitch" type="button" role="switch" aria-checked="true" aria-label="启动时自动检查更新"></button></div>
+                  <div class="update-row"><div class="update-copy"><strong>检查更新</strong><span id="updateCopy">上次检查：今天 18:42</span></div><button class="check-button" id="checkButton" type="button"><svg><use href="#i-refresh"></use></svg><span>立即检查</span></button></div>
+                </div>
+              </div>
+            </section>
+
+            <section class="principles-panel" aria-labelledby="principles-title">
+              <header class="section-head"><div><h2 id="principles-title">产品原则</h2><p>用简单、可核对的方式记录和整理工作。</p></div></header>
+              <div class="principle-grid">
+                <article class="principle"><span class="principle-index">01</span><div><h3>本地优先</h3><p>核心记录默认只保存在本机，由你决定何时导出或接入模型。</p></div></article>
+                <article class="principle"><span class="principle-index">02</span><div><h3>时间线回看</h3><p>按时间快速回看工作轨迹，判断过程和数据来源保持清楚。</p></div></article>
+                <article class="principle"><span class="principle-index">03</span><div><h3>日报整理</h3><p>把当天记录整理成结构化日报，减少重复回忆和手工汇总。</p></div></article>
+              </div>
+            </section>
+
+            <footer class="foundation-row">
+              <span class="foundation-label">技术基础</span>
+              <div class="tech-list"><span class="tech-item">Tauri 2</span><span class="tech-item">Svelte</span><span class="tech-item">Rust</span><span class="tech-item">SQLite</span></div>
+              <span class="foundation-note">轻量桌面应用 · 本地数据优先</span>
+            </footer>
+          </div>
+        </section>
+      </div>
+    </main>
+
+    <div class="modal-layer" id="supportModal" aria-hidden="true">
+      <button class="modal-backdrop" type="button" data-close-support aria-label="关闭赞助弹窗"></button>
+      <section class="support-dialog" role="dialog" aria-modal="true" aria-labelledby="support-title">
+        <header class="dialog-head">
+          <div class="dialog-heading"><p class="dialog-kicker">SUPPORT</p><h2 id="support-title">支持 Work Review</h2><p>如果这个项目帮助你更清楚地回顾工作，可以选择一种方式支持持续开发。点击二维码可放大查看。</p></div>
+          <button class="dialog-close" type="button" data-close-support aria-label="关闭赞助弹窗"><svg><use href="#i-close"></use></svg></button>
+        </header>
+        <div class="payment-grid">
+          <article class="payment-method"><div class="payment-name"><span class="payment-dot"></span><h3>微信</h3></div><button class="qr-button" type="button" data-qr="./assets/sponsor-wechat.png" aria-label="放大微信赞助二维码"><img src="./assets/sponsor-wechat.png" alt="微信赞助二维码" /></button><p class="payment-hint">微信扫码支持</p></article>
+          <article class="payment-method"><div class="payment-name"><span class="payment-dot"></span><h3>支付宝</h3></div><button class="qr-button" type="button" data-qr="./assets/sponsor-alipay.png" aria-label="放大支付宝赞助二维码"><img src="./assets/sponsor-alipay.png" alt="支付宝赞助二维码" /></button><p class="payment-hint">支付宝扫码支持</p></article>
+          <article class="payment-method"><div class="payment-name"><span class="payment-dot"></span><h3>Buy Me a Coffee</h3></div><button class="qr-button" type="button" data-qr="./assets/sponsor-coffee.png" aria-label="放大 Buy Me a Coffee 二维码"><img src="./assets/sponsor-coffee.png" alt="Buy Me a Coffee QR code" /></button><p class="payment-hint">适合海外支付</p></article>
+        </div>
+      </section>
+    </div>
+
+    <div class="zoom-layer" id="zoomLayer" aria-hidden="true">
+      <button class="modal-backdrop" type="button" data-close-zoom aria-label="关闭二维码放大预览"></button>
+      <img class="zoom-image" id="zoomImage" src="./assets/sponsor-wechat.png" alt="放大的赞助二维码" />
+    </div>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"><svg><use href="#i-check"></use></svg><span></span></div>
+
+    <svg class="sr-only" width="0" height="0" aria-hidden="true">
+      <symbol id="i-overview" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="4" y="4" width="6" height="6" rx="1.5"></rect><rect x="14" y="4" width="6" height="6" rx="1.5"></rect><rect x="4" y="14" width="6" height="6" rx="1.5"></rect><rect x="14" y="14" width="6" height="6" rx="1.5"></rect></symbol>
+      <symbol id="i-eye" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M2.8 12s3.5-5.2 9.2-5.2 9.2 5.2 9.2 5.2-3.5 5.2-9.2 5.2S2.8 12 2.8 12Z"></path><circle cx="12" cy="12" r="2.4"></circle></symbol>
+      <symbol id="i-timeline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="8.5"></circle><path d="M12 7.5v5l3.2 2"></path></symbol>
+      <symbol id="i-report" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M6 3.8h8l4 4V20H6z"></path><path d="M14 3.8V8h4M9 12h6M9 15.5h6"></path></symbol>
+      <symbol id="i-ask" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 5.5h16v12H9l-4.5 3v-3H4z"></path><path d="M8 10h8M8 13.5h5"></path></symbol>
+      <symbol id="i-settings" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="3"></circle><path d="M19 13.5v-3l-2-.6a7 7 0 0 0-.7-1.6l1-1.8-2.1-2.1-1.8 1A7 7 0 0 0 11.5 5l-.6-2h-3l-.6 2a7 7 0 0 0-1.6.7l-1.8-1-2.1 2.1 1 1.8A7 7 0 0 0 2 10.5l-2 .6v3l2 .6a7 7 0 0 0 .7 1.6l-1 1.8 2.1 2.1 1.8-1a7 7 0 0 0 1.6.7l.6 2h3l.6-2a7 7 0 0 0 1.6-.7l1.8 1 2.1-2.1-1-1.8a7 7 0 0 0 .7-1.6Z" transform="translate(2.1 -.6) scale(.82)"></path></symbol>
+      <symbol id="i-info" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="8.5"></circle><path d="M12 10.5v6M12 7.5h.01"></path></symbol>
+      <symbol id="i-pause" viewBox="0 0 24 24" fill="currentColor"><path d="M7 5h3.5v14H7zM13.5 5H17v14h-3.5z"></path></symbol>
+      <symbol id="i-github" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.8a9.2 9.2 0 0 0-2.9 17.93c.46.08.63-.2.63-.44v-1.8c-2.57.56-3.11-1.09-3.11-1.09-.42-1.07-1.03-1.35-1.03-1.35-.84-.57.07-.56.07-.56.92.07 1.41.95 1.41.95.83 1.41 2.16 1 2.69.77.08-.6.32-1 .59-1.23-2.05-.24-4.21-1.03-4.21-4.57 0-1.01.36-1.83.95-2.48-.1-.23-.41-1.17.09-2.44 0 0 .78-.25 2.54.95a8.8 8.8 0 0 1 4.62 0c1.76-1.2 2.53-.95 2.53-.95.5 1.27.19 2.21.09 2.44.59.65.95 1.47.95 2.48 0 3.55-2.16 4.33-4.22 4.56.33.29.63.85.63 1.71v2.54c0 .25.17.53.63.44A9.2 9.2 0 0 0 12 2.8Z"></path></symbol>
+      <symbol id="i-folder" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3.5 6.5h6l1.7 2h9.3v9.5a2 2 0 0 1-2 2h-13a2 2 0 0 1-2-2z"></path></symbol>
+      <symbol id="i-heart" viewBox="0 0 24 24" fill="currentColor"><path d="M12 20.7c-.26 0-.52-.07-.75-.2C9.14 19.24 4.45 16.16 4.45 11.76c0-2.35 1.85-4.3 4.23-4.3 1.32 0 2.56.6 3.31 1.6.75-1 1.99-1.6 3.31-1.6 2.38 0 4.25 1.95 4.25 4.3 0 4.4-4.69 7.48-6.8 8.74-.23.13-.49.2-.75.2Z"></path></symbol>
+      <symbol id="i-lock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="5" y="10" width="14" height="10" rx="2"></rect><path d="M8 10V7.5a4 4 0 0 1 8 0V10"></path></symbol>
+      <symbol id="i-refresh" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M19 8a7.5 7.5 0 1 0 .6 7.1M19 8V3.8M19 8h-4.2"></path></symbol>
+      <symbol id="i-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m5 12 4 4 10-10"></path></symbol>
+      <symbol id="i-min" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M6 12h12"></path></symbol>
+      <symbol id="i-max" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="6" y="6" width="12" height="12"></rect></symbol>
+      <symbol id="i-close" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="m7 7 10 10M17 7 7 17"></path></symbol>
+    </svg>
+
+    <script>
+      const supportModal = document.querySelector('#supportModal');
+      const zoomLayer = document.querySelector('#zoomLayer');
+      const zoomImage = document.querySelector('#zoomImage');
+      const autoCheckSwitch = document.querySelector('#autoCheckSwitch');
+      const autoCheckCopy = document.querySelector('#autoCheckCopy');
+      const checkButton = document.querySelector('#checkButton');
+      const updateCopy = document.querySelector('#updateCopy');
+      const statusPill = document.querySelector('#statusPill');
+      let autoCheck = true;
+      let toastTimer;
+
+      function showToast(message) {
+        const toast = document.querySelector('#toast');
+        toast.querySelector('span').textContent = message;
+        toast.classList.add('show');
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => toast.classList.remove('show'), 2200);
+      }
+
+      function openSupport() {
+        supportModal.classList.add('open');
+        supportModal.setAttribute('aria-hidden', 'false');
+        supportModal.querySelector('.dialog-close').focus();
+      }
+
+      function closeSupport() {
+        zoomLayer.classList.remove('open');
+        zoomLayer.setAttribute('aria-hidden', 'true');
+        supportModal.classList.remove('open');
+        supportModal.setAttribute('aria-hidden', 'true');
+        document.querySelector('#supportButton').focus();
+      }
+
+      document.querySelector('#supportButton').addEventListener('click', openSupport);
+      document.querySelectorAll('[data-close-support]').forEach((button) => button.addEventListener('click', closeSupport));
+      document.querySelectorAll('[data-qr]').forEach((button) => button.addEventListener('click', () => {
+        zoomImage.src = button.dataset.qr;
+        zoomLayer.classList.add('open');
+        zoomLayer.setAttribute('aria-hidden', 'false');
+      }));
+      document.querySelector('[data-close-zoom]').addEventListener('click', () => {
+        zoomLayer.classList.remove('open');
+        zoomLayer.setAttribute('aria-hidden', 'true');
+      });
+
+      autoCheckSwitch.addEventListener('click', () => {
+        autoCheck = !autoCheck;
+        autoCheckSwitch.classList.toggle('on', autoCheck);
+        autoCheckSwitch.setAttribute('aria-checked', String(autoCheck));
+        autoCheckCopy.textContent = autoCheck ? '已开启，只检查不自动重启' : '已关闭，可随时手动检查';
+        showToast(autoCheck ? '已开启启动时自动检查' : '已关闭启动时自动检查');
+      });
+
+      checkButton.addEventListener('click', () => {
+        if (checkButton.disabled) return;
+        checkButton.disabled = true;
+        checkButton.classList.add('checking');
+        checkButton.querySelector('span').textContent = '检查中';
+        updateCopy.textContent = '正在连接更新服务…';
+        statusPill.textContent = '正在检查';
+        setTimeout(() => {
+          checkButton.disabled = false;
+          checkButton.classList.remove('checking');
+          checkButton.querySelector('span').textContent = '再次检查';
+          updateCopy.textContent = '刚刚检查：已是最新版本';
+          statusPill.textContent = '已是最新版本';
+          showToast('当前已是最新版本 1.3.8');
+        }, 900);
+      });
+
+      document.querySelectorAll('[data-toast]').forEach((button) => button.addEventListener('click', () => showToast(button.dataset.toast)));
+      document.querySelectorAll('.nav-item:not(.active)').forEach((button) => button.addEventListener('click', () => showToast('本轮只评审关于页，其他页面保持现有方案')));
+      document.addEventListener('keydown', (event) => {
+        if (event.key !== 'Escape') return;
+        if (zoomLayer.classList.contains('open')) {
+          zoomLayer.classList.remove('open');
+          zoomLayer.setAttribute('aria-hidden', 'true');
+        } else if (supportModal.classList.contains('open')) {
+          closeSupport();
+        }
+      });
+    </script>
+  </body>
+</html>

@@ -25,7 +25,7 @@ test('关于页应落地紧凑双栏产品面板、轻量原则带与响应式�
   assert.match(css, /\.about-principles-card \.about-trust-card \+ \.about-trust-card\s*\{/);
   assert.match(css, /\.about-principles-card\b/);
   assert.match(css, /\.about-tech-item\b/);
-  assert.match(css, /@media \(max-width:\s*1080px\)[\s\S]*?\.about-product-panel\s*\{[\s\S]*?grid-template-columns:\s*1fr;[\s\S]*?\.about-product-panel \.about-update-grid\s*\{[\s\S]*?repeat\(3,/);
+  assert.match(css, /@media \(max-width:\s*1080px\)[\s\S]*?\.about-product-panel\s*\{[\s\S]*?grid-template-columns:\s*1fr;[\s\S]*?\.about-product-panel \.about-update-grid\s*\{[\s\S]*?repeat\(2,/);
   assert.doesNotMatch(source, /about-update-grid[^\"]*\bborder-t\b/);
 });
 

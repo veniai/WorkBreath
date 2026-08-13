@@ -120,6 +120,17 @@
             "height": 1120
           },
           "section": "第七轮关于"
+        },
+        {
+          "path": "about-version-dedup.html",
+          "createdAt": "2026-08-13T03:13:38.134Z",
+          "status": "approved",
+          "subtitle": "品牌标题保留唯一版本号；更新区仅保留自动检查与手动检查",
+          "viewport": {
+            "width": 1440,
+            "height": 1120
+          },
+          "section": "第十三轮关于页去重"
         }
       ]
     },
@@ -241,5 +252,5 @@
     }
   },
   "createdAt": "2026-08-09T07:59:54.698Z",
-  "updatedAt": "2026-08-13T02:17:27.970Z"
+  "updatedAt": "2026-08-13T03:13:38.135Z"
 }

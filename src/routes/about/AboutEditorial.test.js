@@ -27,7 +27,7 @@ test('关于页应保留左对齐标准页头，并将品牌主体组织为紧�
   assert.match(source, /about-action-row/);
 });
 
-test('产品面板应按当前版本、自动检查更新和手动检查组织三个更新单元', async () => {
+test('产品面板应在品牌处保留唯一版本号，并以自动检查和手动检查组织更新单元', async () => {
   const source = await readAboutSource();
   const brandStart = source.indexOf('class="page-card about-brand-card about-product-panel"');
   const brandEnd = source.indexOf('</section>', brandStart);
@@ -36,10 +36,17 @@ test('产品面板应按当前版本、自动检查更新和手动检查组织�
   assert.match(brandCard, /about-update-grid/);
   assert.equal(
     (brandCard.match(/class="about-update-unit(?:\s|\")/g) || []).length,
-    3,
-    '更新区域应准确包含三个管理单元'
+    2,
+    '更新区域应准确包含两个管理单元'
   );
-  assert.match(brandCard, /v\{appVersion\}/);
+  assert.equal(
+    (brandCard.match(/v\{appVersion\}/g) || []).length,
+    1,
+    '品牌面板应只显示一次当前版本号'
+  );
+  const updateGrid = brandCard.slice(brandCard.indexOf('about-update-grid'));
+  assert.doesNotMatch(updateGrid, /v\{appVersion\}/);
+  assert.doesNotMatch(updateGrid, /t\('about\.currentVersionTag'\)/);
   assert.match(brandCard, /role="switch"/);
   assert.match(brandCard, /t\('about\.checkUpdates'\)/);
   assert.match(brandCard, /about-update-state[\s\S]*\{updateStatus \|\|/);
