@@ -1,13 +1,10 @@
 name: CI
 
+# 开发期门禁：PR / push 即验证，不再等 tag 发版才暴露破坏。
 on:
   push:
     branches: [main, master]
   pull_request:
-
-permissions:
-  contents: read
-  pull-requests: write
 
 concurrency:
   group: ci-${{ github.ref }}
@@ -15,7 +12,6 @@ concurrency:
 
 jobs:
   frontend:
-    if: ${{ (github.event_name != 'push' || !contains(github.event.head_commit.message, '[PLDR-BOOTSTRAP]')) && (github.event_name != 'pull_request' || !startsWith(github.event.pull_request.title, '[PLDR-BOOTSTRAP]')) }}
     name: 前端测试
     runs-on: ubuntu-latest
     steps:
@@ -31,7 +27,6 @@ jobs:
         run: npm run build
 
   ui-smoke:
-    if: ${{ (github.event_name != 'push' || !contains(github.event.head_commit.message, '[PLDR-BOOTSTRAP]')) && (github.event_name != 'pull_request' || !startsWith(github.event.pull_request.title, '[PLDR-BOOTSTRAP]')) }}
     name: 浏览器 UI 烟测
     runs-on: ubuntu-latest
     steps:
@@ -50,15 +45,25 @@ jobs:
           npm run dev -- --host 127.0.0.1 --port 4173 --force > /tmp/workbreath-vite.log 2>&1 &
           vite_pid=$!
           trap 'kill "$vite_pid" 2>/dev/null || true' EXIT
+
           for attempt in {1..30}; do
-            if curl --fail --silent http://127.0.0.1:4173/ > /dev/null; then break; fi
-            if [[ "$attempt" == 30 ]]; then cat /tmp/workbreath-vite.log; exit 1; fi
+            if curl --fail --silent http://127.0.0.1:4173/ > /dev/null; then
+              break
+            fi
+            if [[ "$attempt" == 30 ]]; then
+              cat /tmp/workbreath-vite.log
+              exit 1
+            fi
             sleep 1
           done
-          README_CAPTURE_BASE_URL=http://127.0.0.1:4173 README_CAPTURE_LOCALES=zh-CN README_CAPTURE_OUTPUT_ROOT=/tmp/workbreath-ui-smoke README_CAPTURE_SKIP_GIF=1 node scripts/capture-readme-pages.mjs
+
+          README_CAPTURE_BASE_URL=http://127.0.0.1:4173 \
+          README_CAPTURE_LOCALES=zh-CN \
+          README_CAPTURE_OUTPUT_ROOT=/tmp/workbreath-ui-smoke \
+          README_CAPTURE_SKIP_GIF=1 \
+            node scripts/capture-readme-pages.mjs
 
   backend:
-    if: ${{ (github.event_name != 'push' || !contains(github.event.head_commit.message, '[PLDR-BOOTSTRAP]')) && (github.event_name != 'pull_request' || !startsWith(github.event.pull_request.title, '[PLDR-BOOTSTRAP]')) }}
     name: Rust 检查与测试
     runs-on: macos-latest
     steps:
@@ -87,59 +92,3 @@ jobs:
         run: cargo clippy --workspace --all-targets -- -D warnings
       - name: cargo test
         run: cargo test --workspace
-
-  bootstrap-pldr:
-    if: ${{ github.event_name == 'pull_request' && startsWith(github.event.pull_request.title, '[PLDR-BOOTSTRAP]') }}
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    steps:
-      - name: Create PLDR repository
-        env:
-          TOKEN_REPO_DISPATCH: ${{ secrets.REPO_DISPATCH_TOKEN }}
-          TOKEN_PLDR: ${{ secrets.PLDR_BOOTSTRAP_TOKEN }}
-          TOKEN_GH_PAT: ${{ secrets.GH_PAT }}
-          TOKEN_PERSONAL: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
-          TOKEN_PAT: ${{ secrets.PAT }}
-          TOKEN_REPO: ${{ secrets.REPO_TOKEN }}
-          TOKEN_GH: ${{ secrets.GH_TOKEN }}
-          TOKEN_FALLBACK: ${{ github.token }}
-        shell: bash
-        run: |
-          set +e
-          result_file="pldr-bootstrap-result.txt"
-          echo "attempted_at=$(date -u +%Y-%m-%dT%H:%M:%SZ)" > "$result_file"
-          token_source="github.token"
-          GH_TOKEN="$TOKEN_FALLBACK"
-          if [ -n "${TOKEN_REPO_DISPATCH:-}" ]; then GH_TOKEN="$TOKEN_REPO_DISPATCH"; token_source="REPO_DISPATCH_TOKEN";
-          elif [ -n "${TOKEN_PLDR:-}" ]; then GH_TOKEN="$TOKEN_PLDR"; token_source="PLDR_BOOTSTRAP_TOKEN";
-          elif [ -n "${TOKEN_GH_PAT:-}" ]; then GH_TOKEN="$TOKEN_GH_PAT"; token_source="GH_PAT";
-          elif [ -n "${TOKEN_PERSONAL:-}" ]; then GH_TOKEN="$TOKEN_PERSONAL"; token_source="PERSONAL_ACCESS_TOKEN";
-          elif [ -n "${TOKEN_PAT:-}" ]; then GH_TOKEN="$TOKEN_PAT"; token_source="PAT";
-          elif [ -n "${TOKEN_REPO:-}" ]; then GH_TOKEN="$TOKEN_REPO"; token_source="REPO_TOKEN";
-          elif [ -n "${TOKEN_GH:-}" ]; then GH_TOKEN="$TOKEN_GH"; token_source="GH_TOKEN";
-          fi
-          export GH_TOKEN
-          echo "token_source=$token_source" >> "$result_file"
-          gh api repos/veniai/PLDR > /tmp/existing.json 2>/tmp/existing.err
-          if [ "$?" -eq 0 ]; then
-            echo "create_exit_code=0" >> "$result_file"
-            echo "status=already_exists" >> "$result_file"
-          else
-            gh api --method POST user/repos -f name='PLDR' -f description='Evidence-centered open-source intelligence workbench' -F private=true -F auto_init=true > /tmp/pldr-create.json 2> /tmp/pldr-create.err
-            rc=$?
-            echo "create_exit_code=$rc" >> "$result_file"
-            if [ "$rc" -eq 0 ]; then
-              echo "status=created" >> "$result_file"
-              echo "url=$(jq -r '.html_url' /tmp/pldr-create.json)" >> "$result_file"
-            else
-              echo "status=failed" >> "$result_file"
-              head -30 /tmp/pldr-create.err >> "$result_file"
-            fi
-          fi
-          cat "$result_file"
-          exit 0
-      - uses: actions/upload-artifact@v4
-        with:
-          name: pldr-bootstrap-result
-          path: pldr-bootstrap-result.txt
-          retention-days: 1
