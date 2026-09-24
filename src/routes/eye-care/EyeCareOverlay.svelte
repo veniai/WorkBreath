@@ -86,7 +86,7 @@
   });
 </script>
 
-<svelte:window on:contextmenu|preventDefault />
+<svelte:window on:contextmenu|preventDefault on:dragover|preventDefault on:drop|preventDefault />
 
 <div class="rest-screen" role="dialog" aria-modal="true" aria-label={t('eyeCare.overlayDialogLabel')}>
   <div class="glow" aria-hidden="true"></div>

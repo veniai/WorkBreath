@@ -63,6 +63,13 @@ try {
     'plugin:event|listen', 'get_eye_care_status',
   ]);
 
+  // The standalone entry must retain App.svelte's navigation/menu guards.
+  assert.deepEqual(await page.evaluate(() => ['dragover', 'drop', 'contextmenu'].map(type => {
+    const event = new Event(type, { bubbles: true, cancelable: true });
+    document.querySelector('.rest-screen').dispatchEvent(event);
+    return event.defaultPrevented;
+  })), [true, true, true]);
+
   // An incomplete emergency chord must cancel its timer; a full hold releases once.
   for (const key of ['Control', 'Alt', 'Shift', 'F12']) await page.keyboard.down(key);
   await page.keyboard.up('F12');
@@ -73,7 +80,7 @@ try {
   for (const key of ['F12', 'Shift', 'Alt', 'Control']) await page.keyboard.up(key);
   assert.equal(await page.evaluate(() => window.overlayCheck.calls.filter(cmd => cmd === 'eye_care_emergency_release').length), 1);
   assert.deepEqual(errors, []);
-  console.log('Eye-care overlay: delayed snapshot, live ticks, viewport coverage, reduced motion, isolated bootstrap and emergency hold passed.');
+  console.log('Eye-care overlay: delayed snapshot, live ticks, viewport coverage, reduced motion, isolated bootstrap, navigation guards and emergency hold passed.');
 } finally {
   await browser.close();
 }
