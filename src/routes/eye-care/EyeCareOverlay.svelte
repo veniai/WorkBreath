@@ -4,17 +4,13 @@
   import { listen } from '@tauri-apps/api/event';
   import { initializeLocale, t } from '$lib/i18n/index.js';
 
-  let status = {
-    phase: 'RESTING',
-    remainingSeconds: 0,
-    progress: 0,
-  };
+  let status = null;
   let emergencyTimer = null;
   const EMERGENCY_HOLD_MS = 5000;
 
   $: minutes = Math.floor((status?.remainingSeconds || 0) / 60);
   $: seconds = (status?.remainingSeconds || 0) % 60;
-  $: countdown = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+  $: countdown = status ? `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}` : '—:—';
   $: progress = Math.max(0, Math.min(1, Number(status?.progress) || 0));
 
   function isEmergencyChord(event) {
@@ -52,14 +48,29 @@
     initializeLocale();
     let disposed = false;
     let unlisten = () => {};
-    invoke('get_eye_care_status').then((next) => {
-      if (!disposed && next) status = next;
-    }).catch(() => {});
-    listen('eye-care-status-changed', (event) => {
-      if (!disposed && event.payload) status = event.payload;
-    }).then((cleanup) => {
-      if (disposed) cleanup(); else unlisten = cleanup;
-    }).catch(() => {});
+    let receivedStatusEvent = false;
+    // 先订阅再取快照，慢 IPC 返回不能把最新倒计时覆盖成旧值。
+    (async () => {
+      try {
+        const cleanup = await listen('eye-care-status-changed', (event) => {
+          if (!disposed && event.payload) {
+            receivedStatusEvent = true;
+            status = event.payload;
+          }
+        });
+        if (disposed) { cleanup(); return; }
+        unlisten = cleanup;
+      } catch (error) {
+        console.error('订阅护眼倒计时失败:', error);
+      }
+      if (disposed) return;
+      try {
+        const next = await invoke('get_eye_care_status');
+        if (!disposed && !receivedStatusEvent && next) status = next;
+      } catch (error) {
+        console.error('读取护眼倒计时失败:', error);
+      }
+    })();
 
     window.addEventListener('keydown', handleKeyDown, true);
     window.addEventListener('keyup', handleKeyUp, true);
@@ -186,5 +197,10 @@
     font-size: clamp(11px, 1vw, 14px);
     color: #6e6e73;
     letter-spacing: 0.02em;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .glow { animation: none; }
+    .progress span { transition: none; }
   }
 </style>

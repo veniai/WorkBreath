@@ -63,6 +63,9 @@ jobs:
           README_CAPTURE_SKIP_GIF=1 \
             node scripts/capture-readme-pages.mjs
 
+          EYE_CARE_CHECK_BASE_URL=http://127.0.0.1:4173/ \
+            node scripts/check-eye-care-overlay.mjs
+
   backend:
     name: Rust 检查与测试
     runs-on: macos-latest
@@ -91,4 +94,25 @@ jobs:
       - name: cargo clippy
         run: cargo clippy --workspace --all-targets -- -D warnings
       - name: cargo test
+        run: cargo test --workspace
+
+  windows-backend:
+    name: Windows 原生检查与测试
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: dtolnay/rust-toolchain@1.97.1
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: |
+            . -> target
+      - run: npm ci
+      - run: npm run build
+      - name: Windows cargo check
+        run: cargo check --workspace --all-targets
+      - name: Windows cargo test（含原生窗口层级恢复）
         run: cargo test --workspace

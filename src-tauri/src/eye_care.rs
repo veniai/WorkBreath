@@ -742,6 +742,120 @@ pub fn sync_pre_break_window(app: &AppHandle, status: &EyeCareStatus) -> tauri::
     Ok(())
 }
 
+#[derive(Debug, PartialEq, Eq)]
+struct OverlayRecoveryPlan {
+    show: bool,
+    restore: bool,
+    place: bool,
+    leave_fullscreen: bool,
+    enter_fullscreen: bool,
+}
+
+fn overlay_recovery_plan(
+    supports_fullscreen: bool,
+    fullscreen: bool,
+    visible: bool,
+    minimized: bool,
+    geometry_matches: bool,
+) -> OverlayRecoveryPlan {
+    // 最小化时的坐标不是显示器坐标，先还原，下一次观测再校正几何。
+    let place = !minimized && !geometry_matches;
+    OverlayRecoveryPlan {
+        show: !visible,
+        restore: minimized,
+        place,
+        leave_fullscreen: fullscreen && place,
+        enter_fullscreen: supports_fullscreen && (!fullscreen || place || minimized),
+    }
+}
+
+#[cfg(windows)]
+fn restore_overlay_z_order(hwnd: isize) -> std::io::Result<()> {
+    use winapi::shared::windef::HWND;
+    use winapi::um::winuser::{
+        SetWindowPos, HWND_TOPMOST, SWP_NOACTIVATE, SWP_NOMOVE, SWP_NOOWNERZORDER, SWP_NOSIZE,
+    };
+    let result = unsafe {
+        SetWindowPos(
+            hwnd as HWND,
+            HWND_TOPMOST,
+            0,
+            0,
+            0,
+            0,
+            SWP_NOACTIVATE | SWP_NOMOVE | SWP_NOSIZE | SWP_NOOWNERZORDER,
+        )
+    };
+    if result == 0 {
+        Err(std::io::Error::last_os_error())
+    } else {
+        Ok(())
+    }
+}
+
+fn raise_overlay_window(window: &tauri::WebviewWindow) -> tauri::Result<()> {
+    #[cfg(windows)]
+    {
+        // Tao 的置顶 setter 在内部标志未变化时直接返回。ToDesk 等窗口可以
+        // 在本窗口仍带 TOPMOST 标志时排在它上面，因此显式恢复原生 Z-order。
+        // 不改尺寸、不切换全屏，也不激活每块显示器上的窗口。
+        let hwnd = window.hwnd()?.0 as isize;
+        let label = window.label().to_string();
+        window.run_on_main_thread(move || {
+            if let Err(error) = restore_overlay_z_order(hwnd) {
+                log::warn!("恢复护眼窗口 {label} 层级失败: {error}");
+            }
+        })
+    }
+    #[cfg(not(windows))]
+    window.set_always_on_top(true)
+}
+
+fn recover_overlay_window(
+    window: &tauri::WebviewWindow,
+    position: PhysicalPosition<i32>,
+    size: PhysicalSize<u32>,
+) -> tauri::Result<()> {
+    let minimized = window.is_minimized().unwrap_or(false);
+    let geometry_matches = minimized
+        || matches!((window.outer_position(), window.inner_size()), (Ok(current_position), Ok(current_size))
+            if current_position == position && current_size == size);
+    let plan = overlay_recovery_plan(
+        !cfg!(target_os = "macos"),
+        window.is_fullscreen().unwrap_or(false),
+        window.is_visible().unwrap_or(false),
+        minimized,
+        geometry_matches,
+    );
+    let mut first_error = None;
+    let mut attempt = |operation: &str, result: tauri::Result<()>| {
+        if let Err(error) = result {
+            log::warn!("护眼窗口 {} {operation}失败: {error}", window.label());
+            first_error.get_or_insert(error);
+        }
+    };
+    // 窗口管理器可能拒绝移动或全屏（例如 Wayland）；仍须尝试显示和置顶，
+    // 不能让一个失败的 setter 把整个休息层留在隐藏状态。
+    if plan.restore {
+        attempt("还原", window.unminimize());
+    }
+    if plan.leave_fullscreen {
+        attempt("退出旧全屏", window.set_fullscreen(false));
+    }
+    if plan.place {
+        attempt("定位", window.set_position(Position::Physical(position)));
+        attempt("调整尺寸", window.set_size(Size::Physical(size)));
+    }
+    if plan.show {
+        attempt("显示", window.show());
+    }
+    if plan.enter_fullscreen {
+        attempt("全屏", window.set_fullscreen(true));
+    }
+    attempt("置顶", raise_overlay_window(window));
+    first_error.map_or(Ok(()), Err)
+}
+
 pub fn sync_overlay_windows(app: &AppHandle, status: &EyeCareStatus) -> tauri::Result<()> {
     if status.phase != EyeCarePhase::Resting {
         close_overlay_windows(app);
@@ -749,6 +863,9 @@ pub fn sync_overlay_windows(app: &AppHandle, status: &EyeCareStatus) -> tauri::R
     }
 
     let monitors = app.available_monitors()?;
+    if monitors.is_empty() {
+        return Err(std::io::Error::other("未发现可用于护眼休息的显示器").into());
+    }
     let expected_labels = (0..monitors.len())
         .map(|index| format!("{OVERLAY_PREFIX}{index}"))
         .collect::<HashSet<_>>();
@@ -758,62 +875,67 @@ pub fn sync_overlay_windows(app: &AppHandle, status: &EyeCareStatus) -> tauri::R
             let _ = window.close();
         }
     }
+    let mut first_error = None;
+    let mut focus_candidate = None;
+    let mut overlay_has_focus = false;
     for (index, monitor) in monitors.iter().enumerate() {
         let label = format!("{OVERLAY_PREFIX}{index}");
         let position = *monitor.position();
         let size = *monitor.size();
-        let window = if let Some(window) = app.get_webview_window(&label) {
-            window
-        } else {
-            WebviewWindowBuilder::new(app, &label, WebviewUrl::default())
+        // 单块屏幕失败不能阻止其余显示器恢复覆盖。
+        let result = (|| -> tauri::Result<tauri::WebviewWindow> {
+            let window = if let Some(window) = app.get_webview_window(&label) {
+                window
+            } else {
+                WebviewWindowBuilder::new(
+                    app,
+                    &label,
+                    WebviewUrl::App("eye-care-overlay.html".into()),
+                )
                 .title("WorkBreath Rest")
-                .inner_size(size.width as f64, size.height as f64)
-                .position(position.x as f64, position.y as f64)
                 .resizable(true)
                 .maximizable(false)
                 .minimizable(false)
                 .closable(false)
                 .decorations(false)
-                .transparent(true)
+                .transparent(false)
                 .visible(false)
                 .always_on_top(true)
                 .visible_on_all_workspaces(true)
                 .skip_taskbar(true)
                 .shadow(false)
-                .focused(true)
+                .focused(false)
+                .content_protected(true)
                 .build()?
-        };
-
-        // 已进入 fullscreen 的窗口不再重复设置 position/size/fullscreen，
-        // 否则 watchdog 每秒一次的 set_position/set_size 会把窗口踢出 fullscreen。
-        let already_fullscreen = window.is_fullscreen().unwrap_or(false);
-
-        if !already_fullscreen {
-            let _ = window.set_position(Position::Physical(PhysicalPosition::new(
-                position.x, position.y,
-            )));
-            let _ = window.set_size(Size::Physical(PhysicalSize::new(size.width, size.height)));
-            let _ = window.set_always_on_top(true);
-            let _ = window.set_visible_on_all_workspaces(true);
-            let _ = window.set_skip_taskbar(true);
-            let _ = window.set_content_protected(true);
-            let _ = window.show();
-            let _ = window.unminimize();
-            let _ = window.set_focus();
-            // Windows 任务栏和 Linux GNOME 面板都是 topmost 窗口，
-            // 只有进入 fullscreen 模式才会触发系统面板自动隐藏。
-            // macOS 不需要：always_on_top + visible_on_all_workspaces 已能覆盖 Dock 和菜单栏。
-            #[cfg(not(target_os = "macos"))]
-            {
-                let _ = window.set_fullscreen(true);
+            };
+            Ok(window)
+        })();
+        match result {
+            Ok(window) => {
+                if let Err(error) = recover_overlay_window(&window, position, size) {
+                    first_error.get_or_insert(error);
+                }
+                overlay_has_focus |= window.is_focused().unwrap_or(false);
+                if focus_candidate.is_none() {
+                    focus_candidate = Some(window);
+                }
             }
-        } else {
-            let _ = window.show();
-            let _ = window.set_focus();
+            Err(error) => {
+                log::warn!("恢复护眼窗口 {label} 失败: {error}");
+                first_error.get_or_insert(error);
+            }
         }
-        let _ = app.emit_to(label.as_str(), STATUS_EVENT, status);
     }
-    Ok(())
+    // 全部屏幕保持覆盖，只在没有任何休息窗口持有焦点时请求一次。
+    if !overlay_has_focus {
+        if let Some(window) = focus_candidate {
+            if let Err(error) = window.set_focus() {
+                first_error.get_or_insert(error);
+            }
+        }
+    }
+    // background_eye_care_task 已统一广播状态，无需再向每屏重复发一次。
+    first_error.map_or(Ok(()), Err)
 }
 
 pub fn show_recap_window(app: &AppHandle, recap: &EyeCareRecap) -> tauri::Result<()> {
@@ -1062,6 +1184,138 @@ pub async fn eye_care_emergency_release(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[cfg(windows)]
+    #[test]
+    fn windows_recovers_z_order_when_another_topmost_window_moves_above_overlay() {
+        use std::ptr::null_mut;
+        use winapi::shared::windef::HWND;
+        use winapi::um::winuser::{
+            CreateWindowExW, DestroyWindow, GetWindow, GetWindowLongPtrW, GWL_EXSTYLE, GW_HWNDNEXT,
+            WS_EX_NOACTIVATE, WS_EX_TOOLWINDOW, WS_EX_TOPMOST, WS_POPUP,
+        };
+
+        struct TestWindow(HWND);
+        impl TestWindow {
+            fn new() -> Self {
+                let class: Vec<u16> = "STATIC\0".encode_utf16().collect();
+                // Hidden, non-activating windows exercise native stacking without
+                // covering the developer's desktop or stealing keyboard focus.
+                let hwnd = unsafe {
+                    CreateWindowExW(
+                        WS_EX_TOPMOST | WS_EX_TOOLWINDOW | WS_EX_NOACTIVATE,
+                        class.as_ptr(),
+                        class.as_ptr(),
+                        WS_POPUP,
+                        0,
+                        0,
+                        1,
+                        1,
+                        null_mut(),
+                        null_mut(),
+                        null_mut(),
+                        null_mut(),
+                    )
+                };
+                assert!(!hwnd.is_null(), "{}", std::io::Error::last_os_error());
+                Self(hwnd)
+            }
+
+            fn is_above(&self, other: &Self) -> bool {
+                let mut next = self.0;
+                for _ in 0..10_000 {
+                    next = unsafe { GetWindow(next, GW_HWNDNEXT) };
+                    if next == other.0 {
+                        return true;
+                    }
+                    if next.is_null() {
+                        return false;
+                    }
+                }
+                panic!("Native window chain did not terminate");
+            }
+        }
+        impl Drop for TestWindow {
+            fn drop(&mut self) {
+                unsafe {
+                    DestroyWindow(self.0);
+                }
+            }
+        }
+
+        let overlay = TestWindow::new();
+        let remote_control = TestWindow::new();
+        restore_overlay_z_order(overlay.0 as isize).unwrap();
+        restore_overlay_z_order(remote_control.0 as isize).unwrap();
+        assert!(remote_control.is_above(&overlay));
+        assert_ne!(
+            unsafe { GetWindowLongPtrW(overlay.0, GWL_EXSTYLE) } & WS_EX_TOPMOST as isize,
+            0
+        );
+
+        restore_overlay_z_order(overlay.0 as isize).unwrap();
+        assert!(overlay.is_above(&remote_control));
+        assert_ne!(
+            unsafe { GetWindowLongPtrW(overlay.0, GWL_EXSTYLE) } & WS_EX_TOPMOST as isize,
+            0
+        );
+    }
+
+    #[test]
+    fn healthy_fullscreen_overlay_never_repositions_or_toggles_fullscreen() {
+        assert_eq!(
+            overlay_recovery_plan(true, true, true, false, true),
+            OverlayRecoveryPlan {
+                show: false,
+                restore: false,
+                place: false,
+                leave_fullscreen: false,
+                enter_fullscreen: false,
+            }
+        );
+    }
+
+    #[test]
+    fn minimized_fullscreen_overlay_is_restored_even_while_visible() {
+        let plan = overlay_recovery_plan(true, true, true, true, false);
+        assert!(plan.restore);
+        assert!(plan.enter_fullscreen);
+        assert!(!plan.place, "最小化坐标不能用来重定位全屏窗口");
+        assert!(!plan.leave_fullscreen);
+    }
+
+    #[test]
+    fn hidden_overlay_is_shown_without_disturbing_fullscreen_geometry() {
+        let plan = overlay_recovery_plan(true, true, false, false, true);
+        assert!(plan.show);
+        assert!(!plan.place);
+        assert!(!plan.enter_fullscreen);
+    }
+
+    #[test]
+    fn monitor_layout_change_reenters_fullscreen_at_new_geometry() {
+        let plan = overlay_recovery_plan(true, true, true, false, false);
+        assert!(plan.leave_fullscreen);
+        assert!(plan.place);
+        assert!(plan.enter_fullscreen);
+    }
+
+    #[test]
+    fn lost_fullscreen_is_recovered_even_with_correct_geometry() {
+        let plan = overlay_recovery_plan(true, false, true, false, true);
+        assert!(plan.enter_fullscreen);
+        assert!(!plan.place);
+    }
+
+    #[test]
+    fn macos_overlay_keeps_borderless_geometry_without_native_fullscreen_spaces() {
+        let stable = overlay_recovery_plan(false, false, true, false, true);
+        assert!(!stable.place);
+        assert!(!stable.enter_fullscreen);
+        let moved = overlay_recovery_plan(false, false, true, false, false);
+        assert!(moved.place);
+        assert!(!moved.enter_fullscreen);
+    }
 
     fn activity(
         timestamp: i64,
