@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.6.0] - Unreleased
+## [1.6.0] - 2026-09-24
 
 ### 修复
 - **休息窗口恢复**：Windows 护眼 watchdog 显式恢复原生窗口层级，并还原被最小化的休息窗口；显示器布局变化后重新定位和进入全屏。针对远程控制软件等前台窗口覆盖休息层的情况补齐恢复路径，ToDesk 实机验证尚待完成。
@@ -22,8 +22,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 更新 HTTP 依赖链至 reqwest 0.12 / h2 0.4.19，并将 rustls 更新至 0.23.45，修复 Rust 审计新发现的 RUSTSEC-2026-0258 与 RUSTSEC-2026-0285；保留原有代理和 TLS 配置。
 
 ### 升级
-- 保留 1.5.11 的应用标识、数据目录、更新地址和公钥，准备沿用现有签名更新链路升级至 1.6.0。
-- 当前为本地候选，尚未发布更新清单或安装包。验证证据和发布前检查见 `docs/eye-care/V1.6-VALIDATION.md`。
+- 保留 1.5.11 的应用标识、数据目录、更新地址和公钥，沿用现有签名更新链路升级至 1.6.0。
+
+### 验证
+- 445 项前端测试、450 项 Windows 测试、461 项 macOS 测试、macOS 严格 Clippy、浏览器检查及依赖审计通过；Windows 测试包通过 1.5.11 更新公钥验签。
+- ToDesk 本机实测和 1.5.11 实际覆盖升级尚未完成，未宣称实机验收通过。详细证据见 `docs/eye-care/V1.6-VALIDATION.md`。
 
 ## [1.5.11] - 2026-08-13
 
