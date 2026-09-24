@@ -1,6 +1,6 @@
 [package]
 name = "work-review"
-version = "1.5.11"
+version = "1.6.0"
 description = "本地工作回顾与护眼节奏助手"
 authors = ["WorkBreath Team"]
 edition = "2021"
@@ -29,7 +29,7 @@ rusqlite = { version = "0.30", features = ["bundled"] }
 base64 = "0.21"
 
 # HTTP 客户端
-reqwest = { version = "0.11", features = ["json", "socks"] }
+reqwest = { version = "0.12", features = ["json", "socks"] }
 
 # 日期时间
 chrono = { version = "0.4", features = ["serde"] }
